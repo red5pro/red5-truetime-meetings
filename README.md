@@ -52,7 +52,7 @@ A real-time video conferencing application built with React and Red5 Pro, featur
 
 ```bash
 # Clone the repository
-git clone https://github.com/red5pro/truetime-meetings
+git clone https://github.com/red5pro/red5-truetime-meetings
 cd truetime-meetings
 
 # Install dependencies
