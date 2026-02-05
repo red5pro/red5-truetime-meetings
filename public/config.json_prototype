@@ -1,0 +1,22 @@
+{
+    "VITE_TURN_SERVER_URL": "stun:stun2.l.google.com:19302",
+    "VITE_TURN_SERVER_USERNAME": "",
+    "VITE_TURN_SERVER_CREDENTIAL": "",
+    "VITE_HOST": "xxx.red5pro.net",
+    "VITE_BASENAME": "/",
+    "VITE_NODE_GROUP": "default",
+    "VITE_BACKEND_HOST": "",
+    "VITE_ENABLE_CLOSED_CAPTION": "false",
+    "VITE_ENABLE_RECORDING": "false",
+    "VITE_DEFAULT_THEME": "black",
+    "VITE_LOGO_URL": "/logo.svg",
+    "VITE_ANALYTICS_ENDPOINT": "https://analytics.example.com",
+    "VITE_GOOGLE_CLIENT_ID": "xxx.apps.googleusercontent.com",
+    "VITE_ENABLE_GOOGLE_AUTH": "false",
+    "VITE_PUBNUB_PUBLISH_KEY": "pub-c-xxx",
+    "VITE_PUBNUB_SUBSCRIBE_KEY": "sub-c-xxx",
+    "VITE_AWS_ACCESS_KEY": "xxx",
+    "VITE_AWS_SECRET_ACCESS_KEY": "xxx",
+    "VITE_AWS_BUCKET_NAME": "xxx",
+    "VITE_AWS_BUCKET_LOCATION": "xxx"
+}
