@@ -8,6 +8,9 @@ import { useTranslation } from 'react-i18next';
 import CloseDrawerButton from './DrawerButton';
 import { getRed5DrawerStyle } from "../styles/themeUtil";
 import { SvgIcon } from './SvgIcon';
+import Lottie from 'lottie-react';
+import recordingAnimation from '../styles/lottieFiles/recording-animation.json';
+import clockAnimation from '../styles/lottieFiles/clock.json';
 
 interface LocalRecordingStatus {
     isRecording: boolean;
@@ -58,8 +61,22 @@ const ContentGrid = styled(Grid)(({ theme }: { theme: Theme }) => ({
     overflow: 'hidden',
 }));
 
-const StatusItem = ({ label, value, icon }: { label: string, value: string | number, icon: string }) => {
+const StatusItem = ({ label, value, icon, iconColor, lottieType }: { label: string, value: string | number, icon: string, iconColor?: string, lottieType?: 'recording' | 'clock' }) => {
     const theme = useTheme();
+
+    const getLottieAnimation = () => {
+        switch (lottieType) {
+            case 'recording':
+                return recordingAnimation;
+            case 'clock':
+                return clockAnimation;
+            default:
+                return null;
+        }
+    };
+
+    const animationData = getLottieAnimation();
+
     return (
         <Grid container alignItems="center" spacing={2} sx={{ mb: 2 }}>
             <Grid>
@@ -72,7 +89,16 @@ const StatusItem = ({ label, value, icon }: { label: string, value: string | num
                     alignItems: 'center',
                     justifyContent: 'center'
                 }}>
-                    <SvgIcon size={210} name={icon} color={theme.palette.text.primary} />
+                    {animationData ? (
+                        <Lottie
+                            animationData={animationData}
+                            loop={true}
+                            autoplay={true}
+                            style={{ width: 32, height: 32 }}
+                        />
+                    ) : (
+                        <SvgIcon size={20} name={icon} color={iconColor || theme.palette.text.primary} />
+                    )}
                 </Box>
             </Grid>
             <Grid sx={{ flex: 1 }}>
@@ -178,6 +204,8 @@ const LocalRecordingDrawer = React.memo<LocalRecordingDrawerProps>((props) => {
                         label={t('Status')}
                         value={renderActiveStatus()}
                         icon={isUploading ? 'cloud-upload' : (isActive ? 'record' : 'stop')}
+                        iconColor={isActive && !isPaused ? '#E74C3C' : undefined}
+                        lottieType={isActive && !isPaused ? 'recording' : undefined}
                     />
 
                     {uploadStatus === 'uploading' && (
@@ -257,6 +285,7 @@ const LocalRecordingDrawer = React.memo<LocalRecordingDrawerProps>((props) => {
                             label={t('Duration')}
                             value={formatDuration(elapsedSeconds)}
                             icon="clock"
+                            lottieType="clock"
                         />
                     )}
 
