@@ -58,6 +58,7 @@ interface UseRecordingReturn {
     uploadStatus: 'idle' | 'uploading' | 'success' | 'error';
     uploadError: string | null;
     hasS3Config: boolean;
+    recordingStartTime: number | null;
 
     // Setters
     setIsRecordingActive: React.Dispatch<React.SetStateAction<boolean>>;
@@ -439,14 +440,15 @@ export const useRecording = (
     }, [isLocalRecordingActive, conferenceClientRef]);
 
     /**
-     * Upload local recording to S3
+     * Upload local recording to S3 (using Mediabunny segments)
      */
     const uploadLocalRecording = useCallback(async (): Promise<boolean> => {
-        if (!conferenceClientRef?.current) {
-            log.error('Conference client not available');
+        const blobs = recordedSegmentsRef.current;
+
+        if (blobs.length === 0) {
+            log.warn('No recording data to upload');
             return false;
         }
-        const client = conferenceClientRef.current;
 
         const config = getRuntimeConfig();
         const accessKeyId = config.VITE_AWS_ACCESS_KEY;
@@ -460,16 +462,21 @@ export const useRecording = (
         }
 
         try {
-            const blob = await client.generateLocalRecordingZip();
-            if (!blob) {
-                log.warn('No recording data to upload');
-                return false;
-            }
-
             setIsUploading(true);
             setUploadStatus('uploading');
             setUploadError(null);
             setUploadProgress(0);
+
+            // Create ZIP from Mediabunny recording segments
+            const zip = new JSZip();
+            blobs.forEach((blob, index) => {
+                const segmentFilename = blobs.length === 1
+                    ? `recording.mp4`
+                    : `part${index + 1}.mp4`;
+                zip.file(segmentFilename, blob);
+            });
+
+            const zipBlob = await zip.generateAsync({ type: 'blob' });
 
             const { S3Client } = await import('@aws-sdk/client-s3');
             const { Upload } = await import('@aws-sdk/lib-storage');
@@ -480,14 +487,15 @@ export const useRecording = (
             });
 
             const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-            const key = `recordings/live/streams/localrecording_${roomName}_${timestamp}_${client.streamName}.zip`;
+            const streamName = conferenceClientRef?.current?.streamName || 'unknown';
+            const key = `recordings/live/streams/localrecording_${roomName}_${timestamp}_${streamName}.zip`;
 
             const upload = new Upload({
                 client: s3Client,
                 params: {
                     Bucket: bucket,
                     Key: key,
-                    Body: blob,
+                    Body: zipBlob,
                     ContentType: 'application/zip'
                 },
                 // Disable checksum to avoid CRC32 multipart upload issues
@@ -521,7 +529,7 @@ export const useRecording = (
             }
             return false;
         }
-    }, [conferenceClientRef, t]);
+    }, [roomName, conferenceClientRef, t]);
 
     /**
      * Stop local recording (Mediabunny)
@@ -742,6 +750,7 @@ export const useRecording = (
         uploadStatus,
         uploadError,
         hasS3Config,
+        recordingStartTime: recordingStartTimeRef.current,
 
         // Setters
         setIsRecordingActive,

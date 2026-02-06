@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { useState, useEffect } from 'react';
 import Drawer from '@mui/material/Drawer';
 import { styled, useTheme, Theme } from '@mui/material/styles';
 import Grid from '@mui/material/Grid2';
@@ -39,6 +40,7 @@ interface LocalRecordingDrawerProps {
     uploadStatus?: 'idle' | 'uploading' | 'success' | 'error';
     uploadError?: string | null;
     hasS3Config?: boolean;
+    recordingStartTime?: number | null;
 }
 
 const Red5Drawer = styled(Drawer)(({ theme }: { theme: Theme }) => ({
@@ -85,7 +87,14 @@ const StatusItem = ({ label, value, icon }: { label: string, value: string | num
     );
 };
 
-const formatSize = (bytes: number) => {
+const formatDuration = (seconds: number): string => {
+    const hrs = Math.floor(seconds / 3600);
+    const mins = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+    return `${hrs.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+};
+
+const formatSize = (bytes: number): string => {
     if (bytes === 0) return '0 Bytes';
     const k = 1024;
     const sizes = ['Bytes', 'KB', 'MB', 'GB'];
@@ -98,8 +107,40 @@ const LocalRecordingDrawer = React.memo<LocalRecordingDrawerProps>((props) => {
     const theme = useTheme();
     const {
         status, isActive, isPaused, onDownload, onClear, onUpload,
-        open, onClose, isUploading, uploadProgress, uploadStatus, uploadError
+        open, onClose, isUploading, uploadProgress, uploadStatus, uploadError,
+        recordingStartTime
     } = props;
+
+    // Timer state for recording duration
+    const [elapsedSeconds, setElapsedSeconds] = useState(0);
+    const [finalDuration, setFinalDuration] = useState(0);
+
+    // Update timer every second while recording is active
+    useEffect(() => {
+        if (!isActive || !recordingStartTime) {
+            if (!isActive && elapsedSeconds > 0) {
+                // Save the final duration before resetting
+                setFinalDuration(elapsedSeconds);
+                setElapsedSeconds(0);
+            }
+            return;
+        }
+
+        // Reset finalDuration when starting a new recording
+        setFinalDuration(0);
+
+        // Calculate initial elapsed time
+        const calculateElapsed = () => Math.floor((Date.now() - recordingStartTime) / 1000);
+        setElapsedSeconds(calculateElapsed());
+
+        const interval = setInterval(() => {
+            if (!isPaused) {
+                setElapsedSeconds(calculateElapsed());
+            }
+        }, 1000);
+
+        return () => clearInterval(interval);
+    }, [isActive, isPaused, recordingStartTime]);
 
     const renderActiveStatus = () => {
         if (isActive) return isPaused ? t('Paused') : t('Recording');
@@ -211,23 +252,26 @@ const LocalRecordingDrawer = React.memo<LocalRecordingDrawerProps>((props) => {
                         </Box>
                     )}
 
-                    {status && (
+                    {isActive && (
+                        <StatusItem
+                            label={t('Duration')}
+                            value={formatDuration(elapsedSeconds)}
+                            icon="clock"
+                        />
+                    )}
+
+                    {!isActive && ((status?.estimatedSize ?? 0) > 0 || finalDuration > 0) && (
                         <>
                             <StatusItem
-                                label={t('Estimated Size')}
-                                value={formatSize(status.estimatedSize)}
-                                icon="database"
+                                label={t('Final Duration')}
+                                value={formatDuration(finalDuration)}
+                                icon="clock"
                             />
-                            <StatusItem
-                                label={t('Chunks Captured')}
-                                value={status.chunks}
-                                icon="arrow-right-short"
-                            />
-                            {status.segments > 0 && (
+                            {status && status.estimatedSize > 0 && (
                                 <StatusItem
-                                    label={t('Completed Segments')}
-                                    value={status.segments}
-                                    icon="approve"
+                                    label={t('File Size')}
+                                    value={formatSize(status.estimatedSize)}
+                                    icon="database"
                                 />
                             )}
                         </>

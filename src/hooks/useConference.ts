@@ -143,6 +143,7 @@ interface LocalRecording {
     isUploading: boolean;
     uploadProgress: number;
     hasS3Config: boolean;
+    recordingStartTime: number | null;
 }
 
 interface ScreenShare {

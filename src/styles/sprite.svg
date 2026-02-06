@@ -412,4 +412,23 @@
         <circle cx="12" cy="12" r="10" fill="#ffffff"/>
     </symbol>
 
+    <symbol viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" id="clock">
+    <circle cx="100" cy="100" r="95" fill="white" stroke="#333" stroke-width="6"/>
+    
+    <g stroke="#333" stroke-width="4" stroke-linecap="round">
+        <line x1="100" y1="15" x2="100" y2="25" />
+        <line x1="100" y1="175" x2="100" y2="185" />
+        <line x1="15" y1="100" x2="25" y2="100" />
+        <line x1="175" y1="100" x2="185" y2="100" />
+    </g>
+    
+    <line x1="100" y1="100" x2="65" y2="70" stroke="#333" stroke-width="6" stroke-linecap="round" />
+    
+    <line x1="100" y1="100" x2="140" y2="60" stroke="#333" stroke-width="4" stroke-linecap="round" />
+    
+    <line x1="100" y1="100" x2="100" y2="40" stroke="#E74C3C" stroke-width="2" stroke-linecap="round" />
+    
+    <circle cx="100" cy="100" r="4" fill="#333" />
+    </symbol>
+
 </svg>

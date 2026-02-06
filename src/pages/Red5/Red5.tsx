@@ -510,6 +510,7 @@ function Red5(props: Red5Props) {
                             uploadStatus={conference.features.localRecording.uploadStatus}
                             uploadError={conference.features.localRecording.uploadError}
                             hasS3Config={conference.features.localRecording.hasS3Config}
+                            recordingStartTime={conference.features.localRecording.recordingStartTime}
                         />
                     </>
                 )
