@@ -10,6 +10,8 @@ import { ConferenceClient } from "red5pro-conference-sdk";
 import { ConferenceEvents } from "red5pro-conference-sdk";
 import { MediabunnyRecorder } from '../utils/MediabunnyRecorder';
 import JSZip from 'jszip';
+import { S3Client } from '@aws-sdk/client-s3';
+import { Upload } from '@aws-sdk/lib-storage';
 
 // Type definitions
 type MessageVariant = 'info' | 'success' | 'error' | 'warning';
@@ -477,9 +479,6 @@ export const useRecording = (
             });
 
             const zipBlob = await zip.generateAsync({ type: 'blob' });
-
-            const { S3Client } = await import('@aws-sdk/client-s3');
-            const { Upload } = await import('@aws-sdk/lib-storage');
 
             const s3Client = new S3Client({
                 region,
