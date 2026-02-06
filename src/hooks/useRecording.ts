@@ -8,6 +8,8 @@ import { getRuntimeConfig } from '../utils/configStore';
 import { useTranslation } from 'react-i18next';
 import { ConferenceClient } from "red5pro-conference-sdk";
 import { ConferenceEvents } from "red5pro-conference-sdk";
+import { MediabunnyRecorder } from '../utils/MediabunnyRecorder';
+import JSZip from 'jszip';
 
 // Type definitions
 type MessageVariant = 'info' | 'success' | 'error' | 'warning';
@@ -65,8 +67,8 @@ interface UseRecordingReturn {
     stopRecording: (serverRecording?: boolean, localRecording?: boolean) => Promise<boolean>;
 
     // Local Recording Methods
-    startLocalRecording: (stream?: MediaStream, timeslice?: number) => void;
-    stopLocalRecording: () => Blob | null;
+    startLocalRecording: (stream?: MediaStream, timeslice?: number) => Promise<void>;
+    stopLocalRecording: () => Promise<Blob | null>;
     pauseLocalRecording: () => void;
     resumeLocalRecording: () => void;
     downloadLocalRecording: (filename?: string) => Promise<boolean>;
@@ -365,10 +367,16 @@ export const useRecording = (
         }
     }, [roomName, token, backendConfig.apiEndpoints.stopRecording]);
 
+    // Mediabunny recorder ref for local recording
+    const mediabunnyRecorderRef = useRef<MediabunnyRecorder | null>(null);
+    const recordedSegmentsRef = useRef<Blob[]>([]);
+    const recordingStartTimeRef = useRef<number | null>(null);
+    const currentRecordingStreamRef = useRef<MediaStream | null>(null);
+
     /**
-     * Start local recording
+     * Start local recording using Mediabunny
      */
-    const startLocalRecording = useCallback((stream?: MediaStream, timeslice: number = 1000): void => {
+    const startLocalRecording = useCallback(async (stream?: MediaStream, _timeslice: number = 1000): Promise<void> => {
         if (!conferenceClientRef?.current) {
             log.error('Conference client not available');
             if (displayMessageRef.current) {
@@ -380,13 +388,48 @@ export const useRecording = (
 
         if (isLocalRecordingActive) {
             log.warn('Local recording is already active');
-            // TODO: when we join a room with local recording already active, startLocalRecording called multiple times, fix it! 
             return;
         }
 
         try {
             setLocalRecordingStatus(null); // Reset status for new recording
-            client.startLocalRecording(stream, timeslice);
+            recordedSegmentsRef.current = []; // Clear previous segments
+
+            // Get the stream to record - use provided stream or get from client
+            const recordingStream = stream || client.mediaStreamManager?.getCurrentStream();
+            if (!recordingStream) {
+                throw new Error('No media stream available for recording');
+            }
+
+            // Create and start Mediabunny recorder
+            const recorder = new MediabunnyRecorder({
+                videoCodec: 'avc',
+                audioCodec: 'aac',
+            });
+
+            recorder.onstart = () => {
+                log.log('Local recording started (Mediabunny)');
+            };
+
+            recorder.onerror = (error) => {
+                log.error('Mediabunny recording error:', error);
+                if (displayMessageRef.current) {
+                    displayMessageRef.current(`Recording error: ${error.message}`, 'error');
+                }
+            };
+
+            mediabunnyRecorderRef.current = recorder;
+            currentRecordingStreamRef.current = recordingStream;
+            recordingStartTimeRef.current = Date.now();
+
+            await recorder.start(recordingStream);
+
+            setIsLocalRecordingActive(true);
+            setIsLocalRecordingPaused(false);
+
+            if (displayMessageRef.current) {
+                displayMessageRef.current('Local recording started', 'success');
+            }
         } catch (error) {
             log.error('Failed to start local recording:', error);
             if (displayMessageRef.current) {
@@ -481,14 +524,13 @@ export const useRecording = (
     }, [conferenceClientRef, t]);
 
     /**
-     * Stop local recording
+     * Stop local recording (Mediabunny)
      */
-    const stopLocalRecording = useCallback((): Blob | null => {
-        if (!conferenceClientRef?.current) {
-            log.error('Conference client not available');
+    const stopLocalRecording = useCallback(async (): Promise<Blob | null> => {
+        if (!mediabunnyRecorderRef.current) {
+            log.warn('No local recording in progress');
             return null;
         }
-        const client = conferenceClientRef.current;
 
         if (!isLocalRecordingActive) {
             log.warn('No local recording in progress');
@@ -496,9 +538,32 @@ export const useRecording = (
         }
 
         try {
-            const blob = client.stopLocalRecording();
-            const finalStatus = client.getLocalRecordingStatus();
-            setLocalRecordingStatus(finalStatus);
+            const blob = await mediabunnyRecorderRef.current.stop();
+
+            if (blob) {
+                // Add to segments
+                recordedSegmentsRef.current.push(blob);
+
+                const sizeMB = (blob.size / (1024 * 1024)).toFixed(2);
+                log.log(`Local recording stopped. Size: ${sizeMB} MB`);
+
+                setLocalRecordingStatus({
+                    isRecording: false,
+                    isPaused: false,
+                    chunks: recordedSegmentsRef.current.length,
+                    segments: recordedSegmentsRef.current.length,
+                    estimatedSize: blob.size,
+                    state: 'inactive',
+                });
+
+                if (displayMessageRef.current) {
+                    displayMessageRef.current(`Local recording stopped (${sizeMB} MB)`, 'info');
+                }
+            }
+
+            setIsLocalRecordingActive(false);
+            setIsLocalRecordingPaused(false);
+            currentRecordingStreamRef.current = null;
 
             // Auto-upload if S3 config is present
             if (hasS3Config) {
@@ -517,48 +582,102 @@ export const useRecording = (
             }
             return null;
         }
-    }, [isLocalRecordingActive, conferenceClientRef, hasS3Config, uploadLocalRecording, onRecordingStop]);
+    }, [isLocalRecordingActive, hasS3Config, uploadLocalRecording, onRecordingStop]);
 
     /**
-     * Pause local recording
+     * Pause local recording (Mediabunny)
      */
     const pauseLocalRecording = useCallback((): void => {
-        if (!conferenceClientRef?.current || !isLocalRecordingActive) return;
-        const client = conferenceClientRef.current;
+        if (!mediabunnyRecorderRef.current || !isLocalRecordingActive) return;
 
         try {
-            client.pauseLocalRecording();
+            mediabunnyRecorderRef.current.pause();
+            setIsLocalRecordingPaused(true);
+            log.log('Local recording paused');
+            if (displayMessageRef.current) {
+                displayMessageRef.current('Local recording paused', 'info');
+            }
         } catch (error) {
             log.error('Failed to pause local recording:', error);
         }
-    }, [isLocalRecordingActive, conferenceClientRef]);
+    }, [isLocalRecordingActive]);
 
     /**
-     * Resume local recording
+     * Resume local recording (Mediabunny)
      */
     const resumeLocalRecording = useCallback((): void => {
-        if (!conferenceClientRef?.current || !isLocalRecordingActive) return;
-        const client = conferenceClientRef.current;
+        if (!mediabunnyRecorderRef.current || !isLocalRecordingActive) return;
 
         try {
-            client.resumeLocalRecording();
+            mediabunnyRecorderRef.current.resume();
+            setIsLocalRecordingPaused(false);
+            log.log('Local recording resumed');
+            if (displayMessageRef.current) {
+                displayMessageRef.current('Local recording resumed', 'info');
+            }
         } catch (error) {
             log.error('Failed to resume local recording:', error);
         }
-    }, [isLocalRecordingActive, conferenceClientRef]);
+    }, [isLocalRecordingActive]);
 
     /**
-     * Download local recording as ZIP
+     * Download local recording as ZIP (Mediabunny MP4)
      */
     const downloadLocalRecording = useCallback(async (filename?: string): Promise<boolean> => {
-        if (!conferenceClientRef?.current) {
-            log.error('Conference client not available');
+        const blobs = recordedSegmentsRef.current;
+
+        if (blobs.length === 0) {
+            log.warn('No recorded data available');
+            if (displayMessageRef.current) {
+                displayMessageRef.current('No recording data available', 'warning');
+            }
             return false;
         }
-        const client = conferenceClientRef.current;
 
         try {
-            return await client.downloadLocalRecording(filename);
+            const zip = new JSZip();
+
+            // Add all segments to the ZIP
+            blobs.forEach((blob, index) => {
+                const segmentFilename = blobs.length === 1
+                    ? `recording.mp4`
+                    : `part${index + 1}.mp4`;
+                zip.file(segmentFilename, blob);
+            });
+
+            // Generate ZIP
+            const zipBlob = await zip.generateAsync({ type: 'blob' });
+
+            // Create download link
+            const timestamp = (recordingStartTimeRef.current
+                ? new Date(recordingStartTimeRef.current)
+                : new Date()
+            ).toISOString().replace(/[:.]/g, '-');
+            const downloadFilename = filename || `recording-${timestamp}`;
+
+            const url = URL.createObjectURL(zipBlob);
+            const anchor = document.createElement('a');
+            anchor.style.display = 'none';
+            anchor.href = url;
+            anchor.download = `${downloadFilename}.zip`;
+            document.body.appendChild(anchor);
+            anchor.click();
+
+            setTimeout(() => {
+                if (anchor.parentNode) {
+                    document.body.removeChild(anchor);
+                }
+                URL.revokeObjectURL(url);
+            }, 100);
+
+            const totalSize = blobs.reduce((acc, blob) => acc + blob.size, 0);
+            const sizeMB = (totalSize / (1024 * 1024)).toFixed(2);
+            log.log(`Recording downloaded: ${downloadFilename}.zip (${sizeMB} MB)`);
+
+            if (displayMessageRef.current) {
+                displayMessageRef.current(`Recording downloaded: ${downloadFilename}.zip (${sizeMB} MB)`, 'success');
+            }
+            return true;
         } catch (error) {
             log.error('Failed to download local recording:', error);
             if (displayMessageRef.current) {
@@ -566,45 +685,47 @@ export const useRecording = (
             }
             return false;
         }
-    }, [conferenceClientRef]);
+    }, []);
 
     /**
-     * Get local recording blobs
+     * Get local recording blobs (Mediabunny)
      */
     const getLocalRecordingBlob = useCallback((): Blob[] | null => {
-        if (!conferenceClientRef?.current) return null;
-        const client = conferenceClientRef.current;
-
-        try {
-            return client.getLocalRecordingBlob();
-        } catch (error) {
-            log.error('Failed to get local recording blob:', error);
-            return null;
-        }
-    }, [conferenceClientRef]);
+        return recordedSegmentsRef.current.length > 0 ? [...recordedSegmentsRef.current] : null;
+    }, []);
 
     /**
-     * Clear local recording
+     * Clear local recording (Mediabunny)
      */
     const clearLocalRecording = useCallback((): void => {
-        if (!conferenceClientRef?.current) return;
-        const client = conferenceClientRef.current;
-
         try {
-            client.clearLocalRecording();
-            // close local recording drawer
+            // Cancel any active recording
+            if (mediabunnyRecorderRef.current?.isRecording) {
+                mediabunnyRecorderRef.current.cancel();
+            }
+
+            // Clear segments
+            recordedSegmentsRef.current = [];
+            mediabunnyRecorderRef.current = null;
+            recordingStartTimeRef.current = null;
+            currentRecordingStreamRef.current = null;
+
+            // Close local recording drawer
             if (onRecordingClear) {
                 onRecordingClear();
             }
 
             setLocalRecordingStatus(null);
+            setIsLocalRecordingActive(false);
+            setIsLocalRecordingPaused(false);
+
             if (displayMessageRef.current) {
                 displayMessageRef.current('Local recording data cleared', 'info');
             }
         } catch (error) {
             log.error('Failed to clear local recording:', error);
         }
-    }, [conferenceClientRef, onRecordingClear]);
+    }, [onRecordingClear]);
 
     return {
         // Server Recording State
