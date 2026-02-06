@@ -1,8 +1,8 @@
-import {defineConfig} from 'vite'
+import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import obfuscator from 'vite-plugin-javascript-obfuscator'
 
-export default defineConfig(({command, mode}) => {
+export default defineConfig(({ command, mode }) => {
     const isProduction = mode === 'production'
 
     return {
@@ -16,39 +16,42 @@ export default defineConfig(({command, mode}) => {
                 ],
             },
         }),
-            // Only obfuscate in production
-            ...(isProduction ? [
-                obfuscator({
-                    options: {
-                        rotateStringArray: true,
-                        stringArray: true,
-                        stringArrayEncoding: [],
-                        stringArrayThreshold: 0.5,
-                        deadCodeInjection: false,
-                        deadCodeInjectionThreshold: 0.4,
-                        unicodeEscapeSequence: false,
-                        renameGlobals: false,
-                        compact: true,
-                        controlFlowFlattening: false,
-                        controlFlowFlatteningThreshold: 0.75,
-                        debugProtection: true,
-                        debugProtectionInterval: 0,
-                        disableConsoleOutput: true,
-                        identifierNamesGenerator: 'mangled',
-                        log: false,
-                        numbersToExpressions: false,
-                        selfDefending: true,
-                        simplify: true,
-                        splitStrings: false,
-                        splitStringsChunkLength: 10,
-                        transformObjectKeys: false,
-                    },
-                    // Exclude node_modules
-                    exclude: [/node_modules/]
-                })
-            ] : [])],
+        // Only obfuscate in production
+        ...(isProduction ? [
+            obfuscator({
+                options: {
+                    rotateStringArray: true,
+                    stringArray: true,
+                    stringArrayEncoding: [],
+                    stringArrayThreshold: 0.5,
+                    deadCodeInjection: false,
+                    deadCodeInjectionThreshold: 0.4,
+                    unicodeEscapeSequence: false,
+                    renameGlobals: false,
+                    compact: true,
+                    controlFlowFlattening: false,
+                    controlFlowFlatteningThreshold: 0.75,
+                    debugProtection: true,
+                    debugProtectionInterval: 0,
+                    disableConsoleOutput: true,
+                    identifierNamesGenerator: 'mangled',
+                    log: false,
+                    numbersToExpressions: false,
+                    selfDefending: true,
+                    simplify: true,
+                    splitStrings: false,
+                    splitStringsChunkLength: 10,
+                    transformObjectKeys: false,
+                },
+                // Exclude node_modules
+                exclude: [/node_modules/]
+            })
+        ] : [])],
         server: {
             port: 3000,
+        },
+        optimizeDeps: {
+            include: ['@aws-sdk/client-s3', '@aws-sdk/lib-storage'],
         },
         build: {
             rollupOptions: {
