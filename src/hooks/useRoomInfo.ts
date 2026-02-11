@@ -4,9 +4,12 @@ import { getBackendConfig } from '../utils/conferenceConfig';
 
 // Type definitions
 interface User {
-    id: string;
-    name: string;
-    // Add other user properties as needed based on your API response
+    uid: string;
+    metaData?: string;
+    role?: string;
+    joinTime?: number;
+    audioEnabled?: boolean;
+    videoEnabled?: boolean;
 }
 
 interface RoomInfo {
@@ -67,25 +70,16 @@ export const useRoomInfo = (
              */
             const url = `${backendConfig.host}${backendConfig.apiEndpoints.getRoomUsers.replace('{roomName}', roomName)}`;
 
-            const response = await getDataRef.current<RoomInfo>(url, {
+            const response = await getDataRef.current<any>(url, {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
             });
 
-            // The response structure might differ based on the backend (e.g. Config Service vs direct)
-            // If using Config Service, the response might be wrapped.
-            // For now, assuming the response structure is consistent or handled by the backend proxy/service.
-            // If there's a specific difference in response shape based on config service availability,
-            // we might need to check `getBackendConfig().host` or similar, but ideally the backend normalizes this.
-            // Given previous logic:
-            // if (configServiceAvailable) -> response.users
-            // else -> response
-
-            // We can check if response has 'users' property to determine the shape
-            if ('users' in (response as any)) {
-                // @ts-ignore
-                setRoomInfo(response.users || { userCount: 0, users: [] });
+            // The API returns { userCount, users: [...] } directly.
+            // Normalize the response to ensure we always have the correct shape.
+            if (response && typeof response.userCount === 'number' && Array.isArray(response.users)) {
+                setRoomInfo(response as RoomInfo);
             } else {
                 setRoomInfo(response || { userCount: 0, users: [] });
             }
