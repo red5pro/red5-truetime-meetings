@@ -23,7 +23,6 @@ import { JoinForm } from "./components/JoinForm.tsx";
 import { PlayOnlyVideoCard } from "./components/PlayOnlyVideoCard.tsx";
 import { VideoPreview } from "./components/VideoPreview.tsx";
 import { ControlButtons } from "./components/ControlButtons.tsx";
-import { getRuntimeConfig } from '../../utils/configStore.ts'
 import { UserRole } from '../../constants/userRoles.ts';
 
 // Utility functions
@@ -32,7 +31,7 @@ const getPublishStreamId = (): string | boolean | undefined => {
 }
 
 const generateStreamId = (streamName: string): string => {
-    return streamName.replace(/[\W_]/g, '') + '_' + makeId(10)
+    return streamName.replace(/[\W_]/g, '') + '_' + makeId(6)
 }
 
 const LobbyPage = React.memo<LobbyPageProps>((props) => {
