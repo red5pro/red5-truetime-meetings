@@ -49,6 +49,7 @@ export interface MeetingPageProps {
     infoDrawerOpen: boolean
     localRecordingDrawerOpen: boolean
     transcriptionDrawerOpen: boolean
+    externalStreamsDrawerOpen: boolean
     sendReactions?: (emoji: string) => void
     setShowEmojis?: (show: boolean) => void
     showEmojis: boolean
@@ -98,6 +99,7 @@ export interface MeetingPageProps {
     handleInfoDrawerOpen: () => void
     handleLocalRecordingDrawerOpen: (open: boolean) => void
     handleTranscriptionDrawerOpen: (open: boolean) => void
+    handleExternalStreamsDrawerOpen: (open: boolean) => void
     outgoingBitrate: number
     updateOutgoingBitrate: (bitrate: number) => void
     startRecord?: (recordSeparately?: boolean, serverRecording?: boolean, localRecording?: boolean) => void

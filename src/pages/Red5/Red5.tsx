@@ -18,6 +18,7 @@ import { UnauthorizedDialog } from '../../Components/Footer/Components/Unauthori
 import MeetingPermissionDialog from '../../Components/PermissionDialog.tsx';
 import LocalRecordingDrawer from '../../Components/LocalRecordingDrawer.tsx';
 import TranscriptionDrawer from '../../Components/TranscriptionDrawer.tsx';
+import ExternalStreamsDrawer from '../../Components/ExternalStreamsDrawer.tsx';
 
 // Master hook
 import { useConference } from '../../hooks/useConference.ts';
@@ -427,6 +428,10 @@ function Red5(props: Red5Props) {
                             // UI state
                             glass={conference.ui.isGlassmorphic}
                             globals={sharedVariables}
+
+                            // External Streams
+                            externalStreamsDrawerOpen={conference.ui.externalStreamsDrawerOpen}
+                            handleExternalStreamsDrawerOpen={conference.ui.handleExternalStreamsDrawerOpen}
                         />
 
                         {/* Drawers */}
@@ -511,6 +516,16 @@ function Red5(props: Red5Props) {
                             uploadError={conference.features.localRecording.uploadError}
                             hasS3Config={conference.features.localRecording.hasS3Config}
                             recordingStartTime={conference.features.localRecording.recordingStartTime}
+                        />
+
+                        <ExternalStreamsDrawer
+                            open={conference.ui.externalStreamsDrawerOpen}
+                            onClose={conference.ui.handleExternalStreamsDrawerOpen}
+                            streams={conference.features.externalStreams.streams}
+                            fetchStreams={conference.features.externalStreams.fetchStreams}
+                            addToRoom={conference.features.externalStreams.addToRoom}
+                            loading={conference.features.externalStreams.loading}
+                            error={conference.features.externalStreams.error}
                         />
                     </>
                 )

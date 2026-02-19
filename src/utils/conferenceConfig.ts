@@ -45,6 +45,9 @@ interface ApiEndpoints {
     blockUser: string;
     unblockUser: string;
     getRoomUsers: string;
+    getExternalStreams: string;
+    addExternalStream: string;
+    removeExternalStream: string;
 }
 
 interface BackendConfig {
@@ -174,7 +177,10 @@ export const getBackendConfig = (): BackendConfig => {
             transcription: '/as/v1/conference/room/{roomName}/transcriptions',
             blockUser: '/as/v1/conference/room/{roomName}/user/{userId}/block',
             unblockUser: '/as/v1/conference/room/{roomName}/user/{userId}/unblock',
-            getRoomUsers: '/as/v1/conference/room/{roomName}/users'
+            getRoomUsers: '/as/v1/conference/room/{roomName}/users',
+            getExternalStreams: '/as/v1/conference/external-streams',
+            addExternalStream: '/as/v1/conference/room/{roomName}/external-stream/{streamId}',
+            removeExternalStream: '/as/v1/conference/room/{roomName}/external-stream/{streamId}'
         }
     };
 };
