@@ -522,8 +522,10 @@ function Red5(props: Red5Props) {
                             open={conference.ui.externalStreamsDrawerOpen}
                             onClose={conference.ui.handleExternalStreamsDrawerOpen}
                             streams={conference.features.externalStreams.streams}
+                            participants={conference.participants.participants}
                             fetchStreams={conference.features.externalStreams.fetchStreams}
                             addToRoom={conference.features.externalStreams.addToRoom}
+                            removeFromRoom={conference.features.externalStreams.removeFromRoom}
                             loading={conference.features.externalStreams.loading}
                             error={conference.features.externalStreams.error}
                         />

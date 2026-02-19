@@ -10,10 +10,14 @@ import { getRed5DrawerStyle } from "../styles/themeUtil";
 import { SvgIcon } from './SvgIcon';
 import { ExternalStream } from '../hooks/useExternalStreams';
 
+import { parseMetaData } from '../utils/utils';
+import { MetaDataKeys } from '../constants/metaDataKeys';
+
 interface ExternalStreamsDrawerProps {
     open?: boolean;
     onClose?: (open: boolean) => void;
     streams: ExternalStream[];
+    participants: Record<string, any>;
     fetchStreams: () => Promise<ExternalStream[]>;
     addToRoom: (streamName: string) => Promise<void>;
     removeFromRoom: (streamName: string) => Promise<void>;
@@ -40,7 +44,7 @@ const ExternalStreamsDrawer = React.memo<ExternalStreamsDrawerProps>((props) => 
     const { t } = useTranslation();
     const theme = useTheme();
     const {
-        open, onClose, streams, fetchStreams, addToRoom, loading, error
+        open, onClose, streams, participants, fetchStreams, addToRoom, removeFromRoom, loading, error
     } = props;
 
     useEffect(() => {
@@ -52,11 +56,39 @@ const ExternalStreamsDrawer = React.memo<ExternalStreamsDrawerProps>((props) => 
     const handleAdd = async (streamName: string) => {
         try {
             await addToRoom(streamName);
-            // Optionally refetch or show success
+            await fetchStreams();
         } catch (error) {
             // Error handled by hook
         }
     };
+
+    const handleRemove = async (streamName: string) => {
+        try {
+            await removeFromRoom(streamName);
+            await fetchStreams();
+        } catch (error) {
+            // Error handled by hook
+        }
+    };
+
+    const sortedStreams = React.useMemo(() => {
+        const participantEntries = Object.values(participants);
+
+        const isJoined = (streamName: string) => {
+            return participantEntries.some(p => {
+                const meta = parseMetaData(p.metaData);
+                return p.uid === streamName || meta[MetaDataKeys.NAME] === streamName || meta[MetaDataKeys.EXTERNAL_STREAM] === 'external-stream' && (p.uid === streamName || meta[MetaDataKeys.NAME] === streamName);
+            });
+        };
+
+        return [...streams].sort((a, b) => {
+            const aJoined = isJoined(a.streamName);
+            const bJoined = isJoined(b.streamName);
+            if (aJoined && !bJoined) return -1;
+            if (!aJoined && bJoined) return 1;
+            return 0;
+        });
+    }, [streams, participants]);
 
     return (
         <Red5Drawer
@@ -92,47 +124,55 @@ const ExternalStreamsDrawer = React.memo<ExternalStreamsDrawerProps>((props) => 
                         <Typography color="error" variant="body2" sx={{ textAlign: 'center', mt: 2 }}>
                             {error}
                         </Typography>
-                    ) : streams.length === 0 ? (
+                    ) : sortedStreams.length === 0 ? (
                         <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', mt: 4 }}>
                             {t('No external streams available.')}
                         </Typography>
                     ) : (
                         <List sx={{ background: theme.palette.themeColor?.[60] }}>
-                            {streams.map((stream) => (
-                                <ListItem
-                                    key={stream.streamGuid}
-                                    sx={{
-                                        mb: 2,
-                                        background: 'rgba(255, 255, 255, 0.03)',
-                                        borderRadius: 2,
-                                        '&:hover': {
-                                            background: 'rgba(255, 255, 255, 0.05)'
-                                        }
-                                    }}
-                                >
-                                    <ListItemText
-                                        primary={stream.streamName}
-                                        secondary={
-                                            <></>
-                                        }
-                                    />
-                                    <ListItemSecondaryAction>
-                                        <Button
-                                            variant="contained"
-                                            size="small"
-                                            onClick={() => handleAdd(stream.streamName)}
-                                            sx={{
-                                                borderRadius: 4,
-                                                textTransform: 'none',
-                                                fontSize: '0.75rem',
-                                                py: 0.5
-                                            }}
-                                        >
-                                            {t('Add to Room')}
-                                        </Button>
-                                    </ListItemSecondaryAction>
-                                </ListItem>
-                            ))}
+                            {sortedStreams.map((stream) => {
+                                const participantEntries = Object.values(participants);
+                                const joinedParticipant = participantEntries.find(p => {
+                                    const meta = parseMetaData(p.metaData);
+                                    return p.uid === stream.streamName || meta[MetaDataKeys.NAME] === stream.streamName || (meta[MetaDataKeys.EXTERNAL_STREAM] === 'external-stream' && (p.uid === stream.streamName || meta[MetaDataKeys.NAME] === stream.streamName));
+                                });
+                                const isJoined = !!joinedParticipant;
+
+                                return (
+                                    <ListItem
+                                        key={stream.streamGuid}
+                                        sx={{
+                                            mb: 2,
+                                            background: isJoined ? 'rgba(36, 255, 0, 0.05)' : 'rgba(255, 255, 255, 0.03)',
+                                            borderRadius: 2,
+                                            '&:hover': {
+                                                background: isJoined ? 'rgba(36, 255, 0, 0.08)' : 'rgba(255, 255, 255, 0.05)'
+                                            }
+                                        }}
+                                    >
+                                        <ListItemText
+                                            primary={stream.streamName}
+                                            secondary={isJoined ? t('Joined') : null}
+                                        />
+                                        <ListItemSecondaryAction>
+                                            <Button
+                                                variant={isJoined ? "outlined" : "contained"}
+                                                color={isJoined ? "error" : "primary"}
+                                                size="small"
+                                                onClick={() => isJoined ? handleRemove(stream.streamName) : handleAdd(stream.streamName)}
+                                                sx={{
+                                                    borderRadius: 4,
+                                                    textTransform: 'none',
+                                                    fontSize: '0.75rem',
+                                                    py: 0.5
+                                                }}
+                                            >
+                                                {isJoined ? t('Remove from Room') : t('Add to Room')}
+                                            </Button>
+                                        </ListItemSecondaryAction>
+                                    </ListItem>
+                                );
+                            })}
                         </List>
                     )}
                 </Box>

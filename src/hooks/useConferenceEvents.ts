@@ -382,6 +382,10 @@ export const useConferenceEvents = (
                     pinVideo(data.uid);
                 }
 
+                if (metaData[MetaDataKeys.EXTERNAL_STREAM] === "external-stream") {
+                    pinVideo(data.uid);
+                }
+
                 if (metaData[MetaDataKeys.IS_SCREEN_SHARING] === true && metaData[MetaDataKeys.OWNER_STREAM_ID] === roomState.publishStreamIdRef.current) {
                     screenShare.showScreenShareSpinner.current = false;
                 } else if (metaData[MetaDataKeys.IS_SCREEN_SHARING] === true) {
