@@ -4,8 +4,8 @@ import { Box } from '@mui/system'
 import VideoCard from '../../Components/Cards/VideoCard.tsx'
 import OthersCard from '../../Components/Cards/OthersCard.tsx'
 import { calculateConnectionQualityScore, isNull } from '../../utils/utils.tsx'
-import {CardDimensions, LayoutConfig, LayoutTiledProps, ParticipantObject} from "./types.ts";
-import {calculateOptimalLayout} from "./utils.ts";
+import { CardDimensions, LayoutConfig, LayoutTiledProps, ParticipantObject } from "./types.ts";
+import { calculateOptimalLayout } from "./utils.ts";
 
 // Constants
 const DEFAULT_ASPECT_RATIO = 16 / 9
@@ -118,6 +118,7 @@ const LayoutTiled = React.memo<LayoutTiledProps>((props) => {
                         isPlayOnly={isPlayOnly}
                         isMicMuted={!participant.audioEnabled}
                         isCamTurnedOff={!participant.videoEnabled}
+                        metaData={participant.metaData}
                         pinVideo={pinVideo}
                         unpinVideo={unpinVideo}
                         layout={layout}

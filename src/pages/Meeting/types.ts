@@ -7,6 +7,7 @@ export interface Participant {
     audioEnabled: boolean
     videoEnabled: boolean
     isRaiseHand: boolean
+    metaData?: string
 }
 
 export interface SubscribedParticipant {

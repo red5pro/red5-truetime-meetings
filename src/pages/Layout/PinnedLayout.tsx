@@ -120,6 +120,7 @@ const LayoutPinned = React.memo<LayoutPinnedProps>((props) => {
                         isPlayOnly={isPlayOnly}
                         isMicMuted={!participant.audioEnabled}
                         isCamTurnedOff={!participant.videoEnabled}
+                        metaData={participant.metaData}
                         pinVideo={pinVideo}
                         unpinVideo={unpinVideo}
                         layout={layout}
@@ -193,6 +194,7 @@ const LayoutPinned = React.memo<LayoutPinnedProps>((props) => {
                             isPlayOnly={isPlayOnly}
                             isMicMuted={!participant.audioEnabled}
                             isCamTurnedOff={!participant.videoEnabled}
+                            metaData={participant.metaData}
                             pinVideo={pinVideo}
                             unpinVideo={unpinVideo}
                             layout={layout}
