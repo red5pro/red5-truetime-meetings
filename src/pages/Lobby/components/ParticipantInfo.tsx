@@ -1,10 +1,10 @@
 import React from "react";
-import {useTranslation} from "react-i18next";
-import {useTheme} from "@mui/material/styles";
-import {Box} from "@mui/system";
-import {Avatar, Typography} from "@mui/material";
-import {getFirstLetter} from "../../../utils/utils.tsx";
-import {ParticipantInfoProps, User} from "../types.ts";
+import { useTranslation } from "react-i18next";
+import { useTheme } from "@mui/material/styles";
+import { Box } from "@mui/system";
+import { Avatar, Typography } from "@mui/material";
+import { getFirstLetter } from "../../../utils/utils.tsx";
+import { ParticipantInfoProps, User } from "../types.ts";
 
 export const ParticipantInfo = React.memo<ParticipantInfoProps>(({ roomInfo, currentUserName }) => {
     const { t } = useTranslation()
@@ -33,49 +33,49 @@ export const ParticipantInfo = React.memo<ParticipantInfoProps>(({ roomInfo, cur
 
         return (
             <Box sx={{
-            display: 'flex',
+                display: 'flex',
                 justifyContent: 'center',
                 alignItems: 'center',
                 gap: 1,
                 mb: 2,
                 flexWrap: 'wrap'
-        }}>
-        {displayUsers.map((user, index) => {
-            const userName = getUserName(user)
-            return (
-                <Avatar
-                    key={user.uid || index}
-            sx={{
-                width: Math.min(48, window.innerWidth * 0.08), // Responsive size
-                    height: Math.min(48, window.innerWidth * 0.08),
-                    aspectRatio: "1 / 1",
-                    backgroundColor: theme?.palette?.themeColor?.[20] || '#393737',
-                    color: "#fff",
-                    fontSize: Math.min(20, window.innerWidth * 0.03),
-                    fontWeight: 600,
-            }}
-        >
-            {getFirstLetter(userName) || "U"}
-            </Avatar>
+            }}>
+                {displayUsers.map((user, index) => {
+                    const userName = getUserName(user)
+                    return (
+                        <Avatar
+                            key={user.uid || index}
+                            sx={{
+                                width: Math.min(48, window.innerWidth * 0.08), // Responsive size
+                                height: Math.min(48, window.innerWidth * 0.08),
+                                aspectRatio: "1 / 1",
+                                backgroundColor: theme?.palette?.themeColor?.[20] || '#393737',
+                                color: "#fff",
+                                fontSize: Math.min(20, window.innerWidth * 0.03),
+                                fontWeight: 600,
+                            }}
+                        >
+                            {getFirstLetter(userName) || "U"}
+                        </Avatar>
+                    )
+                })}
+                {hasMore && (
+                    <Avatar
+                        sx={{
+                            width: Math.min(48, window.innerWidth * 0.08),
+                            height: Math.min(48, window.innerWidth * 0.08),
+                            aspectRatio: "1 / 1",
+                            backgroundColor: theme?.palette?.grey?.[500] || '#757575',
+                            color: "#fff",
+                            fontSize: Math.min(16, window.innerWidth * 0.025),
+                            fontWeight: 600,
+                        }}
+                    >
+                        +{userCount - maxAvatars}
+                    </Avatar>
+                )}
+            </Box>
         )
-        })}
-        {hasMore && (
-            <Avatar
-                sx={{
-            width: Math.min(48, window.innerWidth * 0.08),
-                height: Math.min(48, window.innerWidth * 0.08),
-                aspectRatio: "1 / 1",
-                backgroundColor: theme?.palette?.grey?.[500] || '#757575',
-                color: "#fff",
-                fontSize: Math.min(16, window.innerWidth * 0.025),
-                fontWeight: 600,
-        }}
-        >
-            +{userCount - maxAvatars}
-            </Avatar>
-        )}
-        </Box>
-    )
     }
 
     // Helper function to format participant display
@@ -119,12 +119,12 @@ export const ParticipantInfo = React.memo<ParticipantInfoProps>(({ roomInfo, cur
 
     return (
         <Box sx={{ mb: 2, textAlign: 'center' }}>
-    {renderAvatars()}
-    <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic' }}>
-    {formatParticipantText()}
-    </Typography>
-    </Box>
-)
+            {renderAvatars()}
+            <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic' }}>
+                {formatParticipantText()}
+            </Typography>
+        </Box>
+    )
 })
 
 ParticipantInfo.displayName = 'ParticipantInfo'

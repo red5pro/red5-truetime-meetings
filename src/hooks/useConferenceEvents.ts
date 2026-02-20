@@ -376,13 +376,14 @@ export const useConferenceEvents = (
                     }
                 }));
 
+                if (data.participant.metaData === "external-stream") {
+                    pinVideo(data.uid);
+                    return;
+                }
+
                 let metaData = parseMetaData(data.participant.metaData);
 
                 if (metaData[MetaDataKeys.IS_SCREEN_SHARING] === true) {
-                    pinVideo(data.uid);
-                }
-
-                if (metaData[MetaDataKeys.EXTERNAL_STREAM] === "external-stream") {
                     pinVideo(data.uid);
                 }
 

@@ -79,7 +79,9 @@ export const useRoomInfo = (
             // The API returns { userCount, users: [...] } directly.
             // Normalize the response to ensure we always have the correct shape.
             if (response && typeof response.userCount === 'number' && Array.isArray(response.users)) {
-                setRoomInfo(response as RoomInfo);
+                const filteredUsers = response.users.filter((user: User) => user.metaData !== 'external-stream');
+                response.userCount = filteredUsers.length;
+                setRoomInfo({ ...response, users: filteredUsers } as RoomInfo);
             } else {
                 setRoomInfo(response || { userCount: 0, users: [] });
             }
