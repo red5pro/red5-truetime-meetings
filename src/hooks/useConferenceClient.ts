@@ -160,11 +160,8 @@ export const useConferenceClient = () => {
      * Mute/unmute audio
      */
     const muteAudio = useCallback(async (mute: boolean = true) => {
-        if (
-            !conferenceClient.current ||
-            !conferenceClient.current.getIsPublishing()
-        ) {
-            log.warn("Not publishing, cannot mute audio");
+        if (!conferenceClient.current) {
+            log.warn("Conference client not initialized");
             return false;
         }
 
@@ -187,11 +184,8 @@ export const useConferenceClient = () => {
      * Mute/unmute video
      */
     const muteVideo = useCallback(async (mute: boolean = true) => {
-        if (
-            !conferenceClient.current ||
-            !conferenceClient.current.getIsPublishing()
-        ) {
-            log.warn("Not publishing, cannot mute video");
+        if (!conferenceClient.current) {
+            log.warn("Conference client not initialized");
             return false;
         }
 

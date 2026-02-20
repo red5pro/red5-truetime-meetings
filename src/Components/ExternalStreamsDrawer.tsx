@@ -77,7 +77,7 @@ const ExternalStreamsDrawer = React.memo<ExternalStreamsDrawerProps>((props) => 
         const isJoined = (streamName: string) => {
             return participantEntries.some(p => {
                 const meta = parseMetaData(p.metaData);
-                return p.uid === streamName || meta[MetaDataKeys.NAME] === streamName || meta[MetaDataKeys.EXTERNAL_STREAM] === 'external-stream' && (p.uid === streamName || meta[MetaDataKeys.NAME] === streamName);
+                return p.uid === streamName || meta[MetaDataKeys.NAME] === streamName && (p.uid === streamName || meta[MetaDataKeys.NAME] === streamName);
             });
         };
 

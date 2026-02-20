@@ -34,6 +34,7 @@ interface ConferenceClientConfig {
     pubnubSubscribeKey?: string;
     analyticsEndpoint?: string | null | undefined;
     configServiceUrl?: string;
+    enableNoiseCancellation?: boolean;
 }
 
 
@@ -147,7 +148,8 @@ export const getConferenceClientConfig = (): ConferenceClientConfig => {
             highJitter: 30,              // Alert at 30ms jitter
             lowBitrate: 200000           // Alert below 200kbps
         },
-        configServiceUrl: isConfigServiceAvailable() ? getRuntimeConfig().VITE_CONFIG_SERVICE_URL : undefined
+        configServiceUrl: isConfigServiceAvailable() ? getRuntimeConfig().VITE_CONFIG_SERVICE_URL : undefined,
+        enableNoiseCancellation: false
     };
 };
 
