@@ -482,7 +482,9 @@ export const useRecording = (
 
             const s3Client = new S3Client({
                 region,
-                credentials: { accessKeyId, secretAccessKey }
+                credentials: { accessKeyId, secretAccessKey },
+                requestChecksumCalculation: 'WHEN_REQUIRED',
+                responseChecksumValidation: 'WHEN_REQUIRED'
             });
 
             const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
