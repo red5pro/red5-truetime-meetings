@@ -257,19 +257,19 @@ export const useConference = (roomId: string): UseConferenceReturn => {
 
         floating({
             content: `
-    < div style = "display: flex; flex-direction: column; align-items: center; gap: 2px;" >
-        <span style="font-size: 1em;" > ${reaction} </span>
-            < span style = "
-background - color: rgba(66, 66, 66, 0.7);
-color: white;
-padding: 2px 6px;
-text - align: center;
-border - radius: 4px;
-font - size: 0.3em;
-white - space: nowrap;
-line - height: 1.2;
-font - weight: 500;
-">${streamName}</span>
+    <div style="display: flex; flex-direction: column; align-items: center; gap: 2px;">
+        <span style="font-size: 1em;">${reaction}</span>
+        <span style="
+            background-color: rgba(66, 66, 66, 0.7);
+            color: white;
+            padding: 2px 6px;
+            text-align: center;
+            border-radius: 4px;
+            font-size: 0.3em;
+            white-space: nowrap;
+            line-height: 1.2;
+            font-weight: 500;
+        ">${streamName}</span>
     </div>
         `,
             number: 1,
