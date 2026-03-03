@@ -17,6 +17,10 @@ class HealthController {
             const response = await fetch(`https://${host}/as/v1/proxy/whip/live/test`);
 
             if (response.status === 404 || response.status === 500) {
+                const data = await response.json().catch(() => ({}));
+                if (response.status === 500 && data.error === 'Publisher limit reached.') {
+                    return res.status(500).json({ error: 'Publisher limit reached.' });
+                }
                 return res.status(200).json({
                     isAvailable: false
                 });
