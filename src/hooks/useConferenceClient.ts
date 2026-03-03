@@ -160,7 +160,10 @@ export const useConferenceClient = () => {
      * Mute/unmute audio
      */
     const muteAudio = useCallback(async (mute: boolean = true) => {
-        if (!conferenceClient.current) {
+        if (
+            !conferenceClient.current ||
+            !conferenceClient.current.getIsPublishing()
+        ) {
             log.warn("Conference client not initialized");
             return false;
         }
