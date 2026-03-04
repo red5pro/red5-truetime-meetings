@@ -37,7 +37,7 @@ interface TabPanelProps {
   index: number;
 }
 
-// @ts-ignore
+// @ts-expect-error: temporary fix for legacy code
 const Red5Drawer = styled(Drawer)(({ theme }: { theme: Theme }) =>
   getRed5DrawerStyle(theme, theme.palette.themeColor?.[60], false),
 );
@@ -49,7 +49,7 @@ const EffectsGrid = styled(Grid)(({ theme }: { theme: Theme }) => ({
   borderRadius: 10,
 }));
 
-const TabGrid = styled(Grid)(({}: { theme: Theme }) => ({
+const TabGrid = styled(Grid)(({ }: { theme: Theme }) => ({
   position: 'relative',
   height: '100%',
   paddingBottom: 16,
@@ -57,24 +57,24 @@ const TabGrid = styled(Grid)(({}: { theme: Theme }) => ({
   flexWrap: 'nowrap',
 }));
 
+const TabPanel: React.FC<TabPanelProps> = ({ children, value, index, ...other }) => {
+  return (
+    <Box
+      role="tabpanel"
+      hidden={value !== index}
+      id={`drawer-tabpanel-${index}`}
+      aria-labelledby={`drawer-tab-${index}`}
+      {...other}
+      style={{ height: '100%', width: '100%' }}
+    >
+      {value === index && children}
+    </Box>
+  );
+};
+
 const EffectsDrawer = React.memo<EffectsDrawerProps>((props) => {
   const [value] = React.useState<number>(0);
   const { t } = useTranslation();
-
-  const TabPanel: React.FC<TabPanelProps> = ({ children, value, index, ...other }) => {
-    return (
-      <Box
-        role="tabpanel"
-        hidden={value !== index}
-        id={`drawer-tabpanel-${index}`}
-        aria-labelledby={`drawer-tab-${index}`}
-        {...other}
-        style={{ height: '100%', width: '100%' }}
-      >
-        {value === index && children}
-      </Box>
-    );
-  };
 
   return (
     <Red5Drawer

@@ -1,7 +1,7 @@
 import React from 'react';
 import { Tooltip } from '@mui/material';
 import { ClosedCaption, ClosedCaptionDisabled } from '@mui/icons-material';
-// @ts-ignore
+// @ts-expect-error: temporary fix for legacy code
 import { CustomizedBtn, rectangularStyle, roundStyle } from '../../CustomizedBtn.tsx';
 import { getRuntimeConfig } from '../../../utils/configStore';
 

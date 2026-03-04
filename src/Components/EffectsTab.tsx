@@ -6,7 +6,7 @@ import Divider from '@mui/material/Divider';
 import { SvgIcon } from './SvgIcon';
 import { useTheme, Theme } from '@mui/material';
 import { useTranslation } from 'react-i18next';
-// @ts-ignore
+// @ts-expect-error: temporary fix for legacy code
 import { CustomizedBtn } from './CustomizedBtn.tsx';
 import { Box } from '@mui/system';
 import log from 'loglevel';

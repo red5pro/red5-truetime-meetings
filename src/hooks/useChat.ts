@@ -271,22 +271,22 @@ export const useChat = (
           setNumberOfUnReadMessages((numb) => numb + 1);
         }
 
-        // @ts-ignore
+        // @ts-expect-error: temporary fix for legacy code
         handleSetMessages(notificationEvent);
       } else if (eventType === 'REACTIONS') {
         showReactionsRef.current(
-          // @ts-ignore
+          // @ts-expect-error: temporary fix for legacy code
           notificationEvent.senderStreamId,
           notificationEvent.senderStreamName,
           notificationEvent.reaction,
         );
       } else if (eventType === 'RAISED_HAND') {
         if (notificationEvent.isRaisedHand) {
-          // @ts-ignore
+          // @ts-expect-error: temporary fix for legacy code
           setRaisedHandsRef.current((prev) => [...prev, notificationEvent.senderStreamId]);
         } else {
           setRaisedHandsRef.current((prev) =>
-            // @ts-ignore
+            // @ts-expect-error: temporary fix for legacy code
             prev.filter(
               (streamId) => streamId.localeCompare(notificationEvent.senderStreamId) !== 0,
             ),

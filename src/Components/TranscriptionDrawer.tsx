@@ -50,6 +50,14 @@ const JsonContainer = styled(Box)(({ theme }: { theme: Theme }) => ({
 }));
 
 const TranscriptionDrawer = React.memo<TranscriptionDrawerProps>((props) => {
+  const {
+    open,
+    onClose,
+    fetchTranscriptions,
+    loading,
+    error,
+    data,
+  } = props;
   const { t } = useTranslation();
   const theme = useTheme();
 
@@ -68,21 +76,21 @@ const TranscriptionDrawer = React.memo<TranscriptionDrawerProps>((props) => {
   const handleFetch = useCallback(() => {
     const startTs = new Date(startTime).getTime();
     const endTs = new Date(endTime).getTime();
-    props.fetchTranscriptions(startTs, endTs);
-  }, [startTime, endTime, props.fetchTranscriptions]);
+    fetchTranscriptions(startTs, endTs);
+  }, [startTime, endTime, fetchTranscriptions]);
 
   const handleCopy = useCallback(() => {
-    if (props.data) {
-      navigator.clipboard.writeText(JSON.stringify(props.data, null, 2));
+    if (data) {
+      navigator.clipboard.writeText(JSON.stringify(data, null, 2));
     }
-  }, [props.data]);
+  }, [data]);
 
   const handleCopyForLLM = useCallback(() => {
-    if (props.data?.transcriptionsByUser) {
+    if (data?.transcriptionsByUser) {
       let output = '';
       const allTranscriptions: any[] = [];
 
-      Object.entries(props.data.transcriptionsByUser).forEach(
+      Object.entries(data.transcriptionsByUser).forEach(
         ([user, userCaptions]: [string, any]) => {
           userCaptions.forEach((cap: any) => {
             allTranscriptions.push({
@@ -103,14 +111,14 @@ const TranscriptionDrawer = React.memo<TranscriptionDrawerProps>((props) => {
 
       navigator.clipboard.writeText(output);
     }
-  }, [props.data]);
+  }, [data]);
 
   return (
     <Red5Drawer
       transitionDuration={200}
       anchor="right"
       id="transcription-drawer"
-      open={props?.open}
+      open={open}
       variant="persistent"
     >
       <InfoGrid
@@ -127,7 +135,7 @@ const TranscriptionDrawer = React.memo<TranscriptionDrawerProps>((props) => {
           <Typography variant="h6" component="div">
             {t('Transcriptions')}
           </Typography>
-          <CloseDrawerButton handleInfoDrawerOpen={() => props?.onClose?.(false)} />
+          <CloseDrawerButton handleInfoDrawerOpen={() => onClose?.(false)} />
         </Grid>
 
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
@@ -147,18 +155,18 @@ const TranscriptionDrawer = React.memo<TranscriptionDrawerProps>((props) => {
             slotProps={{ inputLabel: { shrink: true } }}
             fullWidth
           />
-          <Button variant="contained" onClick={handleFetch} disabled={props.loading} fullWidth>
-            {props.loading ? <CircularProgress size={24} /> : t('Fetch Transcriptions')}
+          <Button variant="contained" onClick={handleFetch} disabled={loading} fullWidth>
+            {loading ? <CircularProgress size={24} /> : t('Fetch Transcriptions')}
           </Button>
         </Box>
 
-        {props.error && (
+        {error && (
           <Typography color="error" sx={{ mt: 2 }}>
-            {props.error}
+            {error}
           </Typography>
         )}
 
-        {props.data && (
+        {data && (
           <>
             <Box
               sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 2 }}

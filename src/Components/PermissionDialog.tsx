@@ -420,31 +420,40 @@ export default function PermissionFlowManager({
 
   // Reset to initial state and check permissions whenever dialog opens
   useEffect(() => {
+    let timeoutId: NodeJS.Timeout;
+
     if (open) {
-      setCurrentStep('initial');
+      // Defer state update to avoid cascading renders
+      timeoutId = setTimeout(() => {
+        setCurrentStep('initial');
 
-      // Check current permission state
-      const checkPermissions = async () => {
-        try {
-          const cameraPermission = await navigator.permissions.query({
-            name: 'camera' as PermissionName,
-          });
-          const micPermission = await navigator.permissions.query({
-            name: 'microphone' as PermissionName,
-          });
+        // Check current permission state
+        const checkPermissions = async () => {
+          try {
+            const cameraPermission = await navigator.permissions.query({
+              name: 'camera' as PermissionName,
+            });
+            const micPermission = await navigator.permissions.query({
+              name: 'microphone' as PermissionName,
+            });
 
-          // If both are already granted, auto-request to verify they still work
-          if (cameraPermission.state === 'granted' && micPermission.state === 'granted') {
-            requestPermissions();
+            // If both are already granted, auto-request to verify they still work
+            if (cameraPermission.state === 'granted' && micPermission.state === 'granted') {
+              requestPermissions();
+            }
+          } catch (error) {
+            // Permissions API not supported, just show initial dialog
+            console.log('Permissions API not available', error);
           }
-        } catch (error) {
-          // Permissions API not supported, just show initial dialog
-          console.log('Permissions API not available', error);
-        }
-      };
+        };
 
-      checkPermissions();
+        checkPermissions();
+      }, 0);
     }
+
+    return () => {
+      if (timeoutId) clearTimeout(timeoutId);
+    };
   }, [open]);
 
   return (

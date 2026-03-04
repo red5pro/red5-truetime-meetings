@@ -39,22 +39,22 @@ export function getRed5DrawerStyle(
 
       ...(glass
         ? {
-            overflow: 'hidden',
-            backdropFilter: 'blur(20px)',
-            WebkitBackdropFilter: 'blur(20px)',
-            border: `1px solid ${color}55`,
-            boxShadow: `
+          overflow: 'hidden',
+          backdropFilter: 'blur(20px)',
+          WebkitBackdropFilter: 'blur(20px)',
+          border: `1px solid ${color}55`,
+          boxShadow: `
               0 8px 32px rgba(0, 0, 0, 0.1),
               inset 0 1px 0 rgba(255, 255, 255, 0.3),
               inset 0 -1px 0 rgba(255, 255, 255, 0.05),
               inset 0 0 20px 10px rgba(255, 255, 255, 0.05)
             `,
-          }
+        }
         : {
-            backgroundColor: 'transparent',
-            boxShadow: 'unset', // fallback to default MUI elevation
-            border: 'none',
-          }),
+          backgroundColor: 'transparent',
+          boxShadow: 'unset', // fallback to default MUI elevation
+          border: 'none',
+        }),
     },
   };
 }
@@ -68,7 +68,7 @@ export function getDialogStyle(theme: Theme): StyleObject {
   };
 }
 
-export function getGlassMenuStyle(theme: Theme, p0: string, p1: boolean): StyleObject {
+export function getGlassMenuStyle(theme: Theme): StyleObject {
   return {
     overflow: 'hidden',
     background: theme.palette.themeColor?.[90],

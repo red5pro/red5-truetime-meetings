@@ -334,7 +334,7 @@ function OptionButton(props: OptionButtonProps) {
       <SettingsDialog
         open={dialogOpen}
         onClose={handleDialogClose}
-        //@ts-ignore
+        // @ts-expect-error: temporary fix for legacy code
         selectFocus={selectFocus}
         devices={props?.devices}
         selectedCamera={props?.selectedCamera}
@@ -353,7 +353,7 @@ function OptionButton(props: OptionButtonProps) {
       <LayoutSettingsDialog
         open={layoutDialogOpen}
         onClose={handleLayoutDialogClose}
-        //@ts-ignore
+        // @ts-expect-error: temporary fix for legacy code
         globals={props?.globals}
         handleSetDesiredTileCount={props?.handleSetDesiredTileCount}
         layout={props?.layout}
@@ -563,7 +563,7 @@ function OptionButton(props: OptionButtonProps) {
                 viewBox="0 0 500 500"
                 name={'camera'}
                 color={getMenuIconColor()}
-                // @ts-ignore
+                // @ts-expect-error: temporary fix for legacy code
                 style={{ opacity: !isRecordingEnabled ? 0.5 : 1 }}
               />
             </ListItemIcon>
@@ -595,7 +595,7 @@ function OptionButton(props: OptionButtonProps) {
                 viewBox="0 0 500 500"
                 name={'camera'}
                 color={getMenuIconColor()}
-                // @ts-ignore
+                // @ts-expect-error: temporary fix for legacy code
                 style={{ opacity: !isRecordingEnabled ? 0.5 : 1 }}
               />
             </ListItemIcon>

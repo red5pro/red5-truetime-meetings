@@ -12,7 +12,7 @@ const resources = {
 i18n
   .use(LanguageDetector)
   .use(initReactI18next)
-  //@ts-ignore
+  // @ts-expect-error: temporary fix for legacy code
   .init({
     fallbackLng: 'en',
     interpolation: {

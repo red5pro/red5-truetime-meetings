@@ -1,7 +1,7 @@
 import Typography from '@mui/material/Typography';
 import { useTheme } from '@mui/material/styles';
 import { useTranslation } from 'react-i18next';
-// @ts-ignore
+// @ts-expect-error: temporary fix for legacy code
 import CustomCard from '../CustomCard.tsx';
 import { Box } from '@mui/system';
 

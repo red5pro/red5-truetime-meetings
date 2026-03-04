@@ -10,13 +10,8 @@ import CloseDrawerButton from './DrawerButton';
 import { getRed5DrawerStyle } from '../styles/themeUtil';
 import { Box } from '@mui/system';
 
-interface Message {
-  id?: string;
-  text: string;
-  sender: string;
-  timestamp: number;
-  // Add other message properties as needed
-}
+import { Message } from './MessagesTab';
+import { MessageData } from './MessageInput';
 
 interface MessageDrawerProps {
   messageDrawerOpen?: boolean;
@@ -24,8 +19,8 @@ interface MessageDrawerProps {
   handleMessageDrawerOpen?: (open: boolean) => void;
   handleParticipantListOpen?: (open: boolean) => void;
   handleEffectsOpen?: (open: boolean) => void;
-  sendMessage?: (message: string) => void;
-  handleSetMessages?: (messages: Message[]) => void;
+  sendMessage?: (message: string, files?: File[]) => void;
+  handleSetMessages?: (messageData: MessageData) => void;
   messages?: Message[];
   handleLocalRecordingDrawerOpen?: (open: boolean) => void;
   handleTranscriptionDrawerOpen?: (open: boolean) => void;
@@ -37,7 +32,7 @@ interface TabPanelProps {
   index: number;
 }
 
-// @ts-ignore
+// @ts-expect-error: temporary fix for legacy code
 const Red5Drawer = styled(Drawer)(({ theme }: { theme: Theme }) =>
   getRed5DrawerStyle(theme, theme.palette.themeColor?.[60], false),
 );
@@ -49,7 +44,7 @@ const MessageGrid = styled(Grid)(({ theme }: { theme: Theme }) => ({
   borderRadius: 10,
 }));
 
-const TabGrid = styled(Grid)(({}: { theme: Theme }) => ({
+const TabGrid = styled(Grid)(({ }: { theme: Theme }) => ({
   position: 'relative',
   height: '100%',
   paddingBottom: 16,
@@ -57,25 +52,23 @@ const TabGrid = styled(Grid)(({}: { theme: Theme }) => ({
   flexWrap: 'nowrap',
 }));
 
+const TabPanel: React.FC<TabPanelProps> = ({ children, value, index }) => {
+  return (
+    <Box
+      role="tabpanel"
+      hidden={value !== index}
+      id={`drawer-tabpanel-${index}`}
+      aria-labelledby={`drawer-tab-${index}`}
+      style={{ height: '100%', width: '100%', overflowY: 'auto' }}
+    >
+      {value === index && children}
+    </Box>
+  );
+};
+
 const MessageDrawer = React.memo<MessageDrawerProps>((props) => {
   const [value] = React.useState<number>(0);
   const { t } = useTranslation();
-
-  const TabPanel = React.useMemo(() => {
-    return ({ children, value, index }: TabPanelProps) => {
-      return (
-        <Box
-          role="tabpanel"
-          hidden={value !== index}
-          id={`drawer-tabpanel-${index}`}
-          aria-labelledby={`drawer-tab-${index}`}
-          style={{ height: '100%', width: '100%', overflowY: 'auto' }}
-        >
-          {value === index && children}
-        </Box>
-      );
-    };
-  }, []);
 
   return (
     <Red5Drawer
@@ -124,7 +117,7 @@ const MessageDrawer = React.memo<MessageDrawerProps>((props) => {
           handleSendMessage={(message: string, files?: File[]) =>
             props?.sendMessage?.(message, files)
           }
-          //@ts-ignore
+          // @ts-expect-error: temporary fix for legacy code
           handleSetMessages={(messages: Message[]) => props?.handleSetMessages?.(messages)}
         />
       </MessageGrid>

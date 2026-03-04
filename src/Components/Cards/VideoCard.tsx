@@ -326,7 +326,7 @@ const VideoPlayer = React.memo<VideoPlayerProps>(
       }
 
       return {
-        // @ts-ignore
+        // @ts-expect-error: temporary fix for legacy code
         visibility: (isCamTurnedOff ? 'hidden' : 'visible') as const,
         objectFit: 'contain' as const,
       };
@@ -575,7 +575,7 @@ const VideoCard = React.memo<VideoCardProps>((props) => {
       />
 
       <Box className="single-video-card" id={`card-${streamId || ''}`} style={cardStyle}>
-        {/*@ts-ignore*/}
+        {/*@ts-expect-error*/}
         <TalkingIndicator streamId={streamId} talkers={talkers} />
 
         <VideoPlayer

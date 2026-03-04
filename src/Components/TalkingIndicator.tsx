@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React from 'react';
 import { styled } from '@mui/material/styles';
 import { useTheme } from '@mui/material';
 
@@ -35,18 +35,11 @@ const TalkingIndicatorWrapper = styled('div')<TalkingIndicatorWrapperProps>(
 
 const TalkingIndicator: React.FC<TalkingIndicatorProps> = ({ streamId, talkers }) => {
   const theme = useTheme();
-  // const isTalkingRef = useRef<boolean>(false);
-  const [isTalking, setIsTalking] = useState<boolean>(false);
-
-  useEffect(() => {
-    const talking = talkers.some((talkerId) => {
-      const baseStreamId = streamId.split('_')[0];
-      const baseTalkerId = talkerId.split('_')[0];
-      return baseStreamId === baseTalkerId || streamId === talkerId;
-    });
-
-    setIsTalking(talking);
-  }, [streamId, talkers]);
+  const isTalking = talkers.some((talkerId) => {
+    const baseStreamId = streamId.split('_')[0];
+    const baseTalkerId = talkerId.split('_')[0];
+    return baseStreamId === baseTalkerId || streamId === talkerId;
+  });
 
   return (
     <TalkingIndicatorWrapper

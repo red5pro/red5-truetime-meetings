@@ -236,7 +236,7 @@ export const useDeviceManagement = (
   );
 
   // Helper function to get device name for display
-  // @ts-ignore
+  // @ts-expect-error: temporary fix for legacy code
   const getDeviceName = (deviceId: string | null, deviceType: keyof DeviceList): string => {
     if (!deviceId || deviceId === 'default') return 'Default';
 

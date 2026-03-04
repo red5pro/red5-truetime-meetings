@@ -208,9 +208,9 @@ function Footer(props: FooterProps) {
                 }
                 layout={props?.layout}
                 changeLayout={(layout: string) => props?.changeLayout?.(layout)}
-                //@ts-ignore
+                // @ts-expect-error: temporary fix for legacy code
                 outgoingBitrate={props?.outgoingBitrate}
-                //@ts-ignore
+                // @ts-expect-error: temporary fix for legacy code
                 updateOutgoingBitrate={(bitrate: number) => props?.updateOutgoingBitrate?.(bitrate)}
                 isRecordingActive={props?.isRecordingActive}
                 startRecord={(
@@ -221,7 +221,7 @@ function Footer(props: FooterProps) {
                 stopRecord={(serverRecording?: boolean, localRecording?: boolean) =>
                   props?.stopRecord?.(serverRecording, localRecording)
                 }
-                //@ts-ignore
+                // @ts-expect-error: temporary fix for legacy code
                 networkScore={props?.networkScore}
                 connectionStats={props?.connectionStats}
                 currentIssues={props?.currentIssues}
@@ -363,7 +363,7 @@ function Footer(props: FooterProps) {
                   microphoneSelected={(mic: string) => props?.microphoneSelected?.(mic)}
                   selectedSpeaker={props?.selectedSpeaker}
                   speakerSelected={(speaker: string) => props?.speakerSelected?.(speaker)}
-                  //@ts-ignore
+                  // @ts-expect-error: temporary fix for legacy code
                   devices={props?.devices}
                   updateDevicesList={props?.updateDevicesList}
                   selectedCamera={props?.selectedCamera}
@@ -377,9 +377,9 @@ function Footer(props: FooterProps) {
                   handleParticipantListOpen={(open: boolean) =>
                     props?.handleParticipantListOpen?.(open)
                   }
-                  //@ts-ignore
+                  // @ts-expect-error: temporary fix for legacy code
                   outgoingBitrate={props?.outgoingBitrate}
-                  //@ts-ignore
+                  // @ts-expect-error: temporary fix for legacy code
                   updateOutgoingBitrate={(bitrate: number) =>
                     props?.updateOutgoingBitrate?.(bitrate)
                   }

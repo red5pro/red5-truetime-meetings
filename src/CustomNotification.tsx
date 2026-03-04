@@ -115,7 +115,7 @@ export const useCustomNotification = (): CustomNotificationHook => {
           role: 'alert' as const,
 
           // Additional styling for visual distinction with your dark theme
-          //@ts-ignore
+          // @ts-expect-error: temporary fix for legacy code
           sx: {
             '& .SnackbarContent-root': {
               backgroundColor: getVariantColor(variant, theme),

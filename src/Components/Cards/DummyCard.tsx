@@ -1,10 +1,10 @@
 import { Avatar } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
-// @ts-ignore
+// @ts-expect-error: temporary fix for legacy code
 import CustomCard from '../CustomCard';
-// @ts-ignore
+// @ts-expect-error: temporary fix for legacy code
 import defaultAvatar from '../../static/images/defaultAvatar.png';
-// @ts-ignore
+// @ts-expect-error: temporary fix for legacy code
 import { getFirstLetter, isNull } from '../../utils/utils';
 
 interface DummyCardProps {

@@ -171,21 +171,32 @@ const LocalRecordingDrawer = React.memo<LocalRecordingDrawerProps>((props) => {
 
   // Update timer every second while recording is active
   useEffect(() => {
+    let timeoutId: NodeJS.Timeout;
+
     if (!isActive || !recordingStartTime) {
       if (!isActive && elapsedSeconds > 0) {
-        // Save the final duration before resetting
-        setFinalDuration(elapsedSeconds);
-        setElapsedSeconds(0);
+        // Save the final duration before resetting - defer to avoid cascading renders
+        timeoutId = setTimeout(() => {
+          setFinalDuration(elapsedSeconds);
+          setElapsedSeconds(0);
+        }, 0);
       }
-      return;
+      return () => {
+        if (timeoutId) clearTimeout(timeoutId);
+      };
     }
 
-    // Reset finalDuration when starting a new recording
-    setFinalDuration(0);
+    // Reset finalDuration when starting a new recording - defer to avoid cascading renders
+    timeoutId = setTimeout(() => {
+      setFinalDuration(0);
+    }, 0);
 
     // Calculate initial elapsed time
     const calculateElapsed = () => Math.floor((Date.now() - recordingStartTime) / 1000);
-    setElapsedSeconds(calculateElapsed());
+    // Defer the initial set to avoid cascading renders
+    timeoutId = setTimeout(() => {
+      setElapsedSeconds(calculateElapsed());
+    }, 0);
 
     const interval = setInterval(() => {
       if (!isPaused) {
@@ -193,8 +204,11 @@ const LocalRecordingDrawer = React.memo<LocalRecordingDrawerProps>((props) => {
       }
     }, 1000);
 
-    return () => clearInterval(interval);
-  }, [isActive, isPaused, recordingStartTime]);
+    return () => {
+      if (timeoutId) clearTimeout(timeoutId);
+      clearInterval(interval);
+    };
+  }, [isActive, isPaused, recordingStartTime]); // Removed elapsedSeconds from deps to avoid infinite loop if deferred incorrectly, but it wasn't there anyway
 
   const renderActiveStatus = () => {
     if (isActive) return isPaused ? t('Paused') : t('Recording');

@@ -6,7 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { nanoid } from 'nanoid';
 import Stack from '@mui/material/Stack';
-//@ts-ignore
+// @ts-expect-error: temporary fix for legacy code
 import { GoToLobbyDialog } from '../../Components/Footer/Components/GoToLobbyDialog.tsx';
 import Logo from '../../static/images/logo.svg';
 import { getRuntimeConfig } from '../../utils/configStore';

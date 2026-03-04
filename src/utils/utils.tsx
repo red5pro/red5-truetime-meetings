@@ -85,14 +85,14 @@ export function urlify(text: string | null | undefined): (string | React.ReactEl
 
     if (!hasExternalLink) {
       const externalizedLink = 'https://' + parts[i];
-      // @ts-ignore
+      // @ts-expect-error: temporary fix for legacy code
       parts[i] = (
         <a href={externalizedLink} key={i} target="_blank" rel="noreferrer">
           {parts[i].length > 60 ? parts[i].slice(0, 55) + '...' : parts[i]}
         </a>
       );
     } else {
-      // @ts-ignore
+      // @ts-expect-error: temporary fix for legacy code
       parts[i] = (
         <a href={parts[i]} key={i} target="_blank" rel="noreferrer">
           {parts[i].length > 60 ? parts[i].slice(0, 55) + '...' : parts[i]}
@@ -107,7 +107,7 @@ export function getRootAttribute(attribute: string): string | null {
   return document.getElementById('root')?.getAttribute(attribute) || null;
 }
 
-export function isNull(obj: any): obj is null | undefined {
+export function isNull(obj: unknown): obj is null | undefined {
   return obj === null || typeof obj === 'undefined';
 }
 
@@ -150,9 +150,9 @@ export const getHashParam = (param: string): string | null => {
 export function updateMetaData(
   metaData: string | null | undefined,
   key: string,
-  value: any,
+  value: unknown,
 ): string {
-  let metaDataObj: Record<string, any> = {};
+  let metaDataObj: Record<string, unknown> = {};
   if (!isNull(metaData)) {
     try {
       metaDataObj = JSON.parse(metaData as string);
@@ -164,7 +164,7 @@ export function updateMetaData(
   return JSON.stringify(metaDataObj);
 }
 
-export function parseMetaData(metaData: string | null | undefined): Record<string, any> {
+export function parseMetaData(metaData: string | null | undefined): Record<string, unknown> {
   if (isNull(metaData)) return {};
   try {
     return JSON.parse(metaData as string);
@@ -206,13 +206,14 @@ export function calculateConnectionQualityScore(
   let qualityScore = 5.0; // Start with perfect score
 
   // Helper function to safely get nested properties
-  const safeGet = (obj: any, path: string, defaultValue: number = 0): number => {
-    return path
+  const safeGet = (obj: unknown, path: string, defaultValue: number = 0): number => {
+    const result = path
       .split('.')
       .reduce(
-        (current, key) => (current && current[key] !== undefined ? current[key] : defaultValue),
-        obj,
+        (acc: any, part: string) => (acc && typeof acc === 'object' && part in acc ? acc[part] : undefined),
+        obj
       );
+    return typeof result === 'number' ? result : defaultValue;
   };
 
   // 1. Calculate Packet Loss Score (40% weight)

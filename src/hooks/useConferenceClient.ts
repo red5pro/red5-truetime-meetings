@@ -1,7 +1,7 @@
 // hooks/useConferenceClient.ts
 
 import { useRef, useEffect, useCallback } from 'react';
-// @ts-ignore
+// @ts-expect-error: temporary fix for legacy code
 import { ConferenceClient, ConferenceConfig, User } from 'red5pro-conference-sdk';
 import { getConferenceClientConfig } from '../utils/conferenceConfig';
 import log from 'loglevel';

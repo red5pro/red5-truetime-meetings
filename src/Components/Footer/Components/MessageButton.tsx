@@ -2,7 +2,7 @@ import React from 'react';
 import { SvgIcon } from '../../SvgIcon';
 import { Tooltip, Badge } from '@mui/material';
 import { useTranslation } from 'react-i18next';
-//@ts-ignore
+// @ts-expect-error: temporary fix for legacy code
 import { CustomizedBtn, roundStyle } from '../../CustomizedBtn.tsx';
 import Button from '@mui/material/Button';
 

@@ -208,7 +208,7 @@ function MoreOptionsButton(props: MoreOptionsButtonProps) {
       <LayoutSettingsDialog
         open={layoutDialogOpen}
         onClose={handleLayoutDialogClose}
-        //@ts-ignore
+        // @ts-expect-error: temporary fix for legacy code
         globals={props?.globals}
         handleSetDesiredTileCount={props?.handleSetDesiredTileCount}
         layout={props?.layout}

@@ -162,7 +162,7 @@ const MeetingPage = React.memo<MeetingPageProps>((props) => {
       onVolumeToggle: (streamId: string) => {
         console.log('Volume toggled for participant:', streamId);
       },
-      // @ts-ignore
+      // @ts-expect-error: temporary fix for legacy code
       talkers: currentProps.talkers || [],
       streamName: currentProps.streamName,
     });
@@ -195,7 +195,7 @@ const MeetingPage = React.memo<MeetingPageProps>((props) => {
         onVolumeToggle: (streamId: string) => {
           console.log('Volume toggled for participant:', streamId);
         },
-        // @ts-ignore
+        // @ts-expect-error: temporary fix for legacy code
         talkers: currentProps.talkers || [],
         streamName: currentProps.streamName,
       });
@@ -268,7 +268,7 @@ const MeetingPage = React.memo<MeetingPageProps>((props) => {
         <LayoutAuto
           {...commonProps}
           pinLayout={hasPin}
-          // @ts-ignore
+          // @ts-expect-error: temporary fix for legacy code
           pinnedParticipantId={currentProps.pinnedParticipantId}
           isScreenShared={currentProps.isScreenShared}
           isStartingScreenShare={currentProps.isStartingScreenShare}
@@ -281,7 +281,7 @@ const MeetingPage = React.memo<MeetingPageProps>((props) => {
       return (
         <LayoutPinned
           {...commonProps}
-          // @ts-ignore
+          // @ts-expect-error: temporary fix for legacy code
           pinnedParticipantId={currentProps.pinnedParticipantId}
           layout={currentProps.layout}
         />
@@ -291,7 +291,7 @@ const MeetingPage = React.memo<MeetingPageProps>((props) => {
     return (
       <LayoutTiled
         {...commonProps}
-        // @ts-ignore
+        // @ts-expect-error: temporary fix for legacy code
         isScreenShared={currentProps.isScreenShared}
         isStartingScreenShare={currentProps.isStartingScreenShare}
         layout={currentProps.layout}
@@ -404,12 +404,12 @@ const MeetingPage = React.memo<MeetingPageProps>((props) => {
 
       {/* Mute Participant Dialog */}
       <MuteParticipantDialog
-        // @ts-ignore
+        // @ts-expect-error: temporary fix for legacy code
         isMuteParticipantDialogOpen={props?.isMuteParticipantDialogOpen}
         setMuteParticipantDialogOpen={(open) => props?.setMuteParticipantDialogOpen?.(open)}
-        // @ts-ignore
+        // @ts-expect-error: temporary fix for legacy code
         participantIdMuted={props?.participantIdMuted}
-        // @ts-ignore
+        // @ts-expect-error: temporary fix for legacy code
         setParticipantIdMuted={(participant) => props?.setParticipantIdMuted?.(participant)}
         turnOffYourMicNotification={(streamId) => props?.turnOffYourMicNotification?.(streamId)}
       />
@@ -433,7 +433,7 @@ const MeetingPage = React.memo<MeetingPageProps>((props) => {
         autoPlay
         hidePin
         isMine
-        // @ts-ignore
+        // @ts-expect-error: temporary fix for legacy code
         streamName={props.streamName}
         isPublished
         isPlayOnly={false}
@@ -444,7 +444,7 @@ const MeetingPage = React.memo<MeetingPageProps>((props) => {
         unpinVideo={props.unpinVideo}
         hidePlayer
         layout={props.layout}
-        // @ts-ignore
+        // @ts-expect-error: temporary fix for legacy code
         setParticipantIdMuted={(participantId) => props?.setParticipantIdMuted?.(participantId)}
         setMuteParticipantDialogOpen={(isOpen) => props?.setMuteParticipantDialogOpen?.(isOpen)}
       />
@@ -460,7 +460,7 @@ const MeetingPage = React.memo<MeetingPageProps>((props) => {
         onCaptionTypeChange={(isLive) => props?.closedCaptions?.handleCaptionTypeChange(isLive)}
         selectedLanguage={props?.closedCaptions?.captionsLanguage}
         isLiveCaptions={props?.closedCaptions?.isLiveCaptions}
-        // @ts-ignore
+        // @ts-expect-error: temporary fix for legacy code
         subscribedParticipants={props?.subscribedParticipants}
       />
 
@@ -495,7 +495,7 @@ const MeetingPage = React.memo<MeetingPageProps>((props) => {
         microphoneSelected={props.microphoneSelected}
         selectedSpeaker={props.selectedSpeaker}
         speakerSelected={props.speakerSelected}
-        // @ts-ignore
+        // @ts-expect-error: temporary fix for legacy code
         devices={props.devices}
         selectedCamera={props.selectedCamera}
         cameraSelected={props.cameraSelected}
@@ -530,7 +530,7 @@ const MeetingPage = React.memo<MeetingPageProps>((props) => {
         openAllParticipantsPiP={openAllParticipantsPiP}
         closePiP={closePiP}
         allParticipants={allParticipants}
-        // @ts-ignore
+        // @ts-expect-error: temporary fix for legacy code
         talkers={props.talkers}
         streamName={props.streamName}
         captionsVisible={props?.closedCaptions.captionsVisible}

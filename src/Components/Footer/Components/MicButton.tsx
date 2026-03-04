@@ -15,7 +15,6 @@ import {
 import { useTheme } from '@mui/material/styles';
 import { useTranslation } from 'react-i18next';
 import { Check, BarChart } from '@mui/icons-material';
-// @ts-ignore
 import { CustomizedBtn, rectangularStyle } from '../../CustomizedBtn.tsx';
 import { Box } from '@mui/system';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
@@ -123,13 +122,21 @@ function MicButton(props: MicButtonProps) {
 
   // Start/stop audio monitoring when menu opens/closes
   useEffect(() => {
+    let timeoutId: NodeJS.Timeout;
     if (open && !props.isMicMuted) {
-      startAudioLevelMonitoring();
+      timeoutId = setTimeout(() => {
+        startAudioLevelMonitoring();
+      }, 0);
     } else {
-      stopAudioLevelMonitoring();
+      timeoutId = setTimeout(() => {
+        stopAudioLevelMonitoring();
+      }, 0);
     }
 
-    return () => stopAudioLevelMonitoring();
+    return () => {
+      clearTimeout(timeoutId);
+      stopAudioLevelMonitoring();
+    };
   }, [open, props.isMicMuted, startAudioLevelMonitoring, stopAudioLevelMonitoring]);
 
   const handleMicToggle = (e: MouseEvent<HTMLButtonElement>, mute: boolean) => {

@@ -24,7 +24,7 @@ const loadConfig = async () => {
 };
 
 loadConfig().then(() => {
-  // @ts-ignore
+  // @ts-expect-error: temporary fix for legacy code
   createRoot(document.getElementById('root')).render(
     <StrictMode>
       <GoogleOAuthProvider clientId={getRuntimeConfig().VITE_GOOGLE_CLIENT_ID || ''}>

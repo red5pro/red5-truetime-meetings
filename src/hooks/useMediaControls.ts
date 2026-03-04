@@ -21,37 +21,36 @@ interface UseMediaControlsReturn {
 }
 
 export const useMediaControls = (client: Client): UseMediaControlsReturn => {
+  const { muteAudio, muteVideo } = client;
   const [isMyCamTurnedOff, setIsMyCamTurnedOff] = useState<boolean>(false);
   const [isMyMicMuted, setIsMyMicMuted] = useState<boolean>(false);
   const [microphoneButtonDisabled, setMicrophoneButtonDisabled] = useState<boolean>(false);
   const [cameraButtonDisabled, setCameraButtonDisabled] = useState<boolean>(false);
 
   const toggleMic = useCallback(
-    (mute: boolean): void => {
-      client
-        .muteAudio(mute)
+    (muteStatus: boolean): void => {
+      muteAudio(muteStatus)
         .then(() => {
-          setIsMyMicMuted(mute);
+          setIsMyMicMuted(muteStatus);
         })
         .catch((error) => {
           console.error('Failed to toggle microphone:', error);
         });
     },
-    [client],
+    [muteAudio],
   );
 
   const toggleCamera = useCallback(
-    (mute: boolean): void => {
-      client
-        .muteVideo(mute)
+    (muteStatus: boolean): void => {
+      muteVideo(muteStatus)
         .then(() => {
-          setIsMyCamTurnedOff(mute);
+          setIsMyCamTurnedOff(muteStatus);
         })
         .catch((error) => {
           console.error('Failed to toggle camera:', error);
         });
     },
-    [client],
+    [muteVideo],
   );
 
   return {

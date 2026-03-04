@@ -34,7 +34,7 @@ interface ParticipantListDrawerProps {
   handleTranscriptionDrawerOpen?: (open: boolean) => void;
 }
 
-// @ts-ignore
+// @ts-expect-error: temporary fix for legacy code
 const Red5Drawer = styled(Drawer)(({ theme }: { theme: Theme }) =>
   getRed5DrawerStyle(theme, theme.palette.themeColor?.[60], false),
 );
@@ -106,7 +106,7 @@ const ParticipantListDrawer = memo<ParticipantListDrawerProps>((props) => {
               isMyMicMuted={props?.isMyMicMuted}
               publishStreamId={props?.publishStreamId ?? ''}
               muteLocalMic={() => props?.muteLocalMic?.()}
-              //@ts-ignore
+              // @ts-expect-error: temporary fix for legacy code
               participants={props?.participants}
               role={props?.role ?? ''}
               blockUser={(userId: string, duration?: number) =>

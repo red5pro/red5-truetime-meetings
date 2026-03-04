@@ -165,8 +165,6 @@ function createFloater(config: FloaterConfig): HTMLDivElement {
   const floater = document.createElement('div');
   floater.innerHTML = content;
 
-  const horizontalStart = Math.random() * 100;
-
   floater.style.cssText = `
         position: absolute;
         left: 0;

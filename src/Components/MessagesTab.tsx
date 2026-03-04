@@ -3,7 +3,7 @@ import MessageCard from './Cards/MessageCard';
 import { JSX, useEffect, useRef } from 'react';
 import { FileType } from 'red5pro-conference-sdk';
 
-interface Message {
+export interface Message {
   date: string;
   name: string;
   message: string;

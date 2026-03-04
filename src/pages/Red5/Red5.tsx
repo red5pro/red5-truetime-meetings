@@ -1,5 +1,10 @@
 // Red5.tsx
-// @ts-nocheck
+declare global {
+  interface Window {
+    makeFullScreen?: (divId: string) => void;
+  }
+}
+import { saveDesiredTileCount } from '../../utils/conferenceConfig.ts';
 import { useEffect, useCallback, useRef, ReactNode } from 'react';
 import { Backdrop, Button, CircularProgress, Grid } from '@mui/material';
 import { useBeforeUnload, useParams } from 'react-router-dom';
@@ -27,7 +32,6 @@ import { useConference } from '../../hooks/useConference.ts';
 import { setupPeerConnectionConfig } from '../../utils/utils.tsx';
 import log from 'loglevel';
 import { sharedVariables } from '../../constants/config.ts';
-import GuestWaiting from '../GuestWaiting/GuestWaiting.tsx';
 
 // Setup peer connection config
 setupPeerConnectionConfig();
@@ -84,7 +88,7 @@ function Red5(props: Red5Props) {
   }, [conference.features.chat.messages, scrollToBottom]);
 
   const makeFullScreen = useCallback((divId: string) => {
-    // @ts-ignore
+    // @ts-expect-error: temporary fix for legacy code
     if (sharedVariables.fullScreenId === divId) {
       document.getElementById(divId)?.classList.remove('selected');
       document.getElementById(divId)?.classList.add('unselected');
@@ -97,29 +101,28 @@ function Red5(props: Red5Props) {
         publisherContent.className = 'publisher-content chat-active fullscreen-layout';
       }
       if (sharedVariables.fullScreenId !== -1) {
-        // @ts-ignore
+        // @ts-expect-error: temporary fix for legacy code
         document.getElementById(sharedVariables.fullScreenId)?.classList.remove('selected');
-        // @ts-ignore
+        // @ts-expect-error: temporary fix for legacy code
         document.getElementById(sharedVariables.fullScreenId)?.classList.add('unselected');
       }
       document.getElementById(divId)?.classList.remove('unselected');
       document.getElementById(divId)?.classList.add('selected');
-      // @ts-ignore
+      // @ts-expect-error: temporary fix for legacy code
       sharedVariables.fullScreenId = divId;
     }
   }, []);
 
   useEffect(() => {
-    (window as any).makeFullScreen = makeFullScreen;
+    window.makeFullScreen = makeFullScreen;
     return () => {
-      delete (window as any).makeFullScreen;
+      delete window.makeFullScreen;
     };
   }, [makeFullScreen]);
 
   const handleSetDesiredTileCount = useCallback((maxTrackCount: number) => {
     sharedVariables.desiredTileCount = maxTrackCount;
     // This will be moved to conference.room in future iterations
-    const { saveDesiredTileCount } = require('../../utils/conferenceConfig.ts');
     saveDesiredTileCount(maxTrackCount);
   }, []);
 
@@ -153,7 +156,7 @@ function Red5(props: Red5Props) {
         <UnauthorizedDialog
           onClose={handleUnauthorizedDialogExitClicked}
           open={conference.ui.unAuthorizedDialogOpen}
-          //@ts-ignore
+          // @ts-expect-error: temporary fix for legacy code
           onExitClicked={handleUnauthorizedDialogExitClicked}
           message={conference.ui.unAuthorizedDialogMessage}
         />
@@ -161,7 +164,7 @@ function Red5(props: Red5Props) {
         <MeetingPermissionDialog
           open={conference.ui.permissions.isPermissionDialogVisible}
           setIsPermissionDialogVisible={conference.ui.permissions.setIsPermissionDialogVisible}
-          //@ts-ignore
+          // @ts-expect-error: temporary fix for legacy code
           requestPermissions={conference.ui.permissions.requestPermissions}
           localVideoCreate={conference.media.localVideoCreate}
           updateDevicesList={conference.media.updateDevicesList}
@@ -282,7 +285,7 @@ function Red5(props: Red5Props) {
             // Permissions
             cameraPermissionState={conference.ui.permissions.cameraPermissionState}
             microphonePermissionState={conference.ui.permissions.microphonePermissionState}
-            //@ts-ignore
+            // @ts-expect-error: temporary fix for legacy code
             updatePermissions={conference.ui.permissions.updatePermissions}
             // Virtual background
             selectedBackgroundMode={conference.features.virtualBackground.selectedBackgroundMode}
@@ -482,7 +485,7 @@ function Red5(props: Red5Props) {
             />
 
             <InfoDrawer
-              //@ts-ignore
+              // @ts-expect-error: temporary fix for legacy code
               publishStreamId={conference.room.publishStreamIdRef?.current}
               infoDrawerOpen={conference.ui.infoDrawerOpen}
               handleInfoDrawerOpen={conference.ui.handleInfoDrawerOpen}

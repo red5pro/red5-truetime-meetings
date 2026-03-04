@@ -4,7 +4,7 @@ import { useEffect, useRef } from 'react';
 import { isNull, parseMetaData } from '../utils/utils';
 import { MetaDataKeys } from '../constants/metaDataKeys';
 import log from 'loglevel';
-import globals from 'globals';
+import { sharedVariables } from '../constants/config';
 import { LayoutOptions } from '../utils/layoutOptions';
 
 // ---- Types ----
@@ -77,14 +77,14 @@ type Client = {
 export const useConferenceEvents = (
   client: Client,
   participantsHook: ParticipantsHook,
-  closedCaptions: any,
+  closedCaptions: { addCaption: (data: any) => void },
   roomState: RoomState,
-  mediaControls: any,
-  chat: any,
+  mediaControls: { isMyCamTurnedOff: boolean; isMyMicMuted: boolean },
+  chat: { handleChatMessage: (data: any) => void },
   screenShare: ScreenShare,
   virtualBackground: any,
   recording: Recording,
-  localRecording: any,
+  localRecording: { startLocalRecording: () => void; stopLocalRecording: () => void },
   displayMessage: (msg: string) => void,
   showSuccess: (msg: string) => void,
   showError: (msg: string) => void,
@@ -100,18 +100,69 @@ export const useConferenceEvents = (
   layoutRef: React.MutableRefObject<typeof LayoutOptions>,
   role: string,
 ) => {
+  const { conferenceClient, subscribe } = client;
+  const {
+    participants,
+    setParticipants,
+    setSubscribedParticipants,
+    updateTalkerLevel,
+    clearParticipant,
+    subscribeAttemptsRef,
+    talkerAudioLevelsRef,
+    pinnedParticipantIdRef,
+    guestsWaitingApproval,
+    setGuestsWaitingApproval,
+  } = participantsHook;
+
+  const {
+    setIsJoining,
+    setIsWaitingApproval,
+    setIsPublished,
+    setIsPlayed,
+    setLobbyOrMeetingPage,
+    publishStreamIdRef,
+    streamNameRef,
+  } = roomState;
+
+  const {
+    setIsScreenShared,
+    setIsStartingScreenShare,
+    showScreenShareSpinner,
+  } = screenShare;
+
+  const {
+    setIsRecordingActive,
+  } = recording;
+
   // Store all dependencies in a ref to avoid closure issues
   const depsRef = useRef<any>({});
 
   depsRef.current = {
-    participantsHook,
+    participants,
+    setParticipants,
+    setSubscribedParticipants,
+    updateTalkerLevel,
+    clearParticipant,
+    subscribeAttemptsRef,
+    talkerAudioLevelsRef,
+    pinnedParticipantIdRef,
+    guestsWaitingApproval,
+    setGuestsWaitingApproval,
     closedCaptions,
-    roomState,
+    setIsJoining,
+    setIsWaitingApproval,
+    setIsPublished,
+    setIsPlayed,
+    setLobbyOrMeetingPage,
+    publishStreamIdRef,
+    streamNameRef,
     mediaControls,
     chat,
-    screenShare,
+    setIsScreenShared,
+    setIsStartingScreenShare,
+    showScreenShareSpinner,
     virtualBackground,
-    recording,
+    setIsRecordingActive,
     localRecording,
     displayMessage,
     showSuccess,
@@ -142,7 +193,7 @@ export const useConferenceEvents = (
       },
 
       handleTranscriptionResult: (data: any) => {
-        console.log('Transcription data', data, depsRef.current.participantsHook.participants);
+        console.log('Transcription data', data, depsRef.current.participants);
         const captionData = data.messageEvent;
         captionData.speaker = captionData.streamId;
         depsRef.current.closedCaptions.addCaption(captionData);
@@ -198,34 +249,38 @@ export const useConferenceEvents = (
       handleScreenShareStarted: (data: any) => {
         log.log('Screen share started:', data);
         depsRef.current.displayMessage('You are sharing your screen.');
-        if (data.stream) {
-          client.conferenceClient.current.mediaStreamManager.setScreenShareStream(data.stream);
+        if (data.stream && conferenceClient.current) {
+          conferenceClient.current.mediaStreamManager.setScreenShareStream(data.stream);
         }
-        depsRef.current.screenShare.setIsScreenShared(true);
-        depsRef.current.screenShare.setIsStartingScreenShare(false);
+        depsRef.current.setIsScreenShared(true);
+        depsRef.current.setIsStartingScreenShare(false);
       },
 
       handleScreenShareStopped: () => {
         log.log('Screen share stopped');
         depsRef.current.displayMessage('Screen sharing has ended.');
-        client.conferenceClient.current.mediaStreamManager.setScreenShareStream(null);
-        depsRef.current.screenShare.setIsScreenShared(false);
-        depsRef.current.screenShare.setIsStartingScreenShare(false);
-        depsRef.current.screenShare.showScreenShareSpinner.current = false;
+        if (conferenceClient.current) {
+          conferenceClient.current.mediaStreamManager.setScreenShareStream(null);
+        }
+        depsRef.current.setIsScreenShared(false);
+        depsRef.current.setIsStartingScreenShare(false);
+        depsRef.current.showScreenShareSpinner.current = false;
       },
 
       handleScreenShareFailed: (data: any) => {
         log.log('Screen share is failed:', data);
-        client.conferenceClient.current.mediaStreamManager.setScreenShareStream(null);
-        depsRef.current.screenShare.setIsScreenShared(false);
-        depsRef.current.screenShare.setIsStartingScreenShare(false);
-        depsRef.current.screenShare.showScreenShareSpinner.current = false;
+        if (conferenceClient.current) {
+          conferenceClient.current.mediaStreamManager.setScreenShareStream(null);
+        }
+        depsRef.current.setIsScreenShared(false);
+        depsRef.current.setIsStartingScreenShare(false);
+        depsRef.current.showScreenShareSpinner.current = false;
       },
 
       handleConnectFail: () => {
         log.log('Connect fail');
-        depsRef.current.roomState.setIsJoining(false);
-        depsRef.current.roomState.setIsWaitingApproval(false);
+        depsRef.current.setIsJoining(false);
+        depsRef.current.setIsWaitingApproval(false);
         depsRef.current.displayMessage('Failed to join: Connection failed');
       },
 
@@ -234,7 +289,7 @@ export const useConferenceEvents = (
         depsRef.current.displayMessage('Connection closed');
         depsRef.current
           .handleLeaveFromRoom()
-          .then(() => depsRef.current.roomState.setLobbyOrMeetingPage('lobby'));
+          .then(() => depsRef.current.setLobbyOrMeetingPage('lobby'));
       },
 
       handleSubscribeFailed: (data: any) => {
@@ -242,34 +297,33 @@ export const useConferenceEvents = (
 
         if (isNull(data.user.uid)) return;
 
-        const participantsHook = depsRef.current.participantsHook;
+        const subAttemptsRef = depsRef.current.subscribeAttemptsRef;
 
-        if (!participantsHook.subscribeAttemptsRef.current[data.user.uid]) {
-          participantsHook.subscribeAttemptsRef.current[data.user.uid] = {
+        if (!subAttemptsRef.current[data.user.uid]) {
+          subAttemptsRef.current[data.user.uid] = {
             retryCount: 0,
             inProgress: false,
           };
         }
 
-        participantsHook.subscribeAttemptsRef.current[data.user.uid].retryCount++;
-        participantsHook.subscribeAttemptsRef.current[data.user.uid].inProgress = false;
+        subAttemptsRef.current[data.user.uid].retryCount++;
+        subAttemptsRef.current[data.user.uid].inProgress = false;
 
-        // @ts-ignore
         log.warn(
-          `Subscription failed for ${data.user.uid}. Attempt ${participantsHook.subscribeAttemptsRef.current[data.user.uid].retryCount}/${globals.maxRetries}. Will retry on next opportunity.`,
+          `Subscription failed for ${data.user.uid}. Attempt ${subAttemptsRef.current[data.user.uid].retryCount}/${sharedVariables.maxRetries}. Will retry on next opportunity.`,
         );
 
         eventHandlersRef.current.subscribeToParticipant(data.user);
       },
 
       handleAudioLevel: (data: any) => {
-        depsRef.current.participantsHook.updateTalkerLevel(data.userId, data.level.normalized);
+        depsRef.current.updateTalkerLevel(data.userId, data.level.normalized);
       },
 
       handleSubscribeStop: (data: any) => {
         console.log('handleSubscribeStop', data);
         eventHandlersRef.current.clearRemoteSubscriber(data.uid);
-        depsRef.current.participantsHook.clearParticipant(data.uid);
+        depsRef.current.clearParticipant(data.uid);
       },
 
       handleAudioMuted: (_data: any) => {
@@ -296,8 +350,8 @@ export const useConferenceEvents = (
           .then(() => console.log('handleLeaveFromRoom due to join fail'));
 
         if (data.statusCode === 401) {
-          depsRef.current.roomState.setIsJoining(false);
-          depsRef.current.roomState.setIsWaitingApproval(false);
+          depsRef.current.setIsJoining(false);
+          depsRef.current.setIsWaitingApproval(false);
           depsRef.current.setUnAuthorizedDialogMessage(
             'Publish failed, due to an error. Please try again.',
           );
@@ -317,40 +371,36 @@ export const useConferenceEvents = (
 
         depsRef.current.handleLeaveFromRoom().then(() => console.log(errorMessage));
 
-        depsRef.current.roomState.setIsJoining(false);
-        depsRef.current.roomState.setIsWaitingApproval(false);
+        depsRef.current.setIsJoining(false);
+        depsRef.current.setIsWaitingApproval(false);
         depsRef.current.setUnAuthorizedDialogMessage(errorMessage);
         depsRef.current.setUnAuthorizedDialogOpen(true);
       },
 
       handleParticipantMediaUpdate: (data: any) => {
         log.log('Participant media update:', data);
-        const { streamName, videoEnabled, audioEnabled } = data;
+        const { streamName: sName, videoEnabled, audioEnabled } = data;
 
-        console.log('Participant media update', depsRef.current.participantsHook.participants);
-
-        const participantsHook = depsRef.current.participantsHook;
+        console.log('Participant media update', depsRef.current.participants);
 
         // Update main participants
-        // @ts-ignore
-        participantsHook.setParticipants((prevParticipants) => ({
+        depsRef.current.setParticipants((prevParticipants: Record<string, any>) => ({
           ...prevParticipants,
-          [streamName]: {
-            ...prevParticipants[streamName],
+          [sName]: {
+            ...prevParticipants[sName],
             videoEnabled,
             audioEnabled,
           },
         }));
 
         // Update subscribedParticipants if the participant exists
-        // @ts-ignore
-        participantsHook.setSubscribedParticipants((prev) => {
-          const existing = prev[streamName];
+        depsRef.current.setSubscribedParticipants((prev: Record<string, any>) => {
+          const existing = prev[sName];
           if (!existing) return prev;
 
           return {
             ...prev,
-            [streamName]: {
+            [sName]: {
               ...existing,
               participant: {
                 ...existing.participant,
@@ -365,19 +415,18 @@ export const useConferenceEvents = (
       handleSubscribeSuccess: (data: any) => {
         log.log('Subscribe success:', data.uid);
 
-        const participantsHook = depsRef.current.participantsHook;
-        const roomState = depsRef.current.roomState;
-        const screenShare = depsRef.current.screenShare;
-        const displayMessage = depsRef.current.displayMessage;
-        const pinVideo = depsRef.current.pinVideo;
+        const subAttemptsRef = depsRef.current.subscribeAttemptsRef;
+        const pStreamIdRef = depsRef.current.publishStreamIdRef;
+        const spinnerRef = depsRef.current.showScreenShareSpinner;
+        const dMessage = depsRef.current.displayMessage;
+        const pVideo = depsRef.current.pinVideo;
 
-        participantsHook.subscribeAttemptsRef.current[data.uid] = {
+        subAttemptsRef.current[data.uid] = {
           retryCount: 0,
           inProgress: false,
         };
 
-        // @ts-ignore
-        participantsHook.setSubscribedParticipants((prev) => ({
+        depsRef.current.setSubscribedParticipants((prev: Record<string, any>) => ({
           ...prev,
           [data.uid]: {
             participant: data.participant,
@@ -386,51 +435,50 @@ export const useConferenceEvents = (
         }));
 
         if (data.participant.metaData === 'external-stream') {
-          pinVideo(data.uid);
+          pVideo(data.uid);
           return;
         }
 
         const metaData = parseMetaData(data.participant.metaData);
 
         if (metaData[MetaDataKeys.IS_SCREEN_SHARING] === true) {
-          pinVideo(data.uid);
+          pVideo(data.uid);
         }
 
         if (
           metaData[MetaDataKeys.IS_SCREEN_SHARING] === true &&
-          metaData[MetaDataKeys.OWNER_STREAM_ID] === roomState.publishStreamIdRef.current
+          metaData[MetaDataKeys.OWNER_STREAM_ID] === pStreamIdRef.current
         ) {
-          screenShare.showScreenShareSpinner.current = false;
+          spinnerRef.current = false;
         } else if (metaData[MetaDataKeys.IS_SCREEN_SHARING] === true) {
-          displayMessage(metaData[MetaDataKeys.OWNER_NAME] + ' is sharing their screen.');
+          dMessage(metaData[MetaDataKeys.OWNER_NAME] + ' is sharing their screen.');
         }
       },
 
       handleRoomStateUpdate: (data: any) => {
         console.log('handleRoomStateUpdate', data);
-        depsRef.current.recording.setIsRecordingActive(data.roomState.recording);
+        depsRef.current.setIsRecordingActive(data.roomState.recording);
         if (data.roomState.localRecordingEnabled) {
-          depsRef.current.recording.startLocalRecording();
+          depsRef.current.localRecording.startLocalRecording();
         } else if (
           data.roomState.localRecordingEnabled === false &&
-          depsRef.current.recording.isLocalRecordingActive
+          depsRef.current.localRecording.isLocalRecordingActive
         ) {
-          depsRef.current.recording.stopLocalRecording();
+          depsRef.current.localRecording.stopLocalRecording();
         }
       },
 
       handleGuestJoinRequest: (data: any) => {
         console.log('handleGuestJoinRequest', data);
-        const participantsHook = depsRef.current.participantsHook;
-        const guestsWaitingApproval = { ...(participantsHook.guestsWaitingApproval || {}) };
-        guestsWaitingApproval[data.streamName] = {
+        const guestsWaitApproval = { ...(depsRef.current.guestsWaitingApproval || {}) };
+        guestsWaitApproval[data.streamName] = {
           streamId: data.streamName,
           name: data.streamName,
           streamName: data.streamName,
         };
-        participantsHook.setGuestsWaitingApproval(guestsWaitingApproval);
+        depsRef.current.setGuestsWaitingApproval(guestsWaitApproval);
 
-        displayMessage(`${data.streamName} requested to join the room`);
+        depsRef.current.displayMessage(`${data.streamName} requested to join the room`);
       },
 
       handleNewParticipant: async (data: any) => {
@@ -445,17 +493,14 @@ export const useConferenceEvents = (
         newParticipant.ownerStreamId = newParticipantMetaData[MetaDataKeys.OWNER_STREAM_ID] || null;
         newParticipant.ownerName = newParticipantMetaData[MetaDataKeys.OWNER_NAME] || null;
 
-        const participantsHook = depsRef.current.participantsHook;
-
-        // @ts-ignore
-        participantsHook.setParticipants((prev) => ({
+        depsRef.current.setParticipants((prev: Record<string, any>) => ({
           ...prev,
           [newParticipant.uid]: newParticipant,
         }));
 
-        log.log('participants', participantsHook.participants);
+        log.log('participants', depsRef.current.participants);
 
-        participantsHook.subscribeAttemptsRef.current[newParticipant.uid] = {
+        depsRef.current.subscribeAttemptsRef.current[newParticipant.uid] = {
           retryCount: 0,
           inProgress: false,
         };
@@ -470,74 +515,65 @@ export const useConferenceEvents = (
       handleParticipantDisconnected: (data: any) => {
         log.log('Participant disconnected:', data.participant);
 
-        const participantsHook = depsRef.current.participantsHook;
-
         eventHandlersRef.current.clearRemoteSubscriber(data.participant.uid);
 
         // Remove from participants
-        // @ts-ignore
-        participantsHook.setParticipants((prev) => {
+        depsRef.current.setParticipants((prev: Record<string, any>) => {
           const newParticipants = { ...prev };
           delete newParticipants[data.participant.uid];
           return newParticipants;
         });
 
-        // @ts-ignore
-        participantsHook.setSubscribedParticipants((prev) => {
+        depsRef.current.setSubscribedParticipants((prev: Record<string, any>) => {
           const newSubscribed = { ...prev };
           delete newSubscribed[data.participant.uid];
           return newSubscribed;
         });
 
         // Remove audio level for disconnected participant
-        const newTalkers = { ...participantsHook.talkerAudioLevelsRef.current };
+        const newTalkers = { ...depsRef.current.talkerAudioLevelsRef.current };
         delete newTalkers[data.participant.uid];
-        participantsHook.talkerAudioLevelsRef.current = newTalkers;
+        depsRef.current.talkerAudioLevelsRef.current = newTalkers;
       },
 
       handleUserPublished: async (data: any) => {
-        const roomState = depsRef.current.roomState;
-        const recording = depsRef.current.recording;
-        const participantsHook = depsRef.current.participantsHook;
+        depsRef.current.setIsJoining(false);
+        depsRef.current.setIsWaitingApproval(false);
+        depsRef.current.setIsPublished(true);
+        depsRef.current.setIsPlayed(true);
 
-        roomState.setIsJoining(false);
-        roomState.setIsWaitingApproval(false);
-        roomState.setIsPublished(true);
-        roomState.setIsPlayed(true);
+        depsRef.current.setIsRecordingActive(data.roomState.recording);
 
-        recording.setIsRecordingActive(data.roomState.recording);
-
-        participantsHook.setGuestsWaitingApproval(data.guestsWaitingApproval);
+        depsRef.current.setGuestsWaitingApproval(data.guestsWaitingApproval);
 
         console.log('inside user published', data.guestsWaitingApproval);
 
-        const participants = data.participants;
-        for (const [userId, _participant] of Object.entries(participants)) {
-          const updatedParticipant = participants[userId];
+        const parts = data.participants;
+        for (const [userId, _participant] of Object.entries(parts)) {
+          const updatedParticipant = parts[userId] as any;
           const participantMetaData = parseMetaData(updatedParticipant.metaData);
           updatedParticipant.name =
             participantMetaData[MetaDataKeys.NAME] || updatedParticipant.uid;
           updatedParticipant.isRaiseHand =
             participantMetaData[MetaDataKeys.IS_RAISED_HAND] || false;
-          participants[userId] = updatedParticipant;
+          parts[userId] = updatedParticipant;
         }
-        participantsHook.setParticipants(data.participants);
+        depsRef.current.setParticipants(parts);
 
-        for (const [userId, _participant] of Object.entries(participants)) {
-          participantsHook.subscribeAttemptsRef.current[userId] = {
+        for (const [userId, _participant] of Object.entries(parts)) {
+          depsRef.current.subscribeAttemptsRef.current[userId] = {
             retryCount: 0,
             inProgress: false,
           };
         }
 
-        await eventHandlersRef.current.subscribeToParticipants(data.participants);
+        await eventHandlersRef.current.subscribeToParticipants(parts);
       },
 
       webrtcIssuesDetected: (issues: any) => {
         if (depsRef.current.printStatLogsRef.current) {
           console.log('WebRTC Issues Detected:');
-          // @ts-ignore
-          issues.forEach((issue) => {
+          issues.forEach((issue: any) => {
             console.log(`${issue.type}: ${issue.reason}`);
             console.log('Details:', issue.statsSample);
           });
@@ -546,17 +582,16 @@ export const useConferenceEvents = (
       },
 
       updateDetailedStats: () => {
-        if (client.conferenceClient.current && client.conferenceClient.current.isJoined) {
-          const detailedStats = {};
+        if (conferenceClient.current && conferenceClient.current.isJoined) {
+          const detailedStats = {} as any;
 
           // Get publisher stats
-          if (client.conferenceClient.current.streamName) {
-            const publisherStats = client.conferenceClient.current.getConnectionStats(
-              client.conferenceClient.current.streamName,
+          if (conferenceClient.current.streamName) {
+            const publisherStats = conferenceClient.current.getConnectionStats(
+              conferenceClient.current.streamName,
             );
             if (publisherStats.current) {
-              // @ts-ignore
-              detailedStats[client.conferenceClient.current.streamName] = {
+              detailedStats[conferenceClient.current.streamName] = {
                 ...publisherStats.current,
                 connectionType: 'publisher',
               };
@@ -564,10 +599,9 @@ export const useConferenceEvents = (
           }
 
           // Get subscriber stats
-          client.conferenceClient.current.subscribers.forEach((_sub: any, userId: any) => {
-            const subStats = client.conferenceClient.current.getConnectionStats(userId);
+          conferenceClient.current.subscribers.forEach((_sub: any, userId: any) => {
+            const subStats = conferenceClient.current.getConnectionStats(userId);
             if (subStats.current) {
-              // @ts-ignore
               detailedStats[userId] = {
                 ...subStats.current,
                 connectionType: 'subscriber',
@@ -577,13 +611,12 @@ export const useConferenceEvents = (
 
           // Get screen share stats if active
           if (
-            client.conferenceClient.current.isScreenSharing &&
-            client.conferenceClient.current.streamName
+            conferenceClient.current.isScreenSharing &&
+            conferenceClient.current.streamName
           ) {
-            const screenShareId = client.conferenceClient.current.streamName + '-screenshare';
-            const screenStats = client.conferenceClient.current.getConnectionStats(screenShareId);
+            const screenShareId = conferenceClient.current.streamName + '-screenshare';
+            const screenStats = conferenceClient.current.getConnectionStats(screenShareId);
             if (screenStats.current) {
-              // @ts-ignore
               detailedStats[screenShareId] = {
                 ...screenStats.current,
                 connectionType: 'screen-share-publisher',
@@ -597,8 +630,7 @@ export const useConferenceEvents = (
 
       subscribeToParticipants: async (participantsObj: any) => {
         for (const [_userId, participant] of Object.entries(participantsObj)) {
-          // @ts-ignore
-          if (participant.role !== 'subscriber') {
+          if ((participant as any).role !== 'subscriber') {
             await eventHandlersRef.current.subscribeToParticipant(participant);
           }
         }
@@ -607,24 +639,22 @@ export const useConferenceEvents = (
       subscribeToParticipant: async (participant: any) => {
         if (isNull(participant) || isNull(participant.uid)) return;
 
-        const participantsHook = depsRef.current.participantsHook;
+        const subAttemptsRef = depsRef.current.subscribeAttemptsRef;
 
         try {
-          if (participantsHook.subscribeAttemptsRef.current[participant.uid]?.inProgress) {
+          if (subAttemptsRef.current[participant.uid]?.inProgress) {
             log.warn(`Already attempting to subscribe to ${participant.uid}. Skipping...`);
             return;
           }
-          // @ts-ignore
           if (
-            participantsHook.subscribeAttemptsRef.current[participant.uid]?.retryCount >=
-            globals.maxRetries
+            subAttemptsRef.current[participant.uid]?.retryCount >=
+            sharedVariables.maxRetries
           ) {
             log.error(
               `Max subscription attempts reached for ${participant.uid}. Removing participant.`,
             );
             // Remove from participants (this will remove their video from DOM)
-            // @ts-ignore
-            participantsHook.setParticipants((prev) => {
+            depsRef.current.setParticipants((prev: Record<string, any>) => {
               const newParticipants = { ...prev };
               delete newParticipants[participant.uid];
               return newParticipants;
@@ -638,28 +668,28 @@ export const useConferenceEvents = (
 
           console.log(`Subscribing to participant: ${participant.uid}`);
 
-          participantsHook.subscribeAttemptsRef.current[participant.uid].inProgress = true;
-          await client.subscribe(participant);
+          subAttemptsRef.current[participant.uid].inProgress = true;
+          await subscribe(participant);
         } catch (error) {
           console.error(`Failed to subscribe to ${participant.uid}:`, error);
         }
       },
 
       clearRemoteSubscriber: (streamId: any) => {
-        const participantsHook = depsRef.current.participantsHook;
-        const roomState = depsRef.current.roomState;
-        const layoutRef = depsRef.current.layoutRef;
-        const pinVideo = depsRef.current.pinVideo;
-        const unpinVideo = depsRef.current.unpinVideo;
+        const pParticipantIdRef = depsRef.current.pinnedParticipantIdRef;
+        const sNameRef = depsRef.current.streamNameRef;
+        const lRef = depsRef.current.layoutRef;
+        const pVideo = depsRef.current.pinVideo;
+        const uVideo = depsRef.current.unpinVideo;
 
         if (
-          participantsHook.pinnedParticipantIdRef.current &&
-          streamId.localeCompare(participantsHook.pinnedParticipantIdRef.current) === 0
+          pParticipantIdRef.current &&
+          streamId.localeCompare(pParticipantIdRef.current) === 0
         ) {
-          if (layoutRef.current === LayoutOptions.Sidebar) {
-            pinVideo(roomState.streamNameRef.current);
+          if (lRef.current === LayoutOptions.Sidebar) {
+            pVideo(sNameRef.current);
           } else {
-            unpinVideo(streamId);
+            uVideo(streamId);
           }
         }
       },
@@ -667,9 +697,9 @@ export const useConferenceEvents = (
   }
 
   useEffect(() => {
-    if (!client.conferenceClient.current) return;
+    if (!conferenceClient.current) return;
 
-    const clientInstance = client.conferenceClient.current;
+    const clientInstance = conferenceClient.current as any;
 
     if (clientInstance._eventsRegistered) return;
 
@@ -735,5 +765,5 @@ export const useConferenceEvents = (
         clientInstance._eventsRegistered = false;
       }
     };
-  }, [client.conferenceClient]);
+  }, [conferenceClient, subscribe]);
 };

@@ -20,7 +20,7 @@ export const PlayOnlyVideoCard = React.memo<PlayOnlyVideoCardProps>(
       autoPlay
       hidePin
       isMine={true}
-      //@ts-ignore
+      // @ts-expect-error: temporary fix for legacy code
       streamName={streamName}
       isPublished={isPublished}
       isPlayOnly={isPlayOnly}

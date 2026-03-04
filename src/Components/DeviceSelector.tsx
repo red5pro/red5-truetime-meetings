@@ -62,6 +62,61 @@ declare global {
   }
 }
 
+const DeviceButton: React.FC<DeviceButtonProps> = ({
+  icon,
+  selectedDevice,
+  onClick,
+  disabled = false,
+}) => (
+  <Button
+    variant="outlined"
+    onClick={onClick}
+    disabled={disabled}
+    sx={{
+      minWidth: { xs: '20vw', sm: '15vw', md: '12vw', lg: '10vw' },
+      maxWidth: { xs: '25vw', sm: '18vw', md: '15vw', lg: '13vw' },
+      justifyContent: 'space-between',
+      textTransform: 'none',
+      color: 'white',
+      borderColor: alpha('#fff', 0.3),
+      backgroundColor: alpha('#000', 0.2),
+      backdropFilter: 'blur(10px)',
+      '&:hover': {
+        borderColor: alpha('#fff', 0.5),
+        backgroundColor: alpha('#000', 0.3),
+      },
+      '&:disabled': {
+        color: alpha('#fff', 0.5),
+        borderColor: alpha('#fff', 0.2),
+      },
+    }}
+    startIcon={icon}
+    endIcon={<ExpandMore />}
+  >
+    <Box
+      sx={{
+        flex: 1,
+        textAlign: 'left',
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
+        whiteSpace: 'nowrap',
+        mx: 1,
+      }}
+    >
+      <Typography
+        variant="body2"
+        sx={{
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          whiteSpace: 'nowrap',
+        }}
+      >
+        {selectedDevice}
+      </Typography>
+    </Box>
+  </Button>
+);
+
 const DeviceSelector: React.FC<DeviceSelectorProps> = ({
   devices,
   selectedCamera,
@@ -215,65 +270,10 @@ const DeviceSelector: React.FC<DeviceSelectorProps> = ({
     return device?.label || 'No device selected';
   };
 
-  const DeviceButton: React.FC<DeviceButtonProps> = ({
-    icon,
-    selectedDevice,
-    onClick,
-    disabled = false,
-  }) => (
-    <Button
-      variant="outlined"
-      onClick={onClick}
-      disabled={disabled}
-      sx={{
-        minWidth: { xs: '20vw', sm: '15vw', md: '12vw', lg: '10vw' },
-        maxWidth: { xs: '25vw', sm: '18vw', md: '15vw', lg: '13vw' },
-        justifyContent: 'space-between',
-        textTransform: 'none',
-        color: 'white',
-        borderColor: alpha('#fff', 0.3),
-        backgroundColor: alpha('#000', 0.2),
-        backdropFilter: 'blur(10px)',
-        '&:hover': {
-          borderColor: alpha('#fff', 0.5),
-          backgroundColor: alpha('#000', 0.3),
-        },
-        '&:disabled': {
-          color: alpha('#fff', 0.5),
-          borderColor: alpha('#fff', 0.2),
-        },
-      }}
-      startIcon={icon}
-      endIcon={<ExpandMore />}
-    >
-      <Box
-        sx={{
-          flex: 1,
-          textAlign: 'left',
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
-          whiteSpace: 'nowrap',
-          mx: 1,
-        }}
-      >
-        <Typography
-          variant="body2"
-          sx={{
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            whiteSpace: 'nowrap',
-          }}
-        >
-          {selectedDevice}
-        </Typography>
-      </Box>
-    </Button>
-  );
-
   // Common menu props with disablePortal and high z-index
-  const getMenuProps = (anchorEl: HTMLElement | null) => ({
-    anchorEl: anchorEl,
-    open: Boolean(anchorEl),
+  const cameraMenuProps = {
+    anchorEl: cameraMenuAnchor,
+    open: Boolean(cameraMenuAnchor),
     onClose: handleMenuClose,
     anchorOrigin: {
       vertical: 'bottom' as const,
@@ -283,6 +283,40 @@ const DeviceSelector: React.FC<DeviceSelectorProps> = ({
       vertical: 'top' as const,
       horizontal: 'center' as const,
     },
+    uid: 'camera-menu',
+  };
+
+  const micMenuProps = {
+    anchorEl: micMenuAnchor,
+    open: Boolean(micMenuAnchor),
+    onClose: handleMenuClose,
+    anchorOrigin: {
+      vertical: 'bottom' as const,
+      horizontal: 'center' as const,
+    },
+    transformOrigin: {
+      vertical: 'top' as const,
+      horizontal: 'center' as const,
+    },
+    uid: 'mic-menu',
+  };
+
+  const speakerMenuProps = {
+    anchorEl: speakerMenuAnchor,
+    open: Boolean(speakerMenuAnchor),
+    onClose: handleMenuClose,
+    anchorOrigin: {
+      vertical: 'bottom' as const,
+      horizontal: 'center' as const,
+    },
+    transformOrigin: {
+      vertical: 'top' as const,
+      horizontal: 'center' as const,
+    },
+    uid: 'speaker-menu',
+  };
+
+  const commonMenuSx = {
     disablePortal: true,
     sx: {
       zIndex: 9999,
@@ -294,8 +328,6 @@ const DeviceSelector: React.FC<DeviceSelectorProps> = ({
         backdropFilter: 'blur(20px)',
         border: `1px solid ${alpha('#fff', 0.1)}`,
         maxHeight: 300,
-        minWidth: anchorEl?.offsetWidth || 200,
-        mt: 1,
         zIndex: 9999,
         position: 'relative',
         '& .MuiMenuItem-root': {
@@ -311,7 +343,7 @@ const DeviceSelector: React.FC<DeviceSelectorProps> = ({
         py: 0,
       },
     },
-  });
+  };
 
   return (
     <Box
@@ -358,7 +390,7 @@ const DeviceSelector: React.FC<DeviceSelectorProps> = ({
       />
 
       {/* Camera Menu */}
-      <Menu {...getMenuProps(cameraMenuAnchor)}>
+      <Menu {...cameraMenuProps} {...commonMenuSx}>
         <Typography variant="subtitle2" sx={{ px: 2, py: 1, color: alpha('#fff', 0.7) }}>
           Select Camera
         </Typography>
@@ -392,7 +424,7 @@ const DeviceSelector: React.FC<DeviceSelectorProps> = ({
       </Menu>
 
       {/* Microphone Menu */}
-      <Menu {...getMenuProps(micMenuAnchor)}>
+      <Menu {...micMenuProps} {...commonMenuSx}>
         <Typography variant="subtitle2" sx={{ px: 2, py: 1, color: alpha('#fff', 0.7) }}>
           Select Microphone
         </Typography>
@@ -474,7 +506,7 @@ const DeviceSelector: React.FC<DeviceSelectorProps> = ({
       </Menu>
 
       {/* Speaker Menu */}
-      <Menu {...getMenuProps(speakerMenuAnchor)}>
+      <Menu {...speakerMenuProps} {...commonMenuSx}>
         <Typography variant="subtitle2" sx={{ px: 2, py: 1, color: alpha('#fff', 0.7) }}>
           Select Speaker
         </Typography>

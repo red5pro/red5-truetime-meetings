@@ -11,7 +11,7 @@ import VideocamIcon from '@mui/icons-material/Videocam';
 import GifBoxIcon from '@mui/icons-material/GifBox';
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 
-interface MessageData {
+export interface MessageData {
   name: string;
   message: string;
   date: string;
@@ -46,7 +46,7 @@ const MessageTextField = styled(TextField)(({ theme }: { theme: Theme }) => ({
   },
 }));
 
-const FilePreviewContainer = styled(Box)(({}: { theme: Theme }) => ({
+const FilePreviewContainer = styled(Box)(({ }: { theme: Theme }) => ({
   display: 'flex',
   flexWrap: 'wrap',
   gap: '8px',

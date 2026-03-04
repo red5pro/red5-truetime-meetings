@@ -36,7 +36,7 @@ const getCustomizedIconButtonStyle = (props: StyleProps, theme: Theme) => {
   if (glass) {
     customizedIconButtonStyle = {
       ...customizedIconButtonStyle,
-      // @ts-ignore
+      // @ts-expect-error: temporary fix for legacy code
       backdropFilter: 'blur(10px)',
       backgroundColor: 'rgba(255, 255, 255, 0.1)',
     };
@@ -45,7 +45,7 @@ const getCustomizedIconButtonStyle = (props: StyleProps, theme: Theme) => {
   if (rounded) {
     customizedIconButtonStyle = {
       ...customizedIconButtonStyle,
-      // @ts-ignore
+      // @ts-expect-error: temporary fix for legacy code
       backgroundColor: active ? theme.palette.primary.main : theme.palette.action.hover,
       color: active ? theme.palette.primary.contrastText : theme.palette.text.primary,
       '&:hover': {
@@ -58,7 +58,7 @@ const getCustomizedIconButtonStyle = (props: StyleProps, theme: Theme) => {
     customizedIconButtonStyle = {
       ...customizedIconButtonStyle,
       color: theme.palette.primary.main,
-      // @ts-ignore
+      // @ts-expect-error: temporary fix for legacy code
       backgroundColor: theme.palette.primary.light + '20',
     };
   }

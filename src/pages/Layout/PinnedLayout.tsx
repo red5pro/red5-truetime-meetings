@@ -130,10 +130,10 @@ const LayoutPinned = React.memo<LayoutPinnedProps>((props) => {
             pinVideo={pinVideo}
             unpinVideo={unpinVideo}
             layout={layout}
-            // @ts-ignore
+            // @ts-expect-error: temporary fix for legacy code
             talkers={talkers}
             connectionQuality={connectionQualityScore}
-            // @ts-ignore
+            // @ts-expect-error: temporary fix for legacy code
             setParticipantIdMuted={(participantId: string) =>
               props?.setParticipantIdMuted?.(participantId)
             }
@@ -212,10 +212,10 @@ const LayoutPinned = React.memo<LayoutPinnedProps>((props) => {
                 pinVideo={pinVideo}
                 unpinVideo={unpinVideo}
                 layout={layout}
-                // @ts-ignore
+                // @ts-expect-error: temporary fix for legacy code
                 talkers={talkers}
                 connectionQuality={connectionQualityScore}
-                // @ts-ignore
+                // @ts-expect-error: temporary fix for legacy code
                 setParticipantIdMuted={(participantId: string) =>
                   props?.setParticipantIdMuted?.(participantId)
                 }

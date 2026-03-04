@@ -167,7 +167,7 @@ function MessageCard(props: MessageCardProps) {
           {'  '}
         </Typography>
         {
-          //@ts-ignore
+          // @ts-expect-error: temporary fix for legacy code
           <Typography
             variant="body2"
             color={theme.palette.grey}

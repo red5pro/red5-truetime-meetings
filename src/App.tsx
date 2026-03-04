@@ -1,4 +1,4 @@
-import { createContext, JSX, useEffect, useState } from 'react';
+import { JSX, useEffect, useState } from 'react';
 import './App.css';
 import { CssBaseline, ThemeProvider } from '@mui/material';
 import theme from './styles/theme';
@@ -71,13 +71,8 @@ function copyWindowLocation(): void {
 window.getWindowLocation = getWindowLocation;
 window.copyWindowLocation = copyWindowLocation;
 
-// Theme context type
-interface ThemeContextType {
-  currentTheme: string;
-  setCurrentTheme: (theme: string) => void;
-}
 
-export const ThemeContext = createContext<ThemeContextType | null>(null);
+import { ThemeContext } from './contexts/ThemeContext';
 
 function App(): JSX.Element {
   const [currentTheme, setCurrentTheme] = useState<string>(
@@ -144,7 +139,7 @@ function App(): JSX.Element {
         maxSnack={3}
         Components={{
           info: Red5SnackBar,
-          // @ts-ignore
+          // @ts-expect-error: temporary fix for legacy code
           message: Red5SnackBar,
         }}
       >
