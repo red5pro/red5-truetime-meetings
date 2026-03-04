@@ -17,6 +17,7 @@ A real-time video conferencing application built with React and Red5 Pro, featur
 - **Raise hand functionality** for meeting management
 - **Participant list** with status indicators
 - **Audio level detection** and visual talker indicators
+- **External Streams Drawer** for viewing additional media sources
 
 ### Media Controls
 - **Camera on/off** with device selection
@@ -110,8 +111,18 @@ The application supports **runtime configuration** via a JSON file, allowing you
 | `VITE_TURN_SERVER_CREDENTIAL` | string | TURN server credential | `""` |
 | `VITE_ENABLE_RECORDING` | string | Enable recording feature | `"true"` or `"false"` |
 | `VITE_ENABLE_CLOSED_CAPTION` | string | Enable closed captions | `"true"` or `"false"` |
+| `VITE_ENABLE_EXTERNAL_STREAMS` | string | Enable external streams feature | `"true"` or `"false"` |
 | `VITE_DEFAULT_THEME` | string | Default UI theme | `"black"` or `"blue"` |
 | `VITE_LOGO_URL` | string | Custom logo URL | `"/path/to/logo.svg"` |
+| `VITE_BASENAME` | string | Application base path | `"/meeting"` |
+| `VITE_CONFIG_SERVICE_URL` | string | Configuration service URL | `"/config"` |
+| `VITE_GOOGLE_CLIENT_ID` | string | Google OAuth Client ID | `"..."` |
+| `VITE_ENABLE_GOOGLE_AUTH` | string | Enable Google Authentication | `"true"` or `"false"` |
+| `VITE_ANALYTICS_ENDPOINT` | string | Analytics API endpoint | `"https://..."` |
+| `VITE_AWS_ACCESS_KEY` | string | AWS Access Key | `"..."` |
+| `VITE_AWS_SECRET_ACCESS_KEY` | string | AWS Secret Access Key | `"..."` |
+| `VITE_AWS_BUCKET_NAME` | string | AWS S3 Bucket Name | `"..."` |
+| `VITE_AWS_BUCKET_LOCATION` | string | AWS S3 Bucket Region | `"us-east-1"` |
 
 ### Environment Variables (Development)
 
@@ -127,8 +138,13 @@ VITE_TURN_SERVER_CREDENTIAL=""
 VITE_PUBNUB_PUBLISH_KEY="pub-x-xxxxxx-xxxxxx-xxxxxx-xxxxxx-xxxxxx"
 VITE_PUBNUB_SUBSCRIBE_KEY="sub-x-xxxxxx-xxxxxx-xxxxxx-xxxxxx-xxxxxx"
 VITE_VIRTUAL_BACKGROUND_IMAGES="https://xxx,https://xxx,https://xxx"
+VITE_ENABLE_RECORDING="false"
+VITE_ENABLE_CLOSED_CAPTION="false"
+VITE_ENABLE_EXTERNAL_STREAMS="false"
 VITE_DEFAULT_THEME='black'
 VITE_LOGO_URL="https://xxx"
+VITE_BASENAME="/"
+VITE_CONFIG_SERVICE_URL="http://localhost:3001"
 ```
 
 > **Note**: Runtime configuration from `config.json` takes precedence over build-time environment variables.
