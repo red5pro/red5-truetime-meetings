@@ -1,4 +1,4 @@
-const red5Service = require('../services/red5Service');
+import red5Service from '../services/red5Service.js';
 
 class TokenController {
   async generateToken(req, res) {
@@ -26,4 +26,4 @@ class TokenController {
   }
 }
 
-module.exports = new TokenController();
+export default new TokenController();

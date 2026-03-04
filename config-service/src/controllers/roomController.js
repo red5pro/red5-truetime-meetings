@@ -1,4 +1,4 @@
-const red5Service = require('../services/red5Service');
+import red5Service from '../services/red5Service.js';
 
 class RoomController {
   async getUsers(req, res) {
@@ -206,4 +206,4 @@ class RoomController {
   }
 }
 
-module.exports = new RoomController();
+export default new RoomController();

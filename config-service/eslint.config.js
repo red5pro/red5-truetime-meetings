@@ -6,11 +6,12 @@ export default [
   js.configs.recommended,
   {
     languageOptions: {
-      globals: {
-        ...globals.node,
-      },
       ecmaVersion: 'latest',
       sourceType: 'module',
+      globals: {
+        ...globals.browser,
+        ...globals.node,
+      }
     },
     rules: {
       'no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],

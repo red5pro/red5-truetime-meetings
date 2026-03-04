@@ -1,5 +1,5 @@
-const fs = require('fs').promises;
-const path = require('path');
+import fs from 'fs/promises';
+import path from 'path';
 
 const CONFIG_FILE = process.env.CONFIG_FILE || '/data/config.json';
 
@@ -38,7 +38,7 @@ class ConfigService {
       return JSON.parse(data);
     } catch (error) {
       console.error('Error reading config:', error);
-      throw new Error('Failed to read configuration');
+      throw new Error('Failed to read configuration', { cause: error });
     }
   }
 
@@ -46,7 +46,7 @@ class ConfigService {
     let currentConfig = {};
     try {
       currentConfig = await this.read();
-    } catch (error) {
+    } catch {
       console.log('No existing config found, creating new one during update');
     }
 
@@ -69,4 +69,4 @@ class ConfigService {
   }
 }
 
-module.exports = new ConfigService();
+export default new ConfigService();

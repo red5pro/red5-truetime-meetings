@@ -1,7 +1,7 @@
-const validThemes = ['blue', 'black'];
-const validBooleans = ['true', 'false'];
+export const validThemes = ['blue', 'black'];
+export const validBooleans = ['true', 'false'];
 
-const validateConfig = (config) => {
+export const validateConfig = (config) => {
   const errors = [];
 
   // Validate URLs
@@ -39,10 +39,4 @@ const validateConfig = (config) => {
   }
 
   return errors;
-};
-
-module.exports = {
-  validateConfig,
-  validThemes,
-  validBooleans,
 };
