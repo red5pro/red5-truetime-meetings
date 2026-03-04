@@ -1,4 +1,4 @@
-# TrueTime Meetings by Red5
+# TrueTime Meetings™ by Red5
 
 A real-time video conferencing application built with React and Red5 Pro, featuring multi-participant video calls, screen sharing, chat messaging, and various interactive features.
 
