@@ -22,7 +22,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import GeneralSettingsDialog from './GeneralSettingsDialog.tsx';
 import { ThemeList } from '../../../constants/themeList.js';
-import { ThemeContext } from '../../../App.js';
+import { ThemeContext } from '../../../contexts/ThemeContext.js';
 import i18n from 'i18next';
 import { CustomizedBtn, rectangularStyle } from '../../CustomizedBtn.tsx';
 import { getGlassMenuStyle } from '../../../styles/themeUtil.js';
@@ -367,7 +367,7 @@ function OptionButton(props: OptionButtonProps) {
         connectionStats={props?.connectionStats}
         currentIssues={props?.currentIssues}
         printStatLogs={props?.printStatLogs || false}
-        setPrintStatLogs={props?.setPrintStatLogs || (() => {})}
+        setPrintStatLogs={props?.setPrintStatLogs || (() => { })}
       />
       <GeneralSettingsDialog
         open={generalSettingsDialogOpen}
