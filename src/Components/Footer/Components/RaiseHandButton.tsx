@@ -2,8 +2,7 @@ import { SvgIcon } from '../../SvgIcon';
 import { Tooltip } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '@mui/material/styles';
-// @ts-expect-error: temporary fix for legacy code
-import { CustomizedBtn, rectangularStyle, roundStyle } from '../../CustomizedBtn.tsx';
+import { CustomizedBtn, rectangularStyle } from '../../CustomizedBtn.tsx';
 
 interface RaiseHandButtonProps {
   rounded?: boolean;

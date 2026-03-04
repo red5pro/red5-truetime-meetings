@@ -5,7 +5,7 @@ import { getInitialPlayOnlyMode } from '../utils/conferenceConfig';
 // Type definitions
 type PageType = 'lobby' | 'meeting';
 
-interface UseRoomStateReturn {
+export interface UseRoomStateReturn {
   lobbyOrMeetingPage: PageType;
   setLobbyOrMeetingPage: React.Dispatch<React.SetStateAction<PageType>>;
   leftTheRoom: boolean;

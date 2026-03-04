@@ -75,7 +75,7 @@ const ExternalStreamsDrawer = React.memo<ExternalStreamsDrawerProps>((props) => 
     try {
       await addToRoom(streamName);
       await fetchStreams();
-    } catch (error) {
+    } catch (e) {
       // Error handled by hook
     }
   };
@@ -84,7 +84,7 @@ const ExternalStreamsDrawer = React.memo<ExternalStreamsDrawerProps>((props) => 
     try {
       await removeFromRoom(streamName);
       await fetchStreams();
-    } catch (error) {
+    } catch (e) {
       // Error handled by hook
     }
   };

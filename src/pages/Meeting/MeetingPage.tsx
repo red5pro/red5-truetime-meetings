@@ -233,46 +233,45 @@ const MeetingPage = React.memo<MeetingPageProps>((props) => {
     currentProps.setShowEmojis?.(!currentProps.showEmojis);
   }, []);
 
-  // Layout renderer
-  const renderLayout = useCallback(() => {
-    const currentProps = propsRef.current;
-    const hasPin = !isNull(currentProps.pinnedParticipantId);
+  // Memoized layout
+  const layoutContent = useMemo(() => {
+    const hasPin = !isNull(props.pinnedParticipantId);
     const isAutoLayout =
-      currentProps.layout === LayoutOptions.Auto &&
+      props.layout === LayoutOptions.Auto &&
       allParticipants.length <= AUTO_LAYOUT_PARTICIPANT_LIMIT;
 
     const commonProps = {
       allParticipants,
       width: gallerySize.w,
       height: gallerySize.h,
-      globals: currentProps.globals,
-      publishStreamId: currentProps.publishStreamId,
-      talkers: currentProps.talkers,
-      streamName: currentProps.streamName,
-      isPublished: currentProps.isPublished,
-      isPlayOnly: currentProps.isPlayOnly,
-      isMyMicMuted: currentProps.isMyMicMuted,
-      isMyCamTurnedOff: currentProps.isMyCamTurnedOff,
-      pinVideo: currentProps.pinVideo,
-      unpinVideo: currentProps.unpinVideo,
-      currentConferenceClient: currentProps.currentConferenceClient,
-      setParticipantIdMuted: currentProps?.setParticipantIdMuted,
-      setMuteParticipantDialogOpen: currentProps?.setMuteParticipantDialogOpen,
-      connectionStats: currentProps?.connectionStats,
-      networkScore: currentProps?.networkScore,
+      globals: props.globals,
+      publishStreamId: props.publishStreamId,
+      talkers: props.talkers,
+      streamName: props.streamName,
+      isPublished: props.isPublished,
+      isPlayOnly: props.isPlayOnly,
+      isMyMicMuted: props.isMyMicMuted,
+      isMyCamTurnedOff: props.isMyCamTurnedOff,
+      pinVideo: props.pinVideo,
+      unpinVideo: props.unpinVideo,
+      currentConferenceClient: props.currentConferenceClient,
+      setParticipantIdMuted: props?.setParticipantIdMuted,
+      setMuteParticipantDialogOpen: props?.setMuteParticipantDialogOpen,
+      connectionStats: props?.connectionStats,
+      networkScore: props?.networkScore,
       pipSupported: pipSupported,
     };
 
-    if (isAutoLayout && !currentProps?.closedCaptions.captionsVisible) {
+    if (isAutoLayout && !props?.closedCaptions.captionsVisible) {
       return (
         <LayoutAuto
           {...commonProps}
           pinLayout={hasPin}
           // @ts-expect-error: temporary fix for legacy code
-          pinnedParticipantId={currentProps.pinnedParticipantId}
-          isScreenShared={currentProps.isScreenShared}
-          isStartingScreenShare={currentProps.isStartingScreenShare}
-          isMobile={currentProps.isMobile}
+          pinnedParticipantId={props.pinnedParticipantId}
+          isScreenShared={props.isScreenShared}
+          isStartingScreenShare={props.isStartingScreenShare}
+          isMobile={props.isMobile}
         />
       );
     }
@@ -282,8 +281,8 @@ const MeetingPage = React.memo<MeetingPageProps>((props) => {
         <LayoutPinned
           {...commonProps}
           // @ts-expect-error: temporary fix for legacy code
-          pinnedParticipantId={currentProps.pinnedParticipantId}
-          layout={currentProps.layout}
+          pinnedParticipantId={props.pinnedParticipantId}
+          layout={props.layout}
         />
       );
     }
@@ -292,17 +291,42 @@ const MeetingPage = React.memo<MeetingPageProps>((props) => {
       <LayoutTiled
         {...commonProps}
         // @ts-expect-error: temporary fix for legacy code
-        isScreenShared={currentProps.isScreenShared}
-        isStartingScreenShare={currentProps.isStartingScreenShare}
-        layout={currentProps.layout}
+        isScreenShared={props.isScreenShared}
+        isStartingScreenShare={props.isStartingScreenShare}
+        layout={props.layout}
       />
     );
-  }, [allParticipants, gallerySize, pipSupported]);
+  }, [
+    allParticipants,
+    gallerySize,
+    pipSupported,
+    props.pinnedParticipantId,
+    props.layout,
+    props.globals,
+    props.publishStreamId,
+    props.talkers,
+    props.streamName,
+    props.isPublished,
+    props.isPlayOnly,
+    props.isMyMicMuted,
+    props.isMyCamTurnedOff,
+    props.pinVideo,
+    props.unpinVideo,
+    props.currentConferenceClient,
+    props.setParticipantIdMuted,
+    props.setMuteParticipantDialogOpen,
+    props.connectionStats,
+    props.networkScore,
+    props.closedCaptions.captionsVisible,
+    props.isScreenShared,
+    props.isStartingScreenShare,
+    props.isMobile,
+  ]);
 
   // Effects
   useEffect(() => {
     props.updateAudioOutput?.();
-    handleGalleryResize(false);
+    setTimeout(() => handleGalleryResize(false), 0);
   }, [
     props.participants,
     props.subscribedParticipants,
@@ -311,7 +335,7 @@ const MeetingPage = React.memo<MeetingPageProps>((props) => {
   ]);
 
   useEffect(() => {
-    handleGalleryResize(true);
+    setTimeout(() => handleGalleryResize(true), 0);
   }, [
     props.infoDrawerOpen,
     props.messageDrawerOpen,
@@ -396,7 +420,7 @@ const MeetingPage = React.memo<MeetingPageProps>((props) => {
             : 'calc(100vh - 80px) !important',
         }}
       >
-        {pipIsOpen ? pipOverlay() : renderLayout()}
+        {pipIsOpen ? pipOverlay() : layoutContent}
       </Box>
 
       {/* Recording Indicator */}
@@ -530,7 +554,6 @@ const MeetingPage = React.memo<MeetingPageProps>((props) => {
         openAllParticipantsPiP={openAllParticipantsPiP}
         closePiP={closePiP}
         allParticipants={allParticipants}
-        // @ts-expect-error: temporary fix for legacy code
         talkers={props.talkers}
         streamName={props.streamName}
         captionsVisible={props?.closedCaptions.captionsVisible}

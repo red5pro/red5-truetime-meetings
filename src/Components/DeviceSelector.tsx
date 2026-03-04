@@ -209,7 +209,7 @@ const DeviceSelector: React.FC<DeviceSelectorProps> = ({
     if (micStreamRef.current) {
       micStreamRef.current.getTracks().forEach((track) => track.stop());
     }
-    setAudioLevel(0);
+    setTimeout(() => setAudioLevel(0), 0);
   }, []);
 
   // Start/stop audio monitoring when microphone menu opens/closes

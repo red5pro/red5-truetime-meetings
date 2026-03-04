@@ -11,7 +11,6 @@ interface StyleProps {
 }
 
 interface PiPButtonProps extends StyleProps {
-  footer?: boolean;
   pipIsOpen?: boolean;
   pipSupported?: boolean;
   allParticipants?: any[];
@@ -72,7 +71,6 @@ const CustomizedIconButton = styled(IconButton)<StyleProps>(({ theme, ...props }
 
 const PiPButton = React.memo<PiPButtonProps>((props) => {
   const {
-    footer = false,
     glass = false,
     rounded = true,
     pipIsOpen = false,

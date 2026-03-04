@@ -245,32 +245,6 @@ export const useDeviceManagement = (
     return device ? device.label || `${deviceType} Device` : 'Unknown Device';
   };
 
-  const checkAndUpdateVideoAudioSources = useCallback((): void => {
-    if (roomState.isPlayOnly) {
-      log.info('Play only mode is active, no need to check and update video audio sources.');
-      return;
-    }
-
-    const selectedDevices = getSelectedDevices();
-    const previousVideoDeviceId = selectedDevices.videoDeviceId;
-    const previousAudioDeviceId = selectedDevices.audioDeviceId;
-
-    // Check device availability and update UI
-    const deviceAvailability = checkDeviceAvailability(selectedDevices);
-    updateMediaControlsBasedOnAvailability(deviceAvailability);
-
-    // Handle unavailable or missing devices
-    const updatedDevices = handleUnavailableDevices(selectedDevices, deviceAvailability);
-
-    // Update selected devices if changes were made
-    if (hasDevicesChanged(selectedDevices, updatedDevices)) {
-      setSelectedDevices(updatedDevices);
-    }
-
-    // Switch media sources if devices changed
-    switchMediaSourcesIfNeeded(previousVideoDeviceId, previousAudioDeviceId, updatedDevices);
-  }, [roomState.isPlayOnly, getSelectedDevices, setSelectedDevices]);
-
   // Helper functions
   const checkDeviceAvailability = (selectedDevices: SelectedDevices): DeviceAvailability => {
     const videoDevice = devicesRef.current.videoInputs?.find(
@@ -296,25 +270,6 @@ export const useDeviceManagement = (
     if (isAudioAvailable) {
       mediaControlsRef.current.setMicrophoneButtonDisabled(false);
     }
-  };
-
-  const handleUnavailableDevices = (
-    selectedDevices: SelectedDevices,
-    { isVideoAvailable, isAudioAvailable }: DeviceAvailability,
-  ): SelectedDevices => {
-    const updatedDevices = { ...selectedDevices };
-
-    // Handle video device
-    if (!selectedDevices.videoDeviceId || !isVideoAvailable) {
-      updatedDevices.videoDeviceId = handleUnavailableVideoDevice();
-    }
-
-    // Handle audio device
-    if (!selectedDevices.audioDeviceId || !isAudioAvailable) {
-      updatedDevices.audioDeviceId = handleUnavailableAudioDevice();
-    }
-
-    return updatedDevices;
   };
 
   const handleUnavailableVideoDevice = (): string => {
@@ -359,6 +314,25 @@ export const useDeviceManagement = (
     }
   };
 
+  const handleUnavailableDevices = (
+    selectedDevices: SelectedDevices,
+    { isVideoAvailable, isAudioAvailable }: DeviceAvailability,
+  ): SelectedDevices => {
+    const updatedDevices = { ...selectedDevices };
+
+    // Handle video device
+    if (!selectedDevices.videoDeviceId || !isVideoAvailable) {
+      updatedDevices.videoDeviceId = handleUnavailableVideoDevice();
+    }
+
+    // Handle audio device
+    if (!selectedDevices.audioDeviceId || !isAudioAvailable) {
+      updatedDevices.audioDeviceId = handleUnavailableAudioDevice();
+    }
+
+    return updatedDevices;
+  };
+
   const hasDevicesChanged = (original: SelectedDevices, updated: SelectedDevices): boolean => {
     return (
       original.videoDeviceId !== updated.videoDeviceId ||
@@ -399,6 +373,32 @@ export const useDeviceManagement = (
       log.error('Error while switching video/audio sources', error);
     }
   };
+
+  const checkAndUpdateVideoAudioSources = useCallback((): void => {
+    if (roomState.isPlayOnly) {
+      log.info('Play only mode is active, no need to check and update video audio sources.');
+      return;
+    }
+
+    const selectedDevices = getSelectedDevices();
+    const previousVideoDeviceId = selectedDevices.videoDeviceId;
+    const previousAudioDeviceId = selectedDevices.audioDeviceId;
+
+    // Check device availability and update UI
+    const deviceAvailability = checkDeviceAvailability(selectedDevices);
+    updateMediaControlsBasedOnAvailability(deviceAvailability);
+
+    // Handle unavailable or missing devices
+    const updatedDevices = handleUnavailableDevices(selectedDevices, deviceAvailability);
+
+    // Update selected devices if changes were made
+    if (hasDevicesChanged(selectedDevices, updatedDevices)) {
+      setSelectedDevices(updatedDevices);
+    }
+
+    // Switch media sources if devices changed
+    switchMediaSourcesIfNeeded(previousVideoDeviceId, previousAudioDeviceId, updatedDevices);
+  }, [roomState.isPlayOnly, getSelectedDevices, setSelectedDevices]);
 
   useEffect(() => {
     if (devices.audioInputs?.length || devices.videoInputs?.length) {

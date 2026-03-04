@@ -2,7 +2,7 @@
 import { useCallback, useEffect, useMemo, MutableRefObject } from 'react';
 import { USER_ROLES, UserRole } from '../constants/userRoles';
 import { useConferenceClient } from './useConferenceClient';
-import { useRoomState } from './useRoomState';
+import { useRoomState, UseRoomStateReturn } from './useRoomState';
 import { useParticipants } from './useParticipants';
 import { useMediaControls } from './useMediaControls';
 import { useDeviceManagement } from './useDeviceManagement';
@@ -255,7 +255,6 @@ export const useConference = (roomId: string): UseConferenceReturn => {
 
   const client: Client = useConferenceClient();
 
-  // @ts-expect-error: temporary fix for legacy code
   const roomStateResult: UseRoomStateReturn = useRoomState();
   const {
     publishStreamIdRef,

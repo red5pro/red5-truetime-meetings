@@ -11,7 +11,7 @@ import GeneralSettingsDialog from './GeneralSettingsDialog.tsx';
 import { isMobile, isTablet } from 'react-device-detect';
 import i18n from 'i18next';
 import { ThemeList } from '../../../constants/themeList.js';
-import { ThemeContext } from '../../../App.js';
+import { ThemeContext, ThemeContextType } from '../../../contexts/ThemeContext.ts';
 import { CustomizedBtn, rectangularStyle } from '../../CustomizedBtn.tsx';
 import log from 'loglevel';
 import { ClosedCaption, ClosedCaptionDisabled } from '@mui/icons-material';
@@ -75,7 +75,7 @@ function MoreOptionsButton(props: MoreOptionsButtonProps) {
   const [layoutDialogOpen, setLayoutDialogOpen] = React.useState<boolean>(false);
   const [generalSettingsDialogOpen, setGeneralSettingsDialogOpen] = React.useState<boolean>(false);
   const theme = useTheme();
-  const themeContext = React.useContext(ThemeContext);
+  const themeContext = React.useContext(ThemeContext) as ThemeContextType;
 
   // Check if closed caption feature is enabled
   const isCaptionEnabled = getRuntimeConfig().VITE_ENABLE_CLOSED_CAPTION === 'true';
@@ -112,15 +112,15 @@ function MoreOptionsButton(props: MoreOptionsButtonProps) {
     setAnchorEl(null);
   };
 
-  const handleDialogClose = (_value?: any): void => {
+  const handleDialogClose = (): void => {
     setDialogOpen(false);
   };
 
-  const handleLayoutDialogClose = (_value?: any): void => {
+  const handleLayoutDialogClose = (): void => {
     setLayoutDialogOpen(false);
   };
 
-  const handleGeneralSettingsDialogClose = (_value?: any): void => {
+  const handleGeneralSettingsDialogClose = (): void => {
     setGeneralSettingsDialogOpen(false);
   };
 

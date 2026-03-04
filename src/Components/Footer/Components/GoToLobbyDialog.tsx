@@ -51,11 +51,11 @@ export function GoToLobbyDialog({ onClose, url, open, onGoToLobbyClicked }: GoTo
     setCopied(true);
   };
 
-  const handleClose = (_event?: any, _reason?: string): void => {
+  const handleClose = (): void => {
     onClose();
   };
 
-  const goToLobbyClicked = (_e: React.MouseEvent<HTMLButtonElement>): void => {
+  const goToLobbyClicked = (): void => {
     onGoToLobbyClicked();
   };
 

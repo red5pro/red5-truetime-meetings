@@ -4,4 +4,6 @@ export const MetaDataKeys = {
   IS_SCREEN_SHARING: 'isScreenSharing',
   OWNER_STREAM_ID: 'ownerStreamId',
   OWNER_NAME: 'ownerName',
+  EXTERNAL_STREAM: 'externalStream',
+  EXTERNAL_STREAM_SOURCE: 'externalStreamSource',
 };

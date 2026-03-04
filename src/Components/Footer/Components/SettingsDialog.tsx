@@ -20,7 +20,6 @@ import { SvgIcon } from '../../SvgIcon.js';
 import { useTheme } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 import { getDialogStyle } from '../../../styles/themeUtil.js';
-// @ts-expect-error: temporary fix for legacy code
 import { isNull } from '../../../utils/utils.tsx';
 import { BitrateOptionsList } from '../../../constants/bitrateOptionsList.js';
 import { QuestionMarkRounded } from '@mui/icons-material';
@@ -100,7 +99,7 @@ export default function SettingsDialog(props: SettingsDialogProps) {
     setLocalPushToTalkEnabled(props?.pushToTalkEnabled || false);
   }, [props?.pushToTalkEnabled]);
 
-  const handleClose = (_event?: any, _reason?: string): void => {
+  const handleClose = (): void => {
     props?.onClose?.(props?.selectedValue);
   };
 
