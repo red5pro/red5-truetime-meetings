@@ -51,13 +51,15 @@ const MeetingPage = React.memo<MeetingPageProps>((props) => {
     propsRef.current = props;
   }, [props]);
 
-  // Enhanced PiP Integration for all participants
+  // PiP integration
   const {
     isSupported: pipSupported,
     isOpen: pipIsOpen,
     openPiP,
     updatePiP,
     closePiP,
+    autoOpen: autoOpenPiP,
+    autoClose: autoClosePiP,
   } = usePictureInPicture();
 
   // Memoized participant list
@@ -131,112 +133,66 @@ const MeetingPage = React.memo<MeetingPageProps>((props) => {
     keyboardShortcuts.setIsTapToTalkEnabled(pushToTalkEnabled);
   }, [pushToTalkEnabled, keyboardShortcuts]);
 
-  // Open all participants PiP — returns true if Document PiP opened successfully
-  const openAllParticipantsPiP = useCallback(async (): Promise<boolean> => {
-    if (!pipSupported) {
-      console.warn('Picture-in-Picture is not supported in this browser');
-      return false;
-    }
-
-    const currentProps = propsRef.current;
-
-    return openPiP({
+  // Memoized PiP callbacks — shared by openAllParticipantsPiP, updatePiP effect, and auto-open.
+  // Using propsRef so the callbacks never go stale without needing to be listed as deps.
+  const pipOptions = useMemo(
+    () => ({
       participants: allParticipants,
       onMuteToggle: (streamId: string) => {
-        if (streamId === currentProps.streamName) {
-          currentProps.toggleMic?.();
+        const p = propsRef.current;
+        if (streamId === p.streamName) {
+          p.toggleMic?.();
         } else {
-          currentProps.setParticipantIdMuted?.(streamId);
-          currentProps.setMuteParticipantDialogOpen?.(true);
+          p.setParticipantIdMuted?.(streamId);
+          p.setMuteParticipantDialogOpen?.(true);
         }
       },
       onVideoToggle: (streamId: string) => {
-        if (streamId === currentProps.streamName) {
-          if (currentProps.isMyCamTurnedOff) {
-            currentProps.checkAndTurnOnLocalCamera?.();
-          } else {
-            currentProps.checkAndTurnOffLocalCamera?.();
-          }
+        const p = propsRef.current;
+        if (streamId === p.streamName) {
+          p.isMyCamTurnedOff ? p.checkAndTurnOnLocalCamera?.() : p.checkAndTurnOffLocalCamera?.();
         }
       },
       onVolumeToggle: (streamId: string) => {
-        console.log('Volume toggled for participant:', streamId);
+        console.log('[PiP] volume toggled for:', streamId);
       },
-      // @ts-ignore
-      talkers: currentProps.talkers || [],
-      streamName: currentProps.streamName,
-    });
-  }, [pipSupported, allParticipants, openPiP]);
+      // talkers and streamName are read at call-time via propsRef; the cast handles the
+      // talkers: Talker[] type expected by PiPOpenOptions (runtime shape is compatible).
+      talkers: (propsRef.current.talkers || []) as unknown as { streamId: string }[],
+      streamName: propsRef.current.streamName,
+    }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [allParticipants],
+  );
 
-  // Update PiP when participants change
+
+  // Open all participants PiP
+  const openAllParticipantsPiP = useCallback(
+    () => openPiP(pipOptions),
+    [openPiP, pipOptions],
+  );
+
+  // Keep PiP content fresh when participants change
   useEffect(() => {
-    if (pipIsOpen) {
-      const currentProps = propsRef.current;
+    if (pipIsOpen) updatePiP(pipOptions);
+  }, [pipIsOpen, pipOptions, updatePiP]);
 
-      updatePiP({
-        participants: allParticipants,
-        onMuteToggle: (streamId: string) => {
-          if (streamId === currentProps.streamName) {
-            currentProps.toggleMic?.();
-          } else {
-            currentProps.setParticipantIdMuted?.(streamId);
-            currentProps.setMuteParticipantDialogOpen?.(true);
-          }
-        },
-        onVideoToggle: (streamId: string) => {
-          if (streamId === currentProps.streamName) {
-            if (currentProps.isMyCamTurnedOff) {
-              currentProps.checkAndTurnOnLocalCamera?.();
-            } else {
-              currentProps.checkAndTurnOffLocalCamera?.();
-            }
-          }
-        },
-        onVolumeToggle: (streamId: string) => {
-          console.log('Volume toggled for participant:', streamId);
-        },
-        // @ts-ignore
-        talkers: currentProps.talkers || [],
-        streamName: currentProps.streamName,
-      });
-    }
-  }, [pipIsOpen, allParticipants, updatePiP]);
-
-  // Auto-open PiP when user switches to another tab/window.
-  // Document PiP requires user activation — if it is blocked by the browser we fall back
-  // to the standard HTMLVideoElement PiP API, which is explicitly allowed from
-  // visibilitychange events without a user gesture (per the Picture-in-Picture spec).
+  // Auto-open PiP on tab/window switch.
+  // autoOpenPiP() tries Document PiP first; falls back to Video PiP if user activation
+  // is not available (Document PiP → Video Element PiP both handled inside PiPManager).
   useEffect(() => {
-    const handleVisibilityChange = async () => {
+    const onVisibility = () => {
       if (document.hidden) {
-        if (pipSupported && !pipIsOpen) {
-          const opened = await openAllParticipantsPiP();
-
-          if (!opened && document.pictureInPictureEnabled) {
-            // Fallback: use standard video element PiP (single video, no user gesture needed)
-            const videoEl = document.querySelector<HTMLVideoElement>('video[autoplay]');
-            if (videoEl && videoEl.readyState >= 2) {
-              videoEl.requestPictureInPicture().catch((err) => {
-                console.warn('Video PiP fallback failed:', err);
-              });
-            }
-          }
-        }
+        autoOpenPiP();
       } else {
-        // User returned — close Document PiP
-        if (pipIsOpen) {
-          closePiP();
-        }
-        // Also exit standard video PiP if it was opened as fallback
-        if (document.pictureInPictureElement) {
-          document.exitPictureInPicture().catch(() => { });
-        }
+        autoClosePiP();
       }
     };
 
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
-  }, [pipSupported, pipIsOpen, openAllParticipantsPiP, closePiP]);
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => document.removeEventListener('visibilitychange', onVisibility);
+  }, [autoOpenPiP, autoClosePiP]);
+
 
   // Gallery resize handler
   const handleGalleryResize = useCallback((calcDrawer = false) => {
