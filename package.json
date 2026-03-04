@@ -13,7 +13,8 @@
     "format:check": "prettier --check .",
     "test": "vitest",
     "test:coverage": "vitest run --coverage",
-    "preview": "npx tsx scripts/generate-build-info.ts && vite preview"
+    "preview": "npx tsx scripts/generate-build-info.ts && vite preview",
+    "prepare": "husky"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.971.0",
@@ -67,10 +68,18 @@
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.4.26",
     "globals": "^17.0.0",
+    "husky": "^9.1.7",
     "jsdom": "^28.1.0",
+    "lint-staged": "^16.3.2",
     "prettier": "^3.8.1",
     "typescript-eslint": "^8.56.1",
     "vite": "^7.3.1",
     "vitest": "^4.0.18"
+  },
+  "lint-staged": {
+    "*.{ts,tsx,js,jsx}": [
+      "prettier --write",
+      "eslint --fix"
+    ]
   }
 }
