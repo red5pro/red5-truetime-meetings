@@ -2,7 +2,7 @@ import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import apiRoutes from './src/routes/apiRoutes.js';
-import * as configService from './src/services/configService.js';
+import configService from './src/services/configService.js';
 import healthController from './src/controllers/healthController.js';
 
 const app = express();

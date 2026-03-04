@@ -1,4 +1,4 @@
-import * as configService from '../services/configService.js';
+import configService from '../services/configService.js';
 import red5Service from '../services/red5Service.js';
 
 class HealthController {
