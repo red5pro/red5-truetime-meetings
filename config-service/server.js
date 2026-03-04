@@ -1,9 +1,9 @@
-require('dotenv').config();
-const express = require('express');
-const cors = require('cors');
-const apiRoutes = require('./src/routes/apiRoutes');
-const configService = require('./src/services/configService');
-const healthController = require('./src/controllers/healthController');
+import 'dotenv/config';
+import express from 'express';
+import cors from 'cors';
+import apiRoutes from './src/routes/apiRoutes.js';
+import configService from './src/services/configService.js';
+import healthController from './src/controllers/healthController.js';
 
 const app = express();
 const PORT = process.env.PORT || 3001;

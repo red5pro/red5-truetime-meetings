@@ -1,12 +1,12 @@
-const configService = require('../services/configService');
-const { validateConfig } = require('../utils/validation');
+import configService from '../services/configService.js';
+import { validateConfig } from '../utils/validation.js';
 
 class ConfigController {
   async getConfig(req, res) {
     try {
       const config = await configService.read();
       res.json(config);
-    } catch (error) {
+    } catch {
       res.status(500).json({ error: 'Failed to read configuration' });
     }
   }
@@ -80,4 +80,4 @@ class ConfigController {
   }
 }
 
-module.exports = new ConfigController();
+export default new ConfigController();

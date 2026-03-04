@@ -1,5 +1,5 @@
-const configService = require('../services/configService');
-const red5Service = require('../services/red5Service');
+import configService from '../services/configService.js';
+import red5Service from '../services/red5Service.js';
 
 class HealthController {
   check(req, res) {
@@ -40,4 +40,4 @@ class HealthController {
   }
 }
 
-module.exports = new HealthController();
+export default new HealthController();

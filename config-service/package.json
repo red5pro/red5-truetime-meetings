@@ -1,6 +1,7 @@
 {
   "name": "config-service",
   "version": "1.0.0",
+  "type": "module",
   "description": "Configuration management service for runtime config updates",
   "main": "server.js",
   "scripts": {
@@ -21,9 +22,11 @@
     "pubnub": "^10.1.0"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "@vitest/coverage-v8": "^4.0.18",
     "eslint": "^10.0.2",
     "eslint-config-prettier": "^10.1.8",
+    "globals": "^17.4.0",
     "prettier": "^3.8.1",
     "vitest": "^4.0.18"
   }
