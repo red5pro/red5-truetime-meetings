@@ -49,6 +49,8 @@ interface ApiEndpoints {
     getExternalStreams: string;
     addExternalStream: string;
     removeExternalStream: string;
+    startTranscription: string;
+    stopTranscription: string;
 }
 
 interface BackendConfig {
@@ -174,15 +176,39 @@ export const getBackendConfig = (): BackendConfig => {
         shouldGenerateToken,
         apiEndpoints: {
             generateToken: '/api/generate-token',
-            startRecording: '/as/v1/conference/room/{roomName}/startRecording',
-            stopRecording: '/as/v1/conference/room/{roomName}/stopRecording',
-            transcription: '/as/v1/conference/room/{roomName}/transcriptions',
-            blockUser: '/as/v1/conference/room/{roomName}/user/{userId}/block',
-            unblockUser: '/as/v1/conference/room/{roomName}/user/{userId}/unblock',
-            getRoomUsers: '/as/v1/conference/room/{roomName}/users',
-            getExternalStreams: '/as/v1/conference/external-streams',
-            addExternalStream: '/as/v1/conference/room/{roomName}/external-stream/{streamId}',
-            removeExternalStream: '/as/v1/conference/room/{roomName}/external-stream/{streamId}'
+            startRecording: isConfigServiceAvailable()
+                ? '/api/room/{roomName}/startRecording'
+                : '/as/v1/conference/room/{roomName}/startRecording',
+            stopRecording: isConfigServiceAvailable()
+                ? '/api/room/{roomName}/stopRecording'
+                : '/as/v1/conference/room/{roomName}/stopRecording',
+            transcription: isConfigServiceAvailable()
+                ? '/api/room/{roomName}/transcriptions'
+                : '/as/v1/conference/room/{roomName}/transcriptions',
+            blockUser: isConfigServiceAvailable()
+                ? '/api/room/{roomName}/user/{userId}/block'
+                : '/as/v1/conference/room/{roomName}/user/{userId}/block',
+            unblockUser: isConfigServiceAvailable()
+                ? '/api/room/{roomName}/user/{userId}/unblock'
+                : '/as/v1/conference/room/{roomName}/user/{userId}/unblock',
+            getRoomUsers: isConfigServiceAvailable()
+                ? '/api/room/{roomName}/users'
+                : '/as/v1/conference/room/{roomName}/users',
+            getExternalStreams: isConfigServiceAvailable()
+                ? '/api/external-streams'
+                : '/as/v1/conference/external-streams',
+            addExternalStream: isConfigServiceAvailable()
+                ? '/api/room/{roomName}/external-stream/{streamId}'
+                : '/as/v1/conference/room/{roomName}/external-stream/{streamId}',
+            removeExternalStream: isConfigServiceAvailable()
+                ? '/api/room/{roomName}/external-stream/{streamId}'
+                : '/as/v1/conference/room/{roomName}/external-stream/{streamId}',
+            startTranscription: isConfigServiceAvailable()
+                ? '/api/room/{roomName}/user/{userId}/start-transcription'
+                : '/as/v1/conference/room/{roomName}/user/{userId}/start-transcription',
+            stopTranscription: isConfigServiceAvailable()
+                ? '/api/room/{roomName}/user/{userId}/stop-transcription'
+                : '/as/v1/conference/room/{roomName}/user/{userId}/stop-transcription',
         }
     };
 };
