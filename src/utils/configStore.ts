@@ -7,6 +7,7 @@ export interface RuntimeConfig {
     VITE_BACKEND_HOST?: string;
     VITE_ENABLE_CLOSED_CAPTION?: string;
     VITE_ENABLE_RECORDING?: string;
+    VITE_ENABLE_EXTERNAL_STREAMS?: string;
     VITE_DEFAULT_THEME?: string;
     VITE_LOGO_URL?: string;
     VITE_BASENAME?: string;

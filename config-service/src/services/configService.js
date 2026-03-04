@@ -15,6 +15,7 @@ class ConfigService {
                 VITE_BACKEND_HOST: process.env.VITE_BACKEND_HOST || '',
                 VITE_ENABLE_RECORDING: process.env.VITE_ENABLE_RECORDING || 'false',
                 VITE_ENABLE_CLOSED_CAPTION: process.env.VITE_ENABLE_CLOSED_CAPTION || 'false',
+                VITE_ENABLE_EXTERNAL_STREAMS: process.env.VITE_ENABLE_EXTERNAL_STREAMS || 'false',
                 VITE_DEFAULT_THEME: process.env.VITE_DEFAULT_THEME || 'black',
                 VITE_TURN_SERVER_URL: process.env.VITE_TURN_SERVER_URL || 'stun:stun2.l.google.com:19302',
                 VITE_TURN_SERVER_USERNAME: process.env.VITE_TURN_SERVER_USERNAME || '',

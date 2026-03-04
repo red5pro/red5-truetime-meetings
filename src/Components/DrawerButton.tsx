@@ -10,6 +10,7 @@ interface DrawerButtonProps {
     handleEffectsOpen?: (open: boolean) => void;
     handleLocalRecordingDrawerOpen?: (open: boolean) => void;
     handleTranscriptionDrawerOpen?: (open: boolean) => void;
+    handleExternalStreamsDrawerOpen?: (open: boolean) => void;
 }
 
 function DrawerButton(props: DrawerButtonProps): JSX.Element {
@@ -23,6 +24,7 @@ function DrawerButton(props: DrawerButtonProps): JSX.Element {
         props?.handleEffectsOpen?.(false);
         props?.handleLocalRecordingDrawerOpen?.(false);
         props?.handleTranscriptionDrawerOpen?.(false);
+        props?.handleExternalStreamsDrawerOpen?.(false);
     };
 
     return (

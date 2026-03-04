@@ -1,6 +1,6 @@
 import { useState, useCallback, MutableRefObject } from 'react';
 import { usePostRequest } from "./usePostRequest";
-import { getRuntimeConfig } from "../utils/configStore";
+import { getBackendConfig } from "../utils/conferenceConfig";
 
 // Type definitions
 interface ConferenceClient {
@@ -71,10 +71,11 @@ export const useClosedCaptions = (client: Client): UseClosedCaptionsReturn => {
 
     const startCaption = useCallback(async (): Promise<void> => {
         try {
-            const result = await postData(
-                `https://${getRuntimeConfig().VITE_HOST}/as/v1/conference/room/${client.conferenceClient.current.roomId}/user/${client.conferenceClient.current.streamName}/start-transcription`,
-                {}
-            );
+            const backendConfig = getBackendConfig();
+            const url = `${backendConfig.host}${backendConfig.apiEndpoints.startTranscription
+                .replace('{roomName}', client.conferenceClient.current.roomId)
+                .replace('{userId}', client.conferenceClient.current.streamName)}`;
+            const result = await postData(url, {});
             console.log("startCaption: ", result);
         } catch (error) {
             console.error("Error starting caption:", error);
@@ -83,10 +84,11 @@ export const useClosedCaptions = (client: Client): UseClosedCaptionsReturn => {
 
     const stopCaption = useCallback(async (): Promise<void> => {
         try {
-            const result = await postData(
-                `https://${getRuntimeConfig().VITE_HOST}/as/v1/conference/room/${client.conferenceClient.current.roomId}/user/${client.conferenceClient.current.streamName}/stop-transcription`,
-                {}
-            );
+            const backendConfig = getBackendConfig();
+            const url = `${backendConfig.host}${backendConfig.apiEndpoints.stopTranscription
+                .replace('{roomName}', client.conferenceClient.current.roomId)
+                .replace('{userId}', client.conferenceClient.current.streamName)}`;
+            const result = await postData(url, {});
             console.log("stopCaption: ", result);
         } catch (error) {
             console.error("Error stopping caption:", error);

@@ -10,12 +10,14 @@ interface UseDrawerStatesReturn {
     effectsDrawerOpen: boolean;
     localRecordingDrawerOpen: boolean;
     transcriptionDrawerOpen: boolean;
+    externalStreamsDrawerOpen: boolean;
     handleInfoDrawerOpen: (open: boolean) => void;
     handleMessageDrawerOpen: (open: boolean) => void;
     handleParticipantListOpen: (open: boolean) => void;
     handleEffectsOpen: (open: boolean) => void;
     handleLocalRecordingDrawerOpen: (open: boolean) => void;
     handleTranscriptionDrawerOpen: (open: boolean) => void;
+    handleExternalStreamsDrawerOpen: (open: boolean) => void;
 }
 
 export const useDrawerStates = (): UseDrawerStatesReturn => {
@@ -25,6 +27,7 @@ export const useDrawerStates = (): UseDrawerStatesReturn => {
     const [effectsDrawerOpen, setEffectsDrawerOpen] = useState<boolean>(false);
     const [localRecordingDrawerOpen, setLocalRecordingDrawerOpen] = useState<boolean>(false);
     const [transcriptionDrawerOpen, setTranscriptionDrawerOpen] = useState<boolean>(false);
+    const [externalStreamsDrawerOpen, setExternalStreamsDrawerOpen] = useState<boolean>(false);
 
     const closeAllDrawers = (): void => {
         setInfoDrawerOpen(false);
@@ -33,6 +36,7 @@ export const useDrawerStates = (): UseDrawerStatesReturn => {
         setEffectsDrawerOpen(false);
         setLocalRecordingDrawerOpen(false);
         setTranscriptionDrawerOpen(false);
+        setExternalStreamsDrawerOpen(false);
     };
 
     const handleInfoDrawerOpen = (open: boolean): void => {
@@ -65,6 +69,11 @@ export const useDrawerStates = (): UseDrawerStatesReturn => {
         setTranscriptionDrawerOpen(open);
     };
 
+    const handleExternalStreamsDrawerOpen = (open: boolean): void => {
+        if (open) closeAllDrawers();
+        setExternalStreamsDrawerOpen(open);
+    };
+
     return {
         infoDrawerOpen,
         messageDrawerOpen,
@@ -73,11 +82,13 @@ export const useDrawerStates = (): UseDrawerStatesReturn => {
         effectsDrawerOpen,
         localRecordingDrawerOpen,
         transcriptionDrawerOpen,
+        externalStreamsDrawerOpen,
         handleInfoDrawerOpen,
         handleMessageDrawerOpen,
         handleParticipantListOpen,
         handleEffectsOpen,
         handleLocalRecordingDrawerOpen,
-        handleTranscriptionDrawerOpen
+        handleTranscriptionDrawerOpen,
+        handleExternalStreamsDrawerOpen
     };
 };
