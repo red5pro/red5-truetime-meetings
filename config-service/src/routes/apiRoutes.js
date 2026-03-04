@@ -1,10 +1,10 @@
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const authMiddleware = require('../middleware/authMiddleware');
-const configController = require('../controllers/configController');
-const tokenController = require('../controllers/tokenController');
-const roomController = require('../controllers/roomController');
-const healthController = require('../controllers/healthController');
+import authMiddleware from '../middleware/authMiddleware.js';
+import configController from '../controllers/configController.js';
+import tokenController from '../controllers/tokenController.js';
+import roomController from '../controllers/roomController.js';
+import healthController from '../controllers/healthController.js';
 
 // Config Routes
 router.get('/config', configController.getConfig);
@@ -61,4 +61,4 @@ router.get(
 );
 router.get('/health-check', healthController.check.bind(healthController));
 
-module.exports = router;
+export default router;

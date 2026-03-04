@@ -1,7 +1,7 @@
-const crypto = require('crypto');
-const jwt = require('jsonwebtoken');
-const PubNub = require('pubnub');
-const axios = require('axios');
+import crypto from 'crypto';
+import jwt from 'jsonwebtoken';
+import PubNub from 'pubnub';
+import axios from 'axios';
 
 class Red5Client {
   constructor(masterKey, masterSecret, host) {
@@ -70,7 +70,7 @@ class Red5Client {
         streamManagerHost,
       };
     } catch (error) {
-      throw new Error('Failed to extract credentials from master key/secret: ' + error.message);
+      throw new Error('Failed to extract credentials from master key/secret', { cause: error });
     }
   }
 
@@ -92,7 +92,7 @@ class Red5Client {
 
       return decrypted;
     } catch (error) {
-      throw new Error('Failed to decrypt credentials: ' + error.message);
+      throw new Error('Failed to decrypt credentials', { cause: error });
     }
   }
 
@@ -151,7 +151,7 @@ class Red5Client {
 
       return token;
     } catch (error) {
-      throw new Error('Failed to generate PubNub token: ' + error.message);
+      throw new Error('Failed to generate PubNub token', { cause: error });
     }
   }
 
@@ -180,7 +180,7 @@ class Red5Client {
 
       return token;
     } catch (error) {
-      throw new Error('Failed to generate chat token: ' + error.message);
+      throw new Error('Failed to generate chat token', { cause: error });
     }
   }
 
@@ -223,7 +223,7 @@ class Red5Client {
 
       return conferenceToken;
     } catch (error) {
-      throw new Error('Failed to generate token: ' + error.message);
+      throw new Error('Failed to generate token', { cause: error });
     }
   }
 
@@ -256,7 +256,7 @@ class Red5Client {
       const now = Math.floor(Date.now() / 1000);
 
       return payload.exp > now;
-    } catch (error) {
+    } catch {
       return false;
     }
   }
@@ -325,7 +325,7 @@ class Red5Client {
       const token = jwt.sign(payload, this.credentials.conferenceSecret, { algorithm: 'HS256' });
       return token;
     } catch (error) {
-      throw new Error('Failed to generate admin token: ' + error.message);
+      throw new Error('Failed to generate admin token', { cause: error });
     }
   }
 
@@ -361,9 +361,10 @@ class Red5Client {
       if (error.response) {
         throw new Error(
           `Conference API error: ${error.response.data.message || error.response.statusText}`,
+          { cause: error },
         );
       }
-      throw new Error('Failed to make conference request: ' + error.message);
+      throw new Error('Failed to make conference request', { cause: error });
     }
   }
 
@@ -606,4 +607,4 @@ class Red5Client {
   }
 }
 
-module.exports = Red5Client;
+export default Red5Client;
