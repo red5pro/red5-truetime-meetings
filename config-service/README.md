@@ -48,11 +48,13 @@ docker run -p 3001:3001 \
 ## API Usage
 
 ### Get current configuration (No authentication required)
+
 ```bash
 curl http://localhost:3000/api/config
 ```
 
 ### Update specific fields (partial update) - **Requires Authentication**
+
 ```bash
 curl -X POST http://localhost:3000/api/config \
   -H "Content-Type: application/json" \
@@ -64,6 +66,7 @@ curl -X POST http://localhost:3000/api/config \
 ```
 
 ### Replace entire configuration - **Requires Authentication**
+
 ```bash
 curl -X PUT http://localhost:3000/api/config \
   -H "Content-Type: application/json" \
@@ -82,19 +85,23 @@ curl -X PUT http://localhost:3000/api/config \
 The service validates all configuration values:
 
 ### URL Fields
+
 - `VITE_HOST` - Must be a valid URL or empty string
 - `VITE_BACKEND_HOST` - Must be a valid URL or empty string
 - `VITE_LOGO_URL` - Must be a valid URL or empty string
 - `VITE_TURN_SERVER_URL` - Must start with `turn:` or `turns:` or be empty
 
 ### Boolean Fields
+
 - `VITE_ENABLE_RECORDING` - Must be `"true"` or `"false"`
 - `VITE_ENABLE_CLOSED_CAPTION` - Must be `"true"` or `"false"`
 
 ### Theme Field
+
 - `VITE_DEFAULT_THEME` - Must be one of: `default`, `dark`, `blue`, `black`
 
 ### Example Validation Error Response
+
 ```json
 {
   "error": "Validation failed",
@@ -134,6 +141,7 @@ config-service:
 ```
 
 Or use a `.env` file:
+
 ```bash
 MEETINGS_CONFIG_ADMIN_TOKEN=your-super-secret-token-here-min-32-chars
 ```
@@ -141,6 +149,7 @@ MEETINGS_CONFIG_ADMIN_TOKEN=your-super-secret-token-here-min-32-chars
 ## Error Handling
 
 ### 401 Unauthorized
+
 ```json
 {
   "error": "Invalid authentication token"
@@ -148,6 +157,7 @@ MEETINGS_CONFIG_ADMIN_TOKEN=your-super-secret-token-here-min-32-chars
 ```
 
 ### 400 Bad Request (Validation Error)
+
 ```json
 {
   "error": "Validation failed",
@@ -156,7 +166,9 @@ MEETINGS_CONFIG_ADMIN_TOKEN=your-super-secret-token-here-min-32-chars
 ```
 
 ### 500 Internal Server Error
+
 ```json
 {
   "error": "Failed to update configuration"
 }
+```

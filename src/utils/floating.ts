@@ -20,79 +20,77 @@
  *   give a random size between those values.
  */
 interface FloatingOptions {
-    content?: string;
-    number?: number;
-    duration?: number;
-    repeat?: number | string;
-    direction?: string;
-    size?: number | [number, number];
+  content?: string;
+  number?: number;
+  duration?: number;
+  repeat?: number | string;
+  direction?: string;
+  size?: number | [number, number];
 }
 
 const STYLE_ID = 'floating-style';
 const ANIMATION_KEYFRAMES = 201;
 
-export default function floating(
-    {
-        content = '👌',
-        number = 1,
-        duration = 10,
-        repeat = 'infinite',
-        direction = 'normal',
-        size = 2,
-    }: FloatingOptions = {}
-): () => void {
-    // Initialize styles if not already present
-    initializeStyles();
+export default function floating({
+  content = '👌',
+  number = 1,
+  duration = 10,
+  repeat = 'infinite',
+  direction = 'normal',
+  size = 2,
+}: FloatingOptions = {}): () => void {
+  // Initialize styles if not already present
+  initializeStyles();
 
-    // Create container for floating elements
-    const container = createContainer();
+  // Create container for floating elements
+  const container = createContainer();
 
-    // Create and append floating elements
-    for (let i = 0; i < number; i++) {
-        const floater = createFloater({
-            content,
-            size: getRandomSize(size),
-            duration,
-            delay: i * Math.random(),
-            repeat,
-            direction,
-        });
+  // Create and append floating elements
+  for (let i = 0; i < number; i++) {
+    const floater = createFloater({
+      content,
+      size: getRandomSize(size),
+      duration,
+      delay: i * Math.random(),
+      repeat,
+      direction,
+    });
 
-        container.appendChild(floater);
-    }
+    container.appendChild(floater);
+  }
 
-    document.body.appendChild(container);
+  document.body.appendChild(container);
 
-    // Return cleanup function
-    return () => {
-        container.remove();
-    };
+  // Return cleanup function
+  return () => {
+    container.remove();
+  };
 }
 
 /**
  * Initialize or update the global styles for floating animations
  */
 function initializeStyles(): void {
-    let styleElement = document.getElementById(STYLE_ID) as HTMLStyleElement;
+  let styleElement = document.getElementById(STYLE_ID) as HTMLStyleElement;
 
-    if (!styleElement) {
-        styleElement = document.createElement('style');
-        styleElement.id = STYLE_ID;
-        document.head.appendChild(styleElement);
-    }
+  if (!styleElement) {
+    styleElement = document.createElement('style');
+    styleElement.id = STYLE_ID;
+    document.head.appendChild(styleElement);
+  }
 
-    if (!styleElement.innerHTML) {
-        styleElement.innerHTML = generateStyles();
-    }
+  if (!styleElement.innerHTML) {
+    styleElement.innerHTML = generateStyles();
+  }
 }
 
 /**
  * Generate CSS styles for the floating animation
  */
 function generateStyles(): string {
-    const keyframes = generateKeyframes();
+  const keyframes = generateKeyframes();
 
-    return `
+  return `
         .float-container {
             width: 100vw;
             height: 100vh;
@@ -119,57 +117,57 @@ function generateStyles(): string {
  * Generate keyframe steps for the floating animation
  */
 function generateKeyframes(): string {
-    return Array.from({ length: ANIMATION_KEYFRAMES + 1 }, (_, index) => {
-        const percent = (index * 100) / ANIMATION_KEYFRAMES;
-        const verticalPosition = 110 + index * (-120 / ANIMATION_KEYFRAMES);
+  return Array.from({ length: ANIMATION_KEYFRAMES + 1 }, (_, index) => {
+    const percent = (index * 100) / ANIMATION_KEYFRAMES;
+    const verticalPosition = 110 + index * (-120 / ANIMATION_KEYFRAMES);
 
-        return `${percent}% {
+    return `${percent}% {
             transform: translate(2vw, ${verticalPosition}vh);
         }`;
-    }).join('\n');
+  }).join('\n');
 }
 
 /**
  * Create the container element for floating items
  */
 function createContainer(): HTMLDivElement {
-    const container = document.createElement('div');
-    container.className = 'float-container';
-    return container;
+  const container = document.createElement('div');
+  container.className = 'float-container';
+  return container;
 }
 
 /**
  * Get a random size within the specified range
  */
 function getRandomSize(size: number | [number, number]): number {
-    if (Array.isArray(size)) {
-        const [min, max] = size;
-        return Math.random() * (max - min) + min;
-    }
-    return size;
+  if (Array.isArray(size)) {
+    const [min, max] = size;
+    return Math.random() * (max - min) + min;
+  }
+  return size;
 }
 
 interface FloaterConfig {
-    content: string;
-    size: number;
-    duration: number;
-    delay: number;
-    repeat: number | string;
-    direction: string;
+  content: string;
+  size: number;
+  duration: number;
+  delay: number;
+  repeat: number | string;
+  direction: string;
 }
 
 /**
  * Create a single floating element
  */
 function createFloater(config: FloaterConfig): HTMLDivElement {
-    const { content, size, duration, delay, repeat, direction } = config;
+  const { content, size, duration, delay, repeat, direction } = config;
 
-    const floater = document.createElement('div');
-    floater.innerHTML = content;
+  const floater = document.createElement('div');
+  floater.innerHTML = content;
 
-    const horizontalStart = Math.random() * 100;
+  const horizontalStart = Math.random() * 100;
 
-    floater.style.cssText = `
+  floater.style.cssText = `
         position: absolute;
         left: 0;
         font-size: ${size}em;
@@ -184,14 +182,14 @@ function createFloater(config: FloaterConfig): HTMLDivElement {
             margin-left: ${Math.random() * 100}px;\`;
     `;
 
-    // Clean up element after animation completes (if not infinite)
-    if (repeat !== 'infinite') {
-        floater.addEventListener('animationend', (e: AnimationEvent) => {
-            if (e.animationName === 'float') {
-                floater.remove();
-            }
-        });
-    }
+  // Clean up element after animation completes (if not infinite)
+  if (repeat !== 'infinite') {
+    floater.addEventListener('animationend', (e: AnimationEvent) => {
+      if (e.animationName === 'float') {
+        floater.remove();
+      }
+    });
+  }
 
-    return floater;
+  return floater;
 }

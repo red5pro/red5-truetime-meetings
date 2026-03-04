@@ -26,3 +26,4 @@ public/build-info.json
 .env.development
 public/config.json
 config-service/config.json
+coverage
