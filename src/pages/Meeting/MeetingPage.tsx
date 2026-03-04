@@ -202,6 +202,26 @@ const MeetingPage = React.memo<MeetingPageProps>((props) => {
     }
   }, [pipIsOpen, allParticipants, updatePiP]);
 
+  // Auto-open PiP when user switches to another tab/window
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        // User navigated away — open PiP if supported and not already open
+        if (pipSupported && !pipIsOpen) {
+          openAllParticipantsPiP();
+        }
+      } else {
+        // User returned to the meeting tab — close PiP automatically
+        if (pipIsOpen) {
+          closePiP();
+        }
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, [pipSupported, pipIsOpen, openAllParticipantsPiP, closePiP]);
+
   // Gallery resize handler
   const handleGalleryResize = useCallback((calcDrawer = false) => {
     const gallery = document.getElementById('stream-gallery');
