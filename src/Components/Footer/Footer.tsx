@@ -24,6 +24,7 @@ import CaptionsButton from "./Components/CaptionsButton.tsx"
 import { Devices } from "../DeviceSelector.tsx";
 import LocalRecordingButton from './Components/LocalRecordingButton.tsx'
 import { isNull } from 'lodash'
+import { getRuntimeConfig } from '../../utils/configStore'
 
 interface FooterProps {
     updateDevicesList: () => void;
@@ -101,6 +102,7 @@ interface FooterProps {
     handleTranscriptionDrawerOpen?: (open: boolean) => void
     externalStreamsDrawerOpen?: boolean
     handleExternalStreamsDrawerOpen?: (open: boolean) => void
+    hideExternalStreams?: boolean
 }
 
 
@@ -125,6 +127,7 @@ function Footer(props: FooterProps) {
     const theme = useTheme()
     const mobileBreakpoint = 900
     const [windowWidth, setWindowWidth] = React.useState(window.innerWidth)
+    const isExternalStreamsEnabled = getRuntimeConfig().VITE_ENABLE_EXTERNAL_STREAMS === 'true'
 
     React.useEffect(() => {
         const handleResize = () => {
@@ -375,6 +378,7 @@ function Footer(props: FooterProps) {
                                     handleTranscriptionDrawerOpen={(open: boolean) => props?.handleTranscriptionDrawerOpen?.(open)}
                                     externalStreamsDrawerOpen={props?.externalStreamsDrawerOpen}
                                     handleExternalStreamsDrawerOpen={props?.handleExternalStreamsDrawerOpen}
+                                    hideExternalStreams={!isExternalStreamsEnabled}
                                 />
                             </Grid>
                         ) : null}
@@ -390,12 +394,14 @@ function Footer(props: FooterProps) {
                             handleInfoDrawerOpen={props?.handleInfoDrawerOpen}
                         />
                     </Grid>
-                    <Grid size="auto">
-                        <ExternalStreamsButton
-                            open={props?.externalStreamsDrawerOpen}
-                            onClick={props?.handleExternalStreamsDrawerOpen}
-                        />
-                    </Grid>
+                    {isExternalStreamsEnabled && (
+                        <Grid size="auto">
+                            <ExternalStreamsButton
+                                open={props?.externalStreamsDrawerOpen}
+                                onClick={props?.handleExternalStreamsDrawerOpen}
+                            />
+                        </Grid>
+                    )}
                     {(props?.isLocalRecordingActive || !isNull(props?.localRecordingStatus)) && (
                         <Grid size="auto">
                             <LocalRecordingButton
