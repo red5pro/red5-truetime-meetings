@@ -274,6 +274,7 @@ class Red5Client {
       const payload = JSON.parse(Buffer.from(parts[1], 'base64').toString());
       return payload.pubnubToken || null;
     } catch (error) {
+      console.error('Failed to extract PubNub token', { cause: error });
       return null;
     }
   }
@@ -299,6 +300,7 @@ class Red5Client {
         isValid: payload.exp > Math.floor(Date.now() / 1000),
       };
     } catch (error) {
+      console.error('Failed to decode token', { cause: error });
       return null;
     }
   }
