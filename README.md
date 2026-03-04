@@ -1,4 +1,4 @@
-# TrueTime Meetings by Red5
+# TrueTime Meetings™ by Red5
 
 A real-time video conferencing application built with React and Red5 Pro, featuring multi-participant video calls, screen sharing, chat messaging, and various interactive features.
 
@@ -19,6 +19,7 @@ A real-time video conferencing application built with React and Red5 Pro, featur
 - **Raise hand functionality** for meeting management
 - **Participant list** with status indicators
 - **Audio level detection** and visual talker indicators
+- **External Streams Drawer** for viewing additional media sources
 
 ### Media Controls
 
@@ -132,8 +133,13 @@ VITE_TURN_SERVER_CREDENTIAL=""
 VITE_PUBNUB_PUBLISH_KEY="pub-x-xxxxxx-xxxxxx-xxxxxx-xxxxxx-xxxxxx"
 VITE_PUBNUB_SUBSCRIBE_KEY="sub-x-xxxxxx-xxxxxx-xxxxxx-xxxxxx-xxxxxx"
 VITE_VIRTUAL_BACKGROUND_IMAGES="https://xxx,https://xxx,https://xxx"
+VITE_ENABLE_RECORDING="false"
+VITE_ENABLE_CLOSED_CAPTION="false"
+VITE_ENABLE_EXTERNAL_STREAMS="false"
 VITE_DEFAULT_THEME='black'
 VITE_LOGO_URL="https://xxx"
+VITE_BASENAME="/"
+VITE_CONFIG_SERVICE_URL="http://localhost:3001"
 ```
 
 > **Note**: Runtime configuration from `config.json` takes precedence over build-time environment variables.
