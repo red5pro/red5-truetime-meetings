@@ -155,13 +155,16 @@ export const useConferenceActions = (
                     }
                 }
             } else {
-                const data = await response.json();
-                if (response.status === 500 && data.error === "Publisher limit reached.") {
-                    displayMessageRef.current('The node group is reached maximum capacity. Please try again later.');
-                    return false;
+                if (response.status === 405) {
+                    return true;
                 }
                 if (response.status === 404 || response.status === 500) {
                     displayMessageRef.current('The node group is currently deploying and not yet active. Please try again in a few moments.');
+                    return false;
+                }
+                const data = await response.json();
+                if (response.status === 500 && data.error === "Publisher limit reached.") {
+                    displayMessageRef.current('The node group is reached maximum capacity. Please try again later.');
                     return false;
                 }
             }
