@@ -1,4 +1,4 @@
 export const ThemeList = {
-  Black: "black",
-  Blue: "blue",
+  Black: 'black',
+  Blue: 'blue',
 };

@@ -1,8 +1,8 @@
-import translationEN from "../i18n/en.json";
+import translationEN from '../i18n/en.json';
 
 export const AvailableLanguages = {
   en: {
-    name: "English",
+    name: 'English',
     translation: translationEN,
-  }
+  },
 };

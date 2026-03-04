@@ -1,5 +1,5 @@
 export const LayoutOptions = {
-  Auto: "auto",
-  Tiled: "tiled",
-  Sidebar: "sidebar"
-}
+  Auto: 'auto',
+  Tiled: 'tiled',
+  Sidebar: 'sidebar',
+};

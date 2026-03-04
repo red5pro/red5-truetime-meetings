@@ -1,6 +1,6 @@
 html,
 body {
-  color: "#FFF";
+  color: '#FFF';
   overflow-y: auto;
 }
 
@@ -47,7 +47,6 @@ form {
   box-shadow: inset 0 0 0 10px;
   color: #e5e6e7;
 }
-
 
 #participant-scroll::-webkit-scrollbar {
   width: 12px;
@@ -116,11 +115,7 @@ form {
   border-radius: 21px;
   padding: min(18px, 9%) min(18px, 6%) min(18px, 5%);
   background: rgb(254, 246, 243);
-  background: linear-gradient(
-    180deg,
-    rgba(254, 246, 243, 0) 0%,
-    rgba(0, 0, 0, 0.5) 100%
-  );
+  background: linear-gradient(180deg, rgba(254, 246, 243, 0) 0%, rgba(0, 0, 0, 0.5) 100%);
 }
 .name-indicator .name {
   font-size: 16px;
@@ -263,31 +258,29 @@ form {
   }
 }
 
- .pinned-main {
-    width: 80%;
-    padding: 20px;
- }
-
-
-.pinned-video {
-    width: 100%;
-    height: 100%;
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: relative;
+.pinned-main {
+  width: 80%;
+  padding: 20px;
 }
 
+.pinned-video {
+  width: 100%;
+  height: 100%;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
 
 .sidebar {
-      width: 20%;
-      background-color: #2d2d2d;
-      padding: 20px;
-      display: flex;
-      flex-direction: column;
-      gap: 15px;
-      overflow-y: auto;
+  width: 20%;
+  background-color: #2d2d2d;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  overflow-y: auto;
 }
 
 /* Container styles */
@@ -521,13 +514,13 @@ form {
   .layout-pinned {
     flex-direction: column;
   }
-  
+
   .layout-pinned .pinned-main {
     position: relative;
     width: 100% !important;
     height: 70%;
   }
-  
+
   .layout-pinned .sidebar-video {
     position: relative;
     width: 120px !important;
@@ -537,7 +530,7 @@ form {
     display: inline-block;
     margin-right: 10px;
   }
-  
+
   .layout-pinned::after {
     content: '';
     position: relative;
