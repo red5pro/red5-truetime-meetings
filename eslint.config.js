@@ -8,7 +8,7 @@ import eslintConfigPrettier from 'eslint-config-prettier';
 
 export default [
   {
-    ignores: ['dist'],
+    ignores: ['dist', 'public/rnnoiseWorklet.js', '**/coverage/**'],
   },
   // Configuration for JavaScript files
   {
@@ -31,6 +31,18 @@ export default [
       ...reactHooks.configs.recommended.rules,
       'no-unused-vars': ['error', { varsIgnorePattern: '^[A-Z_]' }],
       'react-refresh/only-export-components': ['warn', { allowConstantExport: true }],
+    },
+  },
+  // Configuration for config-service (Node.js)
+  {
+    files: ['config-service/**/*.js'],
+    languageOptions: {
+      globals: {
+        ...globals.node,
+      },
+    },
+    rules: {
+      'no-undef': 'error',
     },
   },
   // Configuration for TypeScript files
