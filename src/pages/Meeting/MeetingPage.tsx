@@ -131,16 +131,16 @@ const MeetingPage = React.memo<MeetingPageProps>((props) => {
     keyboardShortcuts.setIsTapToTalkEnabled(pushToTalkEnabled);
   }, [pushToTalkEnabled, keyboardShortcuts]);
 
-  // Open all participants PiP
-  const openAllParticipantsPiP = useCallback(() => {
+  // Open all participants PiP — returns true if Document PiP opened successfully
+  const openAllParticipantsPiP = useCallback(async (): Promise<boolean> => {
     if (!pipSupported) {
       console.warn('Picture-in-Picture is not supported in this browser');
-      return;
+      return false;
     }
 
     const currentProps = propsRef.current;
 
-    openPiP({
+    return openPiP({
       participants: allParticipants,
       onMuteToggle: (streamId: string) => {
         if (streamId === currentProps.streamName) {
@@ -202,18 +202,34 @@ const MeetingPage = React.memo<MeetingPageProps>((props) => {
     }
   }, [pipIsOpen, allParticipants, updatePiP]);
 
-  // Auto-open PiP when user switches to another tab/window
+  // Auto-open PiP when user switches to another tab/window.
+  // Document PiP requires user activation — if it is blocked by the browser we fall back
+  // to the standard HTMLVideoElement PiP API, which is explicitly allowed from
+  // visibilitychange events without a user gesture (per the Picture-in-Picture spec).
   useEffect(() => {
-    const handleVisibilityChange = () => {
+    const handleVisibilityChange = async () => {
       if (document.hidden) {
-        // User navigated away — open PiP if supported and not already open
         if (pipSupported && !pipIsOpen) {
-          openAllParticipantsPiP();
+          const opened = await openAllParticipantsPiP();
+
+          if (!opened && document.pictureInPictureEnabled) {
+            // Fallback: use standard video element PiP (single video, no user gesture needed)
+            const videoEl = document.querySelector<HTMLVideoElement>('video[autoplay]');
+            if (videoEl && videoEl.readyState >= 2) {
+              videoEl.requestPictureInPicture().catch((err) => {
+                console.warn('Video PiP fallback failed:', err);
+              });
+            }
+          }
         }
       } else {
-        // User returned to the meeting tab — close PiP automatically
+        // User returned — close Document PiP
         if (pipIsOpen) {
           closePiP();
+        }
+        // Also exit standard video PiP if it was opened as fallback
+        if (document.pictureInPictureElement) {
+          document.exitPictureInPicture().catch(() => { });
         }
       }
     };
