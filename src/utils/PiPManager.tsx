@@ -229,7 +229,8 @@ class PiPManager {
         return 'document';
       } catch (e) {
         const isDomEx = e instanceof DOMException;
-        const isNotAllowed = isDomEx && (e.name === 'NotAllowedError' || e.name === 'SecurityError');
+        const isNotAllowed =
+          isDomEx && (e.name === 'NotAllowedError' || e.name === 'SecurityError');
         if (!isNotAllowed) {
           console.error('[PiPManager] tryAutoOpen Document PiP error:', e);
         }
@@ -260,7 +261,7 @@ class PiPManager {
   autoClose(): void {
     this.close();
     if (document.pictureInPictureElement) {
-      document.exitPictureInPicture().catch(() => { });
+      document.exitPictureInPicture().catch(() => {});
     }
   }
 
@@ -281,7 +282,9 @@ class PiPManager {
             this.pipWindow!.document.head.appendChild(link);
           } else if (sheet.ownerNode && sheet.cssRules) {
             const style = this.pipWindow!.document.createElement('style');
-            style.textContent = Array.from(sheet.cssRules).map((r) => r.cssText).join('\n');
+            style.textContent = Array.from(sheet.cssRules)
+              .map((r) => r.cssText)
+              .join('\n');
             this.pipWindow!.document.head.appendChild(style);
           }
         } catch {
@@ -529,10 +532,7 @@ const PiPParticipant: React.FC<PiPParticipantProps> = ({
         />
       ) : (
         <div className="pip-audio-only">
-          <Avatar
-            src={defaultAvatar}
-            sx={{ width: 56, height: 56, opacity: 0.85 }}
-          />
+          <Avatar src={defaultAvatar} sx={{ width: 56, height: 56, opacity: 0.85 }} />
           <div className="pip-audio-only-name">{label}</div>
         </div>
       )}
@@ -622,9 +622,17 @@ export const usePictureInPicture = (): UsePictureInPictureReturn => {
         // Dynamic sizing by participant count
         const count = participants.length;
         const adjustedWidth =
-          count <= 4 ? Math.max(600, width) : count <= 9 ? Math.max(800, width) : Math.max(1000, width);
+          count <= 4
+            ? Math.max(600, width)
+            : count <= 9
+              ? Math.max(800, width)
+              : Math.max(1000, width);
         const adjustedHeight =
-          count <= 4 ? Math.max(400, height) : count <= 9 ? Math.max(600, height) : Math.max(700, height);
+          count <= 4
+            ? Math.max(400, height)
+            : count <= 9
+              ? Math.max(600, height)
+              : Math.max(700, height);
 
         await pipManager.openWindow({
           width: adjustedWidth,
@@ -723,7 +731,17 @@ export const usePictureInPicture = (): UsePictureInPictureReturn => {
     setError(null);
   }, []);
 
-  return { isSupported, isOpen, error, openPiP, updatePiP, closePiP, togglePiP, autoOpen, autoClose };
+  return {
+    isSupported,
+    isOpen,
+    error,
+    openPiP,
+    updatePiP,
+    closePiP,
+    togglePiP,
+    autoOpen,
+    autoClose,
+  };
 };
 
 // ---------------------------------------------------------------------------
@@ -768,7 +786,12 @@ export const PiPButton: React.FC<PiPButtonProps> = ({
           : `Open Picture-in-Picture (${participants.length} participant${participants.length !== 1 ? 's' : ''})`)
       }
     >
-      <IconButton onClick={handleClick} disabled={disabled} size={size} color={isOpen ? 'primary' : 'default'}>
+      <IconButton
+        onClick={handleClick}
+        disabled={disabled}
+        size={size}
+        color={isOpen ? 'primary' : 'default'}
+      >
         <PictureInPicture />
       </IconButton>
     </Tooltip>

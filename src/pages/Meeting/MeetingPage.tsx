@@ -165,12 +165,8 @@ const MeetingPage = React.memo<MeetingPageProps>((props) => {
     [allParticipants],
   );
 
-
   // Open all participants PiP
-  const openAllParticipantsPiP = useCallback(
-    () => openPiP(pipOptions),
-    [openPiP, pipOptions],
-  );
+  const openAllParticipantsPiP = useCallback(() => openPiP(pipOptions), [openPiP, pipOptions]);
 
   // Keep PiP content fresh when participants change
   useEffect(() => {
@@ -192,7 +188,6 @@ const MeetingPage = React.memo<MeetingPageProps>((props) => {
     document.addEventListener('visibilitychange', onVisibility);
     return () => document.removeEventListener('visibilitychange', onVisibility);
   }, [autoOpenPiP, autoClosePiP]);
-
 
   // Gallery resize handler
   const handleGalleryResize = useCallback((calcDrawer = false) => {
