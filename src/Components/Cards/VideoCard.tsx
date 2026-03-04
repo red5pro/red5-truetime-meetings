@@ -6,8 +6,10 @@ import {
     Box,
     Tooltip,
     Theme,
+    Slider,
 } from '@mui/material'
 import Grid from '@mui/material/Grid2'
+import VolumeUp from '@mui/icons-material/VolumeUp'
 import { useTranslation } from 'react-i18next'
 import { isMobile, isTablet } from 'react-device-detect'
 
@@ -86,6 +88,7 @@ interface OverlayButtonsProps {
     setMuteParticipantDialogOpen: (open: boolean) => void;
     pinVideo: (streamId: string) => void;
     unpinVideo: (force?: boolean) => void;
+    metaData?: string;
 }
 
 interface VideoCardProps extends VideoHTMLAttributes<HTMLVideoElement> {
@@ -108,6 +111,7 @@ interface VideoCardProps extends VideoHTMLAttributes<HTMLVideoElement> {
     setMuteParticipantDialogOpen: (open: boolean) => void;
     connectionQuality?: number;
     talkers?: Talker[];
+    metaData?: string;
 }
 
 // Styled components
@@ -141,7 +145,7 @@ const ScreenShareOverlay = styled(Box)(({ theme }: { theme: Theme }) => ({
     backdropFilter: 'blur(4px)',
 }))
 
-const LoadingContainer = styled(Box)(({}: { theme: Theme }) => ({
+const LoadingContainer = styled(Box)(({ }: { theme: Theme }) => ({
     display: 'flex',
     justifyContent: 'center',
     alignItems: 'center',
@@ -183,12 +187,12 @@ const NAME_INDICATOR_STYLE = {
 }
 
 const ModerationButtons: React.FC<ModerationButtonsProps> = ({
-                                                                 micMuted,
-                                                                 streamId,
-                                                                 name,
-                                                                 setParticipantIdMuted,
-                                                                 setMuteParticipantDialogOpen
-                                                             }) => {
+    micMuted,
+    streamId,
+    name,
+    setParticipantIdMuted,
+    setMuteParticipantDialogOpen
+}) => {
     const handleToggleMic = () => {
         if (micMuted) {
             return
@@ -318,13 +322,13 @@ const VideoTitle = React.memo<VideoTitleProps>(({ name, isRaiseHand }) => {
 })
 
 const VideoPlayer = React.memo<VideoPlayerProps>(({
-                                                      isMine,
-                                                      isCamTurnedOff,
-                                                      streamId,
-                                                      hidePlayer,
-                                                      isPending,
-                                                      videoProps
-                                                  }) => {
+    isMine,
+    isCamTurnedOff,
+    streamId,
+    hidePlayer,
+    isPending,
+    videoProps
+}) => {
     const videoStyle = useMemo(() => {
         if (hidePlayer) {
             return {
@@ -399,24 +403,39 @@ const ScreenShareWarning = React.memo(() => {
 })
 
 const OverlayButtons = React.memo<OverlayButtonsProps>(({
-                                                            isMine,
-                                                            displayHover,
-                                                            hidePin,
-                                                            pinned,
-                                                            layout,
-                                                            streamId,
-                                                            name,
-                                                            micMuted,
-                                                            setParticipantIdMuted,
-                                                            setMuteParticipantDialogOpen,
-                                                            pinVideo,
-                                                            unpinVideo
-                                                        }) => {
+    isMine,
+    displayHover,
+    hidePin,
+    pinned,
+    layout,
+    streamId,
+    name,
+    micMuted,
+    setParticipantIdMuted,
+    setMuteParticipantDialogOpen,
+    pinVideo,
+    unpinVideo,
+    metaData
+}) => {
     if (hidePin) return null
 
     const shouldShowPinButton = !isMobile &&
         !isTablet &&
         !(pinned && layout === LayoutOptions.Sidebar)
+
+    const isExternalStream = metaData === 'external-stream'
+    const [volume, setVolume] = useState<number>(1)
+
+    const handleVolumeChange = useCallback((_: Event, newValue: number | number[]) => {
+        const val = newValue as number
+        setVolume(val)
+        const videoId = isMine ? 'red5pro-publisher' : `red5pro-subscriber-${streamId}`
+        const videoEl = document.getElementById(videoId) as HTMLVideoElement
+        if (videoEl) {
+            videoEl.volume = val
+            videoEl.muted = val === 0
+        }
+    }, [isMine, streamId])
 
     return (
         <Box
@@ -447,7 +466,7 @@ const OverlayButtons = React.memo<OverlayButtonsProps>(({
                         pinned={pinned}
                     />
                 )}
-                {!isMine && (
+                {!isMine && !isExternalStream && (
                     <ModerationButtons
                         name={name}
                         streamId={streamId}
@@ -455,6 +474,20 @@ const OverlayButtons = React.memo<OverlayButtonsProps>(({
                         setParticipantIdMuted={setParticipantIdMuted}
                         setMuteParticipantDialogOpen={setMuteParticipantDialogOpen}
                     />
+                )}
+                {!isMine && isExternalStream && (
+                    <Box sx={{ display: 'flex', alignItems: 'center', ml: 1, width: 100, pointerEvents: 'auto' }}>
+                        <VolumeUp sx={{ color: 'white', mr: 1 }} fontSize="small" />
+                        <Slider
+                            size="small"
+                            min={0}
+                            max={1}
+                            step={0.01}
+                            value={volume}
+                            onChange={handleVolumeChange}
+                            sx={{ color: 'white' }}
+                        />
+                    </Box>
                 )}
             </Box>
         </Box>
@@ -483,6 +516,7 @@ const VideoCard = React.memo<VideoCardProps>((props) => {
         setMuteParticipantDialogOpen,
         connectionQuality = 0,
         talkers = [],
+        metaData,
         ...videoProps
     } = props
     const theme = useTheme()
@@ -550,6 +584,7 @@ const VideoCard = React.memo<VideoCardProps>((props) => {
                 micMuted={isMicMuted}
                 setParticipantIdMuted={setParticipantIdMuted}
                 setMuteParticipantDialogOpen={setMuteParticipantDialogOpen}
+                metaData={metaData}
             />
 
             <Box

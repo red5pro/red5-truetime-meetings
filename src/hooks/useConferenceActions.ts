@@ -140,6 +140,13 @@ export const useConferenceActions = (
                     displayMessageRef.current('The configuration server is unreachable. Please verify your connection or contact support.');
                     return false;
                 }
+                if (response.status === 500) {
+                    const data = await response.json();
+                    if (data.error === "Publisher limit reached.") {
+                        displayMessageRef.current('The node group is reached maximum capacity. Please try again later.');
+                        return false;
+                    }
+                }
                 if (response.status === 200) {
                     const data = await response.json();
                     if (data.isAvailable === false) {
@@ -148,6 +155,11 @@ export const useConferenceActions = (
                     }
                 }
             } else {
+                const data = await response.json();
+                if (response.status === 500 && data.error === "Publisher limit reached.") {
+                    displayMessageRef.current('The node group is reached maximum capacity. Please try again later.');
+                    return false;
+                }
                 if (response.status === 404 || response.status === 500) {
                     displayMessageRef.current('The node group is currently deploying and not yet active. Please try again in a few moments.');
                     return false;

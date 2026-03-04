@@ -1,30 +1,29 @@
 import { useState, useCallback } from 'react';
 
 // Type definitions
-export interface PostRequestOptions extends Omit<RequestInit, 'method' | 'body'> {
+export interface DeleteRequestOptions extends Omit<RequestInit, 'method'> {
     headers?: Record<string, string>;
 }
 
-interface UsePostRequestReturn {
-    postData: <T = any>(url: string, data: any, options?: PostRequestOptions) => Promise<T>;
+interface UseDeleteRequestReturn {
+    deleteData: <T = any>(url: string, options?: DeleteRequestOptions) => Promise<T>;
     loading: boolean;
     error: string | null;
 }
 
-export const usePostRequest = (): UsePostRequestReturn => {
+export const useDeleteRequest = (): UseDeleteRequestReturn => {
     const [loading, setLoading] = useState<boolean>(false);
     const [error, setError] = useState<string | null>(null);
 
-    const postData = useCallback(async <T = any>(
+    const deleteData = useCallback(async <T = any>(
         url: string,
-        data: any,
-        options: PostRequestOptions = {}
+        options: DeleteRequestOptions = {}
     ): Promise<T> => {
         setLoading(true);
         setError(null);
 
         try {
-            const response = await makePostRequest<T>(url, data, options);
+            const response = await makeDeleteRequest<T>(url, options);
             setLoading(false);
             return response;
         } catch (err) {
@@ -35,31 +34,22 @@ export const usePostRequest = (): UsePostRequestReturn => {
         }
     }, []);
 
-    return { postData, loading, error };
+    return { deleteData, loading, error };
 };
 
-export const makePostRequest = async <T = any>(
+export const makeDeleteRequest = async <T = any>(
     url: string,
-    data: any,
-    options: PostRequestOptions = {}
+    options: DeleteRequestOptions = {}
 ): Promise<T> => {
     try {
-        console.log('POST request:', {
-            headers: {
-                'Content-Type': 'application/json',
-                ...options.headers
-            }
-        });
-
         const { headers: customHeaders, ...otherOptions } = options;
 
         const response = await fetch(url, {
-            method: 'POST',
+            method: 'DELETE',
             headers: {
                 'Content-Type': 'application/json',
                 ...customHeaders
             },
-            body: JSON.stringify(data),
             ...otherOptions
         });
 
@@ -67,9 +57,15 @@ export const makePostRequest = async <T = any>(
             throw new Error(`HTTP error! status: ${response.status} `);
         }
 
-        return await response.json() as T;
+        // Handle empty responses
+        const contentType = response.headers.get("content-type");
+        if (contentType && contentType.indexOf("application/json") !== -1) {
+            return await response.json() as T;
+        } else {
+            return {} as T;
+        }
     } catch (error) {
-        console.error('POST request failed:', error);
+        console.error('DELETE request failed:', error);
         throw error;
     }
 };

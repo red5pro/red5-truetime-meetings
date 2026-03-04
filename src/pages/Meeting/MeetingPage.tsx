@@ -215,7 +215,8 @@ const MeetingPage = React.memo<MeetingPageProps>((props) => {
                 currentProps.effectsDrawerOpen ||
                 currentProps.infoDrawerOpen ||
                 currentProps.localRecordingDrawerOpen ||
-                currentProps.transcriptionDrawerOpen
+                currentProps.transcriptionDrawerOpen ||
+                currentProps.externalStreamsDrawerOpen
 
             gallery.classList.toggle('drawer-open', hasOpenDrawer)
         }
@@ -311,6 +312,7 @@ const MeetingPage = React.memo<MeetingPageProps>((props) => {
         props.effectsDrawerOpen,
         props.localRecordingDrawerOpen,
         props.transcriptionDrawerOpen,
+        props.externalStreamsDrawerOpen,
         handleGalleryResize
     ])
 
@@ -530,6 +532,8 @@ const MeetingPage = React.memo<MeetingPageProps>((props) => {
                 isLocalRecordingUploading={props?.isLocalRecordingUploading}
                 transcriptionDrawerOpen={props?.transcriptionDrawerOpen}
                 handleTranscriptionDrawerOpen={props?.handleTranscriptionDrawerOpen}
+                externalStreamsDrawerOpen={props?.externalStreamsDrawerOpen}
+                handleExternalStreamsDrawerOpen={props?.handleExternalStreamsDrawerOpen}
             />
 
         </Container>

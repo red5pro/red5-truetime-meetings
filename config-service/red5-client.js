@@ -508,10 +508,64 @@ class Red5Client {
      * @returns {Promise<Object>} Transcription stop confirmation
      */
     async stopTranscription(roomId, userId) {
-        if (!roomId || !userId) {
-            throw new Error('roomId and userId are required');
+        if (!roomId) {
+            throw new Error('roomId is required');
+        }
+        if (!userId) {
+            throw new Error('userId is required');
         }
         return await this._makeConferenceRequest('POST', `/room/${roomId}/user/${userId}/stop-transcription`, roomId);
+    }
+
+    /**
+     * Get list of all external streams
+     * @returns {Promise<Object>} External streams list
+     */
+    async getExternalStreams() {
+        return await this._makeConferenceRequest('GET', '/external-streams', 'admin');
+    }
+
+    /**
+     * Add an external stream to a room
+     * @param {string} roomName - Room name
+     * @param {string} streamId - External stream ID
+     * @returns {Promise<Object>} Confirmation
+     */
+    async addExternalStream(roomName, streamId) {
+        if (!roomName || !streamId) {
+            throw new Error('roomName and streamId are required');
+        }
+        return await this._makeConferenceRequest('POST', `/room/${roomName}/external-stream/${streamId}`, roomName);
+    }
+
+    /**
+     * Remove an external stream from a room
+     * @param {string} roomName - Room name
+     * @param {string} streamId - External stream ID
+     * @returns {Promise<Object>} Confirmation
+     */
+    async removeExternalStream(roomName, streamId) {
+        if (!roomName || !streamId) {
+            throw new Error('roomName and streamId are required');
+        }
+        return await this._makeConferenceRequest('DELETE', `/room/${roomName}/external-stream/${streamId}`, roomName);
+    }
+
+    /**
+     * Get transcriptions for a room
+     * @param {string} roomName - Room name
+     * @param {number|string} [startTime] - Start time filter (unix ms)
+     * @param {number|string} [endTime] - End time filter (unix ms)
+     * @returns {Promise<Object>} Transcription data
+     */
+    async getTranscriptions(roomName, startTime, endTime) {
+        if (!roomName) {
+            throw new Error('roomName is required');
+        }
+        const params = {};
+        if (startTime !== undefined) params.startTime = startTime;
+        if (endTime !== undefined) params.endTime = endTime;
+        return await this._makeConferenceRequest('GET', `/room/${roomName}/transcriptions`, roomName, null, Object.keys(params).length ? params : null);
     }
 }
 

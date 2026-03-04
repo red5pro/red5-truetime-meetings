@@ -4,7 +4,7 @@ import { Box } from '@mui/system'
 import VideoCard from '../../Components/Cards/VideoCard.tsx'
 import OthersCard from '../../Components/Cards/OthersCard.tsx'
 import { calculateConnectionQualityScore, isNull } from '../../utils/utils.tsx'
-import {LayoutAutoProps, Participant, ParticipantObject} from "./types.ts";
+import { LayoutAutoProps, Participant, ParticipantObject } from "./types.ts";
 
 // Constants
 const MAX_VIDEO_AT_SIDE = 3
@@ -14,7 +14,7 @@ const LAYOUT_CLASSES = {
     IN_OTHERS: 'in-others',
     TILED: 'tiled'
 } as const
-    type LayoutClass = typeof LAYOUT_CLASSES[keyof typeof LAYOUT_CLASSES]
+type LayoutClass = typeof LAYOUT_CLASSES[keyof typeof LAYOUT_CLASSES]
 
 const LayoutAuto = React.memo<LayoutAutoProps>((props) => {
     const {
@@ -98,7 +98,7 @@ const LayoutAuto = React.memo<LayoutAutoProps>((props) => {
 
         const containerStyle = layoutClass === LAYOUT_CLASSES.SIDEBAR_VIDEO
             ? { '--sidebar-index': sidebarIndex } as React.CSSProperties
-    : {}
+            : {}
 
         const videoId = isMine
             ? 'red5pro-publisher'
@@ -132,6 +132,7 @@ const LayoutAuto = React.memo<LayoutAutoProps>((props) => {
                     isPlayOnly={isPlayOnly}
                     isMicMuted={!participant.audioEnabled}
                     isCamTurnedOff={!participant.videoEnabled}
+                    metaData={participant.metaData}
                     pinVideo={pinVideo}
                     unpinVideo={unpinVideo}
                     layout={layout}

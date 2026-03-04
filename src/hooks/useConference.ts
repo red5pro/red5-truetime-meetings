@@ -15,6 +15,7 @@ import { usePermissions } from "./usePermissions";
 import { useClosedCaptions } from "./useClosedCaptions";
 import { useRecording } from "./useRecording";
 import { useTranscription } from "./useTranscription";
+import { useExternalStreams } from "./useExternalStreams";
 import { useConferenceState } from "./useConferenceState";
 import { useConferenceEvents } from "./useConferenceEvents";
 import { useGoogleAuth } from '../contexts/GoogleAuthContext';
@@ -79,11 +80,15 @@ interface DrawerStates {
     participantListDrawerOpen: boolean;
     effectsDrawerOpen: boolean;
     localRecordingDrawerOpen: boolean;
+    transcriptionDrawerOpen: boolean;
+    externalStreamsDrawerOpen: boolean;
     handleInfoDrawerOpen: (open: boolean) => void;
     handleMessageDrawerOpen: (open: boolean) => void;
     handleParticipantListOpen: (open: boolean) => void;
     handleEffectsOpen: (open: boolean) => void;
     handleLocalRecordingDrawerOpen: (open: boolean) => void;
+    handleTranscriptionDrawerOpen: (open: boolean) => void;
+    handleExternalStreamsDrawerOpen: (open: boolean) => void;
 }
 
 interface Permissions {
@@ -133,7 +138,7 @@ interface LocalRecording {
     isLocalRecordingPaused: boolean;
     localRecordingStatus: any | null;
     startLocalRecording: (stream?: MediaStream, timeslice?: number) => void;
-    stopLocalRecording: () => Blob | null;
+    stopLocalRecording: (stream?: MediaStream, timeslice?: number) => Promise<Blob | null>;
     pauseLocalRecording: () => void;
     resumeLocalRecording: () => void;
     downloadLocalRecording: (filename?: string) => Promise<boolean>;
@@ -201,6 +206,7 @@ interface UseConferenceReturn {
         localRecording: LocalRecording;
         closedCaptions: ClosedCaptions;
         transcription: Transcription;
+        externalStreams: any;
     };
     client: Client;
     notifications: CustomNotification & {
@@ -229,6 +235,7 @@ export const useConference = (roomId: string): UseConferenceReturn => {
     const permissions: Permissions = usePermissions();
     // @ts-ignore
     const closedCaptions: ClosedCaptions = useClosedCaptions(client);
+    const externalStreams = useExternalStreams(conferenceState.roomName);
 
     // Memoize helper functions to prevent recreation on every render
     const displayMessage = useCallback((message: string, _variant: NotificationVariant = 'info') => {
@@ -250,21 +257,21 @@ export const useConference = (roomId: string): UseConferenceReturn => {
 
         floating({
             content: `
-        <div style="display: flex; flex-direction: column; align-items: center; gap: 2px;">
-            <span style="font-size: 1em;">${reaction}</span>
-            <span style="
-                background-color: rgba(66, 66, 66, 0.7);
-                color: white;
-                padding: 2px 6px;
-                text-align: center;
-                border-radius: 4px;
-                font-size: 0.3em;
-                white-space: nowrap;
-                line-height: 1.2;
-                font-weight: 500;
-            ">${streamName}</span>
-        </div>
-    `,
+    <div style="display: flex; flex-direction: column; align-items: center; gap: 2px;">
+        <span style="font-size: 1em;">${reaction}</span>
+        <span style="
+            background-color: rgba(66, 66, 66, 0.7);
+            color: white;
+            padding: 2px 6px;
+            text-align: center;
+            border-radius: 4px;
+            font-size: 0.3em;
+            white-space: nowrap;
+            line-height: 1.2;
+            font-weight: 500;
+        ">${streamName}</span>
+    </div>
+        `,
             number: 1,
             duration: 6,
             repeat: 1,
@@ -518,7 +525,8 @@ export const useConference = (roomId: string): UseConferenceReturn => {
             recording,
             localRecording,
             closedCaptions,
-            transcription
+            transcription,
+            externalStreams
         },
 
         // Client and utilities

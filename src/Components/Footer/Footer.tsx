@@ -11,6 +11,7 @@ import MessageButton from './Components/MessageButton.tsx'
 import ParticipantListButton from './Components/ParticipantListButton.tsx'
 import EndCallButton from './Components/EndCallButton.tsx'
 import EndCallConfirmationDialog from './Components/EndCallConfirmationDialog.tsx'
+import ExternalStreamsButton from './Components/ExternalStreamsButton.tsx'
 
 import TimeZone from './Components/TimeZone.tsx'
 import { useParams } from 'react-router-dom'
@@ -23,6 +24,7 @@ import CaptionsButton from "./Components/CaptionsButton.tsx"
 import { Devices } from "../DeviceSelector.tsx";
 import LocalRecordingButton from './Components/LocalRecordingButton.tsx'
 import { isNull } from 'lodash'
+import { getRuntimeConfig } from '../../utils/configStore'
 
 interface FooterProps {
     updateDevicesList: () => void;
@@ -98,6 +100,9 @@ interface FooterProps {
     isLocalRecordingUploading?: boolean
     transcriptionDrawerOpen?: boolean
     handleTranscriptionDrawerOpen?: (open: boolean) => void
+    externalStreamsDrawerOpen?: boolean
+    handleExternalStreamsDrawerOpen?: (open: boolean) => void
+    hideExternalStreams?: boolean
 }
 
 
@@ -122,6 +127,7 @@ function Footer(props: FooterProps) {
     const theme = useTheme()
     const mobileBreakpoint = 900
     const [windowWidth, setWindowWidth] = React.useState(window.innerWidth)
+    const isExternalStreamsEnabled = getRuntimeConfig().VITE_ENABLE_EXTERNAL_STREAMS === 'true'
 
     React.useEffect(() => {
         const handleResize = () => {
@@ -370,6 +376,9 @@ function Footer(props: FooterProps) {
                                     handleInfoDrawerOpen={(infoDrawerOpen: boolean) => props?.handleInfoDrawerOpen?.(infoDrawerOpen)}
                                     transcriptionDrawerOpen={props?.transcriptionDrawerOpen}
                                     handleTranscriptionDrawerOpen={(open: boolean) => props?.handleTranscriptionDrawerOpen?.(open)}
+                                    externalStreamsDrawerOpen={props?.externalStreamsDrawerOpen}
+                                    handleExternalStreamsDrawerOpen={props?.handleExternalStreamsDrawerOpen}
+                                    hideExternalStreams={!isExternalStreamsEnabled}
                                 />
                             </Grid>
                         ) : null}
@@ -382,10 +391,17 @@ function Footer(props: FooterProps) {
                 <Grid container alignItems="center">
                     <Grid size="auto">
                         <InfoButton
-                            infoDrawerOpen={props?.infoDrawerOpen}
                             handleInfoDrawerOpen={props?.handleInfoDrawerOpen}
                         />
                     </Grid>
+                    {isExternalStreamsEnabled && (
+                        <Grid size="auto">
+                            <ExternalStreamsButton
+                                open={props?.externalStreamsDrawerOpen}
+                                onClick={props?.handleExternalStreamsDrawerOpen}
+                            />
+                        </Grid>
+                    )}
                     {(props?.isLocalRecordingActive || !isNull(props?.localRecordingStatus)) && (
                         <Grid size="auto">
                             <LocalRecordingButton

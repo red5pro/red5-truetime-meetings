@@ -62,6 +62,9 @@ interface MoreOptionsButtonProps {
     handleInfoDrawerOpen?: (open: boolean) => void;
     transcriptionDrawerOpen?: boolean;
     handleTranscriptionDrawerOpen?: (open: boolean) => void;
+    externalStreamsDrawerOpen?: boolean;
+    handleExternalStreamsDrawerOpen?: (open: boolean) => void;
+    hideExternalStreams?: boolean;
 }
 
 function MoreOptionsButton(props: MoreOptionsButtonProps) {
@@ -175,6 +178,11 @@ function MoreOptionsButton(props: MoreOptionsButtonProps) {
 
     const handleTranscriptionToggle = (): void => {
         props?.handleTranscriptionDrawerOpen?.(!props?.transcriptionDrawerOpen);
+        handleClose();
+    }
+
+    const handleExternalStreamsToggle = (): void => {
+        props?.handleExternalStreamsDrawerOpen?.(!props?.externalStreamsDrawerOpen);
         handleClose();
     }
 
@@ -358,6 +366,20 @@ function MoreOptionsButton(props: MoreOptionsButtonProps) {
                     </ListItemIcon>
                     <ListItemText id={"more-options-transcription-button"}>{t("Transcriptions")}</ListItemText>
                 </MenuItem>
+
+                {!props?.hideExternalStreams && (
+                    <MenuItem onClick={handleExternalStreamsToggle}>
+                        <ListItemIcon>
+                            <SvgIcon
+                                size={24}
+                                viewBox="0 0 512 512"
+                                name={"database"}
+                                color={getMenuIconColor()}
+                            />
+                        </ListItemIcon>
+                        <ListItemText id={"more-options-external-streams-button"}>{t("External Streams")}</ListItemText>
+                    </MenuItem>
+                )}
 
             </Menu>
         </>

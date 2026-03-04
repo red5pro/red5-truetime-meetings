@@ -7,6 +7,7 @@ export interface Participant {
     isScreenSharing?: boolean
     ownerStreamId?: string
     isPending?: boolean
+    metaData?: string
 }
 
 export interface ParticipantObject {

@@ -1,6 +1,5 @@
 import { useState, useCallback } from 'react';
 import log from 'loglevel';
-import { getRuntimeConfig } from '../utils/configStore';
 import { getBackendConfig } from '../utils/conferenceConfig';
 
 interface TranscriptionEntry {
@@ -43,9 +42,8 @@ export const useTranscription = (roomId: string, token: string): UseTranscriptio
         setError(null);
 
         try {
-            const config = getRuntimeConfig();
             const backendConfig = getBackendConfig();
-            const baseUrl = `https://${config.VITE_HOST}${backendConfig.apiEndpoints.transcription.replace('{roomName}', roomId)}`;
+            const baseUrl = `${backendConfig.host}${backendConfig.apiEndpoints.transcription.replace('{roomName}', roomId)}`;
             const url = `${baseUrl}?startTime=${startTime}&endTime=${endTime}`;
 
             log.log(`Fetching transcriptions from: ${url}`);

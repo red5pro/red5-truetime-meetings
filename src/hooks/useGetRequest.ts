@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 
 // Type definitions
 interface GetRequestOptions extends Omit<RequestInit, 'method'> {
@@ -7,22 +7,22 @@ interface GetRequestOptions extends Omit<RequestInit, 'method'> {
 
 interface UseGetRequestReturn {
     getData: <T = any>(url: string, options?: GetRequestOptions) => Promise<T>;
-        loading: boolean;
-        error: string | null;
-        }
+    loading: boolean;
+    error: string | null;
+}
 
-        export const useGetRequest = (): UseGetRequestReturn => {
-            const [loading, setLoading] = useState<boolean>(false);
-            const [error, setError] = useState<string | null>(null);
+export const useGetRequest = (): UseGetRequestReturn => {
+    const [loading, setLoading] = useState<boolean>(false);
+    const [error, setError] = useState<string | null>(null);
 
-            const getData = async <T = any>(
-            url: string,
-            options: GetRequestOptions = {}
-            ): Promise<T> => {
-            setLoading(true);
-            setError(null);
+    const getData = useCallback(async <T = any>(
+        url: string,
+        options: GetRequestOptions = {}
+    ): Promise<T> => {
+        setLoading(true);
+        setError(null);
 
-            try {
+        try {
             const result = await makeGetRequest<T>(url, options);
             setLoading(false);
             return result;
@@ -32,37 +32,37 @@ interface UseGetRequestReturn {
             setLoading(false);
             throw err;
         }
-        };
+    }, []);
 
-            return { getData, loading, error };
-        };
+    return { getData, loading, error };
+};
 
-        export const makeGetRequest = async <T = any>(
-            url: string,
-            options: GetRequestOptions = {}
-            ): Promise<T> => {
-                try {
-                const response = await fetch(url, {
-                method: 'GET',
-                headers: {
+export const makeGetRequest = async <T = any>(
+    url: string,
+    options: GetRequestOptions = {}
+): Promise<T> => {
+    try {
+        const response = await fetch(url, {
+            method: 'GET',
+            headers: {
                 'Content-Type': 'application/json',
                 ...options.headers
             },
-                ...options
-            });
+            ...options
+        });
 
-                if (response.status === 404) {
-                console.log("The room is empty!");
-                return await response.json() as T;
-            }
+        if (response.status === 404) {
+            console.log("The room is empty!");
+            return await response.json() as T;
+        }
 
-                if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
 
-                return await response.json() as T;
-            } catch (error) {
-                console.error('GET request failed:', error);
-                throw error;
-            }
-            };
+        return await response.json() as T;
+    } catch (error) {
+        console.error('GET request failed:', error);
+        throw error;
+    }
+};
