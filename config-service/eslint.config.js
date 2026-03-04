@@ -11,7 +11,7 @@ export default [
       globals: {
         ...globals.browser,
         ...globals.node,
-      }
+      },
     },
     rules: {
       'no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
