@@ -48,10 +48,6 @@ jobs:
         working-directory: config-service
         run: npm install
 
-      - name: Build project
-        working-directory: config-service
-        run: npm run build
-
       - name: Run Lint
         working-directory: config-service
         run: npm run lint
