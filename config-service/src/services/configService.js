@@ -4,69 +4,69 @@ const path = require('path');
 const CONFIG_FILE = process.env.CONFIG_FILE || '/data/config.json';
 
 class ConfigService {
-    async initialize() {
-        try {
-            await fs.access(CONFIG_FILE);
-            console.log('Config file already exists');
-        } catch {
-            console.log('Creating initial config file from environment variables...');
-            const defaultConfig = {
-                VITE_HOST: process.env.VITE_HOST || '',
-                VITE_BACKEND_HOST: process.env.VITE_BACKEND_HOST || '',
-                VITE_ENABLE_RECORDING: process.env.VITE_ENABLE_RECORDING || 'false',
-                VITE_ENABLE_CLOSED_CAPTION: process.env.VITE_ENABLE_CLOSED_CAPTION || 'false',
-                VITE_ENABLE_EXTERNAL_STREAMS: process.env.VITE_ENABLE_EXTERNAL_STREAMS || 'false',
-                VITE_DEFAULT_THEME: process.env.VITE_DEFAULT_THEME || 'black',
-                VITE_TURN_SERVER_URL: process.env.VITE_TURN_SERVER_URL || 'stun:stun2.l.google.com:19302',
-                VITE_TURN_SERVER_USERNAME: process.env.VITE_TURN_SERVER_USERNAME || '',
-                VITE_TURN_SERVER_CREDENTIAL: process.env.VITE_TURN_SERVER_CREDENTIAL || '',
-                VITE_NODE_GROUP: process.env.VITE_NODE_GROUP || 'default',
-                VITE_LOGO_URL: process.env.VITE_LOGO_URL || '',
-                VITE_BASENAME: process.env.VITE_BASENAME || '/meetings',
-                VITE_ANALYTICS_ENDPOINT: process.env.VITE_ANALYTICS_ENDPOINT
-            };
+  async initialize() {
+    try {
+      await fs.access(CONFIG_FILE);
+      console.log('Config file already exists');
+    } catch {
+      console.log('Creating initial config file from environment variables...');
+      const defaultConfig = {
+        VITE_HOST: process.env.VITE_HOST || '',
+        VITE_BACKEND_HOST: process.env.VITE_BACKEND_HOST || '',
+        VITE_ENABLE_RECORDING: process.env.VITE_ENABLE_RECORDING || 'false',
+        VITE_ENABLE_CLOSED_CAPTION: process.env.VITE_ENABLE_CLOSED_CAPTION || 'false',
+        VITE_ENABLE_EXTERNAL_STREAMS: process.env.VITE_ENABLE_EXTERNAL_STREAMS || 'false',
+        VITE_DEFAULT_THEME: process.env.VITE_DEFAULT_THEME || 'black',
+        VITE_TURN_SERVER_URL: process.env.VITE_TURN_SERVER_URL || 'stun:stun2.l.google.com:19302',
+        VITE_TURN_SERVER_USERNAME: process.env.VITE_TURN_SERVER_USERNAME || '',
+        VITE_TURN_SERVER_CREDENTIAL: process.env.VITE_TURN_SERVER_CREDENTIAL || '',
+        VITE_NODE_GROUP: process.env.VITE_NODE_GROUP || 'default',
+        VITE_LOGO_URL: process.env.VITE_LOGO_URL || '',
+        VITE_BASENAME: process.env.VITE_BASENAME || '/meetings',
+        VITE_ANALYTICS_ENDPOINT: process.env.VITE_ANALYTICS_ENDPOINT,
+      };
 
-            await fs.mkdir(path.dirname(CONFIG_FILE), { recursive: true });
-            await fs.writeFile(CONFIG_FILE, JSON.stringify(defaultConfig, null, 2));
-            console.log('Config file created successfully');
-        }
+      await fs.mkdir(path.dirname(CONFIG_FILE), { recursive: true });
+      await fs.writeFile(CONFIG_FILE, JSON.stringify(defaultConfig, null, 2));
+      console.log('Config file created successfully');
+    }
+  }
+
+  async read() {
+    try {
+      const data = await fs.readFile(CONFIG_FILE, 'utf8');
+      return JSON.parse(data);
+    } catch (error) {
+      console.error('Error reading config:', error);
+      throw new Error('Failed to read configuration');
+    }
+  }
+
+  async update(updates) {
+    let currentConfig = {};
+    try {
+      currentConfig = await this.read();
+    } catch (error) {
+      console.log('No existing config found, creating new one during update');
     }
 
-    async read() {
-        try {
-            const data = await fs.readFile(CONFIG_FILE, 'utf8');
-            return JSON.parse(data);
-        } catch (error) {
-            console.error('Error reading config:', error);
-            throw new Error('Failed to read configuration');
-        }
-    }
+    const updatedConfig = {
+      ...currentConfig,
+      ...updates,
+    };
 
-    async update(updates) {
-        let currentConfig = {};
-        try {
-            currentConfig = await this.read();
-        } catch (error) {
-            console.log('No existing config found, creating new one during update');
-        }
+    await fs.writeFile(CONFIG_FILE, JSON.stringify(updatedConfig, null, 2));
+    return updatedConfig;
+  }
 
-        const updatedConfig = {
-            ...currentConfig,
-            ...updates
-        };
+  async replace(newConfig) {
+    await fs.writeFile(CONFIG_FILE, JSON.stringify(newConfig, null, 2));
+    return newConfig;
+  }
 
-        await fs.writeFile(CONFIG_FILE, JSON.stringify(updatedConfig, null, 2));
-        return updatedConfig;
-    }
-
-    async replace(newConfig) {
-        await fs.writeFile(CONFIG_FILE, JSON.stringify(newConfig, null, 2));
-        return newConfig;
-    }
-
-    getConfigFilePath() {
-        return CONFIG_FILE;
-    }
+  getConfigFilePath() {
+    return CONFIG_FILE;
+  }
 }
 
 module.exports = new ConfigService();

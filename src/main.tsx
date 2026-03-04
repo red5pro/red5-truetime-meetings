@@ -1,10 +1,10 @@
-import { StrictMode } from 'react'
-import { BrowserRouter } from 'react-router-dom'
-import { createRoot } from 'react-dom/client'
+import { StrictMode } from 'react';
+import { BrowserRouter } from 'react-router-dom';
+import { createRoot } from 'react-dom/client';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import { AuthProvider } from './contexts/GoogleAuthContext';
-import './index.css'
-import App from './App.js'
+import './index.css';
+import App from './App.js';
 import { setRuntimeConfig, getRuntimeConfig } from './utils/configStore';
 import { isConfigServiceAvailable } from './utils/utils';
 
@@ -34,6 +34,6 @@ loadConfig().then(() => {
           </BrowserRouter>
         </AuthProvider>
       </GoogleOAuthProvider>
-    </StrictMode>
-  )
+    </StrictMode>,
+  );
 });

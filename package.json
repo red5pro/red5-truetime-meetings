@@ -8,6 +8,11 @@
     "build": "npx tsx scripts/generate-build-info.ts && vite build",
     "build:docker": "npx tsx scripts/generate-build-info.ts && env-cmd -f .env.docker vite build",
     "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test": "vitest",
+    "test:coverage": "vitest run --coverage",
     "preview": "npx tsx scripts/generate-build-info.ts && vite preview"
   },
   "dependencies": {
@@ -48,17 +53,24 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.39.2",
+    "@testing-library/jest-dom": "^6.9.1",
     "@types/lodash": "^4.17.23",
     "@types/react": "^19.2.8",
     "@types/react-dom": "^19.2.3",
     "@typescript-eslint/eslint-plugin": "^8.53.0",
     "@typescript-eslint/parser": "^8.53.0",
     "@vitejs/plugin-react": "^5.1.2",
+    "@vitest/coverage-v8": "^4.0.18",
     "babel-plugin-react-compiler": "^1.0.0",
     "eslint": "^9.39.2",
+    "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.4.26",
     "globals": "^17.0.0",
-    "vite": "^7.3.1"
+    "jsdom": "^28.1.0",
+    "prettier": "^3.8.1",
+    "typescript-eslint": "^8.56.1",
+    "vite": "^7.3.1",
+    "vitest": "^4.0.18"
   }
 }

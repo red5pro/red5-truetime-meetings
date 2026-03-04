@@ -17,12 +17,15 @@ app.use('/api', apiRoutes);
 app.get('/health', healthController.check);
 
 // Start server
-configService.initialize().then(() => {
-  app.listen(PORT, () => {
-    console.log(`Config service running on port ${PORT}`);
-    console.log(`Config file location: ${configService.getConfigFilePath()}`);
+configService
+  .initialize()
+  .then(() => {
+    app.listen(PORT, () => {
+      console.log(`Config service running on port ${PORT}`);
+      console.log(`Config file location: ${configService.getConfigFilePath()}`);
+    });
+  })
+  .catch((error) => {
+    console.error('Failed to initialize config service:', error);
+    process.exit(1);
   });
-}).catch(error => {
-  console.error('Failed to initialize config service:', error);
-  process.exit(1);
-});
