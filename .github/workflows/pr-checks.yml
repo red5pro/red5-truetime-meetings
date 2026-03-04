@@ -24,7 +24,7 @@ jobs:
         run: npm run build
 
       #- name: Run Lint
-        #run: npm run lint
+      #run: npm run lint
 
       - name: Check Formatting
         run: npm run format:check

@@ -507,9 +507,7 @@ export const useConference = (roomId: string): UseConferenceReturn => {
     () => ({
       ...conferenceActions,
       sendReactions: (reaction: string) => {
-        const reactionsStreamId = isPlayOnly
-          ? (roomName || roomId)
-          : publishStreamIdRef.current;
+        const reactionsStreamId = isPlayOnly ? roomName || roomId : publishStreamIdRef.current;
         conferenceActions.sendNotificationEvent('REACTIONS', reactionsStreamId || '', {
           reaction: reaction,
           senderStreamId: publishStreamIdRef.current,
@@ -518,15 +516,11 @@ export const useConference = (roomId: string): UseConferenceReturn => {
       },
 
       setIsRaiseHand: (isRaised: boolean) => {
-        conferenceActions.sendNotificationEvent(
-          'RAISED_HAND',
-          publishStreamIdRef.current || '',
-          {
-            isRaisedHand: isRaised,
-            senderStreamId: publishStreamIdRef.current,
-            senderStreamName: streamName,
-          },
-        );
+        conferenceActions.sendNotificationEvent('RAISED_HAND', publishStreamIdRef.current || '', {
+          isRaisedHand: isRaised,
+          senderStreamId: publishStreamIdRef.current,
+          senderStreamName: streamName,
+        });
         setRaiseHand(isRaised);
       },
 
@@ -542,7 +536,17 @@ export const useConference = (roomId: string): UseConferenceReturn => {
         // Add API call here
       },
     }),
-    [conferenceActions, isPlayOnly, roomName, roomId, publishStreamIdRef, streamName, setRaiseHand, displayMessage, role],
+    [
+      conferenceActions,
+      isPlayOnly,
+      roomName,
+      roomId,
+      publishStreamIdRef,
+      streamName,
+      setRaiseHand,
+      displayMessage,
+      role,
+    ],
   );
 
   // Effects - be very careful with dependencies
@@ -554,7 +558,14 @@ export const useConference = (roomId: string): UseConferenceReturn => {
       setIsJoining(false);
       setIsWaitingApproval(false);
     }
-  }, [isPublished, isPlayed, isPlayOnly, setLobbyOrMeetingPage, setIsJoining, setIsWaitingApproval]);
+  }, [
+    isPublished,
+    isPlayed,
+    isPlayOnly,
+    setLobbyOrMeetingPage,
+    setIsJoining,
+    setIsWaitingApproval,
+  ]);
 
   // Sync stats ref - only run when printStatLogs changes
   useEffect(() => {

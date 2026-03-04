@@ -44,7 +44,7 @@ const MessageGrid = styled(Grid)(({ theme }: { theme: Theme }) => ({
   borderRadius: 10,
 }));
 
-const TabGrid = styled(Grid)(({ }: { theme: Theme }) => ({
+const TabGrid = styled(Grid)(({}: { theme: Theme }) => ({
   position: 'relative',
   height: '100%',
   paddingBottom: 16,

@@ -367,7 +367,7 @@ function OptionButton(props: OptionButtonProps) {
         connectionStats={props?.connectionStats}
         currentIssues={props?.currentIssues}
         printStatLogs={props?.printStatLogs || false}
-        setPrintStatLogs={props?.setPrintStatLogs || (() => { })}
+        setPrintStatLogs={props?.setPrintStatLogs || (() => {})}
       />
       <GeneralSettingsDialog
         open={generalSettingsDialogOpen}

@@ -50,14 +50,7 @@ const JsonContainer = styled(Box)(({ theme }: { theme: Theme }) => ({
 }));
 
 const TranscriptionDrawer = React.memo<TranscriptionDrawerProps>((props) => {
-  const {
-    open,
-    onClose,
-    fetchTranscriptions,
-    loading,
-    error,
-    data,
-  } = props;
+  const { open, onClose, fetchTranscriptions, loading, error, data } = props;
   const { t } = useTranslation();
   const theme = useTheme();
 
@@ -90,16 +83,14 @@ const TranscriptionDrawer = React.memo<TranscriptionDrawerProps>((props) => {
       let output = '';
       const allTranscriptions: any[] = [];
 
-      Object.entries(data.transcriptionsByUser).forEach(
-        ([user, userCaptions]: [string, any]) => {
-          userCaptions.forEach((cap: any) => {
-            allTranscriptions.push({
-              ...cap,
-              user,
-            });
+      Object.entries(data.transcriptionsByUser).forEach(([user, userCaptions]: [string, any]) => {
+        userCaptions.forEach((cap: any) => {
+          allTranscriptions.push({
+            ...cap,
+            user,
           });
-        },
-      );
+        });
+      });
 
       // Sort by timestamp
       allTranscriptions.sort((a, b) => a.timestamp - b.timestamp);

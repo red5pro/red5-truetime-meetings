@@ -46,7 +46,7 @@ const MessageTextField = styled(TextField)(({ theme }: { theme: Theme }) => ({
   },
 }));
 
-const FilePreviewContainer = styled(Box)(({ }: { theme: Theme }) => ({
+const FilePreviewContainer = styled(Box)(({}: { theme: Theme }) => ({
   display: 'flex',
   flexWrap: 'wrap',
   gap: '8px',

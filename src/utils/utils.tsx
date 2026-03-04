@@ -210,8 +210,9 @@ export function calculateConnectionQualityScore(
     const result = path
       .split('.')
       .reduce(
-        (acc: any, part: string) => (acc && typeof acc === 'object' && part in acc ? acc[part] : undefined),
-        obj
+        (acc: any, part: string) =>
+          acc && typeof acc === 'object' && part in acc ? acc[part] : undefined,
+        obj,
       );
     return typeof result === 'number' ? result : defaultValue;
   };

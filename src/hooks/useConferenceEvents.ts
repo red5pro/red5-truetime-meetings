@@ -124,15 +124,9 @@ export const useConferenceEvents = (
     streamNameRef,
   } = roomState;
 
-  const {
-    setIsScreenShared,
-    setIsStartingScreenShare,
-    showScreenShareSpinner,
-  } = screenShare;
+  const { setIsScreenShared, setIsStartingScreenShare, showScreenShareSpinner } = screenShare;
 
-  const {
-    setIsRecordingActive,
-  } = recording;
+  const { setIsRecordingActive } = recording;
 
   // Store all dependencies in a ref to avoid closure issues
   const depsRef = useRef<any>({});
@@ -610,10 +604,7 @@ export const useConferenceEvents = (
           });
 
           // Get screen share stats if active
-          if (
-            conferenceClient.current.isScreenSharing &&
-            conferenceClient.current.streamName
-          ) {
+          if (conferenceClient.current.isScreenSharing && conferenceClient.current.streamName) {
             const screenShareId = conferenceClient.current.streamName + '-screenshare';
             const screenStats = conferenceClient.current.getConnectionStats(screenShareId);
             if (screenStats.current) {
@@ -646,10 +637,7 @@ export const useConferenceEvents = (
             log.warn(`Already attempting to subscribe to ${participant.uid}. Skipping...`);
             return;
           }
-          if (
-            subAttemptsRef.current[participant.uid]?.retryCount >=
-            sharedVariables.maxRetries
-          ) {
+          if (subAttemptsRef.current[participant.uid]?.retryCount >= sharedVariables.maxRetries) {
             log.error(
               `Max subscription attempts reached for ${participant.uid}. Removing participant.`,
             );
@@ -682,10 +670,7 @@ export const useConferenceEvents = (
         const pVideo = depsRef.current.pinVideo;
         const uVideo = depsRef.current.unpinVideo;
 
-        if (
-          pParticipantIdRef.current &&
-          streamId.localeCompare(pParticipantIdRef.current) === 0
-        ) {
+        if (pParticipantIdRef.current && streamId.localeCompare(pParticipantIdRef.current) === 0) {
           if (lRef.current === LayoutOptions.Sidebar) {
             pVideo(sNameRef.current);
           } else {

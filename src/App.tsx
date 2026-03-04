@@ -71,7 +71,6 @@ function copyWindowLocation(): void {
 window.getWindowLocation = getWindowLocation;
 window.copyWindowLocation = copyWindowLocation;
 
-
 import { ThemeContext } from './contexts/ThemeContext';
 
 function App(): JSX.Element {
