@@ -345,7 +345,7 @@ export const useRecording = (
       try {
         setIsRecordingStarting(true);
 
-        const url = `${backendConfig.host}${backendConfig.apiEndpoints.startRecording.replace('{roomName}', roomName)}?recordParticipantStreams=${recordSeparately}&serverRecording=${serverRecording}&localRecording=${localRecording}`;
+        const url = `${backendConfig.host}${backendConfig.apiEndpoints.startRecording.replace('{roomName}', roomName)}?recordParticipantStreams=${recordSeparately}&recordingType=mp4&serverRecording=${serverRecording}&localRecording=${localRecording}`;
 
         log.log('Starting recording for room:', roomName);
         if (displayMessageRef.current) {
