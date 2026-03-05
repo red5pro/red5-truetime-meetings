@@ -135,13 +135,16 @@ const MeetingPage = React.memo<MeetingPageProps>((props) => {
 
   // Memoized PiP callbacks — shared by openAllParticipantsPiP, updatePiP effect, and auto-open.
   // Using propsRef so the callbacks never go stale without needing to be listed as deps.
+  const closePiPRef = useRef(closePiP);
+  closePiPRef.current = closePiP;
+
   const pipOptions = useMemo(
     () => ({
       participants: allParticipants,
       onMuteToggle: (streamId: string) => {
         const p = propsRef.current;
         if (streamId === p.streamName) {
-          p.toggleMic?.();
+          (p.toggleMic as ((muted: boolean) => void) | undefined)?.(!p.isMyMicMuted);
         } else {
           p.setParticipantIdMuted?.(streamId);
           p.setMuteParticipantDialogOpen?.(true);
@@ -156,13 +159,36 @@ const MeetingPage = React.memo<MeetingPageProps>((props) => {
       onVolumeToggle: (streamId: string) => {
         console.log('[PiP] volume toggled for:', streamId);
       },
+      onToggleMic: () => {
+        const p = propsRef.current;
+        (p.toggleMic as ((muted: boolean) => void) | undefined)?.(!p.isMyMicMuted);
+      },
+      onToggleCamera: () => {
+        const p = propsRef.current;
+        p.isMyCamTurnedOff ? p.checkAndTurnOnLocalCamera?.() : p.checkAndTurnOffLocalCamera?.();
+      },
+      onToggleScreenShare: () => {
+        const p = propsRef.current;
+        p.isScreenShared ? p.handleStopScreenShare?.() : p.handleStartScreenShare?.();
+      },
+      onLeaveRoom: () => {
+        closePiPRef.current?.();
+        propsRef.current.setLeftTheRoom?.(true);
+      },
+      isMyMicMuted: props.isMyMicMuted,
+      isMyCamTurnedOff: props.isMyCamTurnedOff,
+      isScreenShared: props.isScreenShared,
+      screenShareStream: props.isScreenShared
+        ? (propsRef.current.currentConferenceClient?.mediaStreamManager?.getScreenShareStream() ??
+          undefined)
+        : undefined,
       // talkers and streamName are read at call-time via propsRef; the cast handles the
       // talkers: Talker[] type expected by PiPOpenOptions (runtime shape is compatible).
       talkers: (propsRef.current.talkers || []) as unknown as { streamId: string }[],
       streamName: propsRef.current.streamName,
     }),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [allParticipants],
+
+    [allParticipants, props.isMyMicMuted, props.isMyCamTurnedOff, props.isScreenShared],
   );
 
   // Open all participants PiP

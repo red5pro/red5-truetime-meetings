@@ -38,6 +38,14 @@ export interface PiPOpenOptions {
   onMuteToggle?: (streamId: string) => void;
   onVideoToggle?: (streamId: string) => void;
   onVolumeToggle?: (streamId: string) => void;
+  onToggleMic?: () => void;
+  onToggleCamera?: () => void;
+  onToggleScreenShare?: () => void;
+  onLeaveRoom?: () => void;
+  isMyMicMuted?: boolean;
+  isMyCamTurnedOff?: boolean;
+  isScreenShared?: boolean;
+  screenShareStream?: MediaStream;
   talkers?: Talker[];
   streamName: string;
 }
@@ -47,6 +55,14 @@ interface PiPUpdateOptions {
   onMuteToggle?: (streamId: string) => void;
   onVideoToggle?: (streamId: string) => void;
   onVolumeToggle?: (streamId: string) => void;
+  onToggleMic?: () => void;
+  onToggleCamera?: () => void;
+  onToggleScreenShare?: () => void;
+  onLeaveRoom?: () => void;
+  isMyMicMuted?: boolean;
+  isMyCamTurnedOff?: boolean;
+  isScreenShared?: boolean;
+  screenShareStream?: MediaStream;
   talkers?: Talker[];
   streamName: string;
 }
@@ -64,6 +80,14 @@ interface PiPGridContentProps {
   onMuteToggle?: (streamId: string) => void;
   onVideoToggle?: (streamId: string) => void;
   onVolumeToggle?: (streamId: string) => void;
+  onToggleMic?: () => void;
+  onToggleCamera?: () => void;
+  onToggleScreenShare?: () => void;
+  onLeaveRoom?: () => void;
+  isMyMicMuted?: boolean;
+  isMyCamTurnedOff?: boolean;
+  isScreenShared?: boolean;
+  screenShareStream?: MediaStream;
   talkers?: Talker[];
   streamName: string;
 }
@@ -161,8 +185,8 @@ class PiPManager {
   // ---------------------------------------------------------------------------
 
   async openWindow({
-    width = 800,
-    height = 600,
+    width = 360,
+    height = 640,
     title = 'Video Conference',
   }: PiPWindowOptions = {}): Promise<Window> {
     if (!this.isSupported()) {
@@ -339,7 +363,7 @@ const PIP_STYLES = `
     margin: 0;
     padding: 0;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    background: #111;
+    background: #1a1a1a;
     overflow: hidden;
     color: #fff;
   }
@@ -349,7 +373,7 @@ const PIP_STYLES = `
     height: 100vh;
     display: flex;
     flex-direction: column;
-    background: #111;
+    background: #1a1a1a;
   }
 
   /* ---- Header ---- */
@@ -357,17 +381,17 @@ const PIP_STYLES = `
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 6px 12px;
-    background: rgba(0, 0, 0, 0.6);
+    padding: 8px 12px;
+    background: rgba(0, 0, 0, 0.5);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-    min-height: 38px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    min-height: 36px;
     flex-shrink: 0;
   }
 
   .pip-title {
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 600;
     letter-spacing: 0.02em;
     color: rgba(255, 255, 255, 0.85);
@@ -378,42 +402,66 @@ const PIP_STYLES = `
     color: #fff;
     border: none;
     border-radius: 6px;
-    width: 26px;
-    height: 26px;
+    width: 24px;
+    height: 24px;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 15px;
+    font-size: 14px;
     line-height: 1;
     transition: background 0.15s;
   }
   .pip-close-btn:hover { background: rgba(255, 255, 255, 0.18); }
 
-  /* ---- Grid ---- */
+  /* ---- Grid (scrollable, always 2 columns) ---- */
   .pip-participants-grid {
     flex: 1;
     display: grid;
-    gap: 3px;
-    padding: 3px;
-    overflow: hidden;
+    grid-template-columns: repeat(2, 1fr);
+    grid-auto-rows: minmax(120px, 1fr);
+    gap: 4px;
+    padding: 4px;
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+
+  /* Scrollbar styling */
+  .pip-participants-grid::-webkit-scrollbar {
+    width: 4px;
+  }
+  .pip-participants-grid::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .pip-participants-grid::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 2px;
+  }
+  .pip-participants-grid::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.35);
+  }
+
+  /* Single participant: full width */
+  .pip-participants-grid.single-participant {
+    grid-template-columns: 1fr;
   }
 
   /* ---- Tile ---- */
   .pip-participant-tile {
     position: relative;
-    background: #1e1e1e;
+    background: #2a2a2a;
     border-radius: 10px;
     overflow: hidden;
     display: flex;
     align-items: center;
     justify-content: center;
+    min-height: 120px;
   }
 
   .pip-participant-video {
     width: 100%;
     height: 100%;
-    object-fit: cover;
+    object-fit: contain;
   }
 
   /* Speaking ring */
@@ -432,23 +480,23 @@ const PIP_STYLES = `
     50%       { opacity: 0.35; }
   }
 
-  /* Name pill — always visible */
+  /* Name pill */
   .pip-name-pill {
     position: absolute;
-    bottom: 6px;
-    left: 6px;
+    bottom: 4px;
+    left: 4px;
     background: rgba(0, 0, 0, 0.55);
     backdrop-filter: blur(6px);
     -webkit-backdrop-filter: blur(6px);
     border-radius: 4px;
     padding: 2px 6px;
-    font-size: 11px;
+    font-size: 10px;
     font-weight: 500;
     color: #fff;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    max-width: calc(100% - 12px);
+    max-width: calc(100% - 8px);
     z-index: 3;
   }
 
@@ -459,12 +507,12 @@ const PIP_STYLES = `
     align-items: center;
     justify-content: center;
     height: 100%;
-    gap: 8px;
+    gap: 6px;
     padding: 8px;
   }
 
   .pip-audio-only-name {
-    font-size: 13px;
+    font-size: 11px;
     font-weight: 500;
     text-align: center;
     color: rgba(255,255,255,0.8);
@@ -480,7 +528,128 @@ const PIP_STYLES = `
     color: rgba(255, 255, 255, 0.4);
     gap: 10px;
   }
-  .pip-empty-icon { font-size: 40px; opacity: 0.4; }
+  .pip-empty-icon { font-size: 36px; opacity: 0.4; }
+
+  /* ---- Screen Share Layout ---- */
+  .pip-screenshare-layout {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .pip-screenshare-main {
+    flex: 1;
+    min-height: 0;
+    padding: 4px 4px 2px;
+  }
+
+  .pip-screenshare-main .pip-participant-tile {
+    width: 100%;
+    height: 100%;
+    border-radius: 10px;
+  }
+
+  .pip-screenshare-strip {
+    flex-shrink: 0;
+    display: flex;
+    gap: 4px;
+    padding: 2px 4px 4px;
+    overflow-x: auto;
+    overflow-y: hidden;
+  }
+
+  .pip-screenshare-strip::-webkit-scrollbar {
+    height: 3px;
+  }
+  .pip-screenshare-strip::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .pip-screenshare-strip::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 2px;
+  }
+
+  .pip-screenshare-strip .pip-participant-tile {
+    flex-shrink: 0;
+    width: 115px;
+    height: 86px;
+    border-radius: 8px;
+    min-height: unset;
+  }
+
+  .pip-screenshare-strip .pip-name-pill {
+    font-size: 8px;
+    padding: 1px 4px;
+    bottom: 2px;
+    left: 2px;
+  }
+
+  /* ---- Control Bar ---- */
+  .pip-control-bar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 10px 12px;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    flex-shrink: 0;
+  }
+
+  .pip-ctrl-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s ease;
+    background: rgba(255, 255, 255, 0.12);
+    color: #fff;
+  }
+
+  .pip-ctrl-btn:hover {
+    background: rgba(255, 255, 255, 0.22);
+  }
+
+  .pip-ctrl-btn.active {
+    background: rgba(255, 255, 255, 0.12);
+    color: #fff;
+  }
+
+  .pip-ctrl-btn.muted {
+    background: #d93025;
+    color: #fff;
+  }
+  .pip-ctrl-btn.muted:hover {
+    background: #c12a1f;
+  }
+
+  .pip-ctrl-btn.end-call {
+    background: #d93025;
+    color: #fff;
+    width: 44px;
+    height: 44px;
+  }
+  .pip-ctrl-btn.end-call:hover {
+    background: #b71c1c;
+  }
+
+  .pip-ctrl-btn svg {
+    width: 20px;
+    height: 20px;
+    fill: currentColor;
+  }
+
+  .pip-ctrl-btn.end-call svg {
+    width: 22px;
+    height: 22px;
+  }
 `;
 
 // ---------------------------------------------------------------------------
@@ -493,13 +662,54 @@ const pipManager = new PiPManager();
 // React components rendered inside the PiP window
 // ---------------------------------------------------------------------------
 
-function getGridStyle(count: number): React.CSSProperties {
-  if (count <= 1) return { gridTemplateColumns: '1fr' };
-  if (count <= 4) return { gridTemplateColumns: 'repeat(2, 1fr)' };
-  if (count <= 9) return { gridTemplateColumns: 'repeat(3, 1fr)' };
-  if (count <= 16) return { gridTemplateColumns: 'repeat(4, 1fr)' };
-  return { gridTemplateColumns: 'repeat(5, 1fr)' };
-}
+// SVG Icons for PiP control bar (inline to avoid MUI dependency in PiP window)
+const MicIcon = () => (
+  <svg viewBox="0 0 24 24">
+    <path d="M12 14c1.66 0 2.99-1.34 2.99-3L15 5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.3-3c0 3-2.54 5.1-5.3 5.1S6.7 14 6.7 11H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c3.28-.48 6-3.3 6-6.72h-1.7z" />
+  </svg>
+);
+
+const MicOffIcon = () => (
+  <svg viewBox="0 0 24 24">
+    <path d="M19 11h-1.7c0 .74-.16 1.43-.43 2.05l1.23 1.23c.56-.98.9-2.09.9-3.28zm-4.02.17c0-.06.02-.11.02-.17V5c0-1.66-1.34-3-3-3S9 3.34 9 5v.18l5.98 5.99zM4.27 3L3 4.27l6.01 6.01V11c0 1.66 1.33 3 2.99 3 .22 0 .44-.03.65-.08l1.66 1.66c-.71.33-1.5.52-2.31.52-2.76 0-5.3-2.1-5.3-5.1H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c.91-.13 1.77-.45 2.54-.9L19.73 21 21 19.73 4.27 3z" />
+  </svg>
+);
+
+const VideocamIcon = () => (
+  <svg viewBox="0 0 24 24">
+    <path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z" />
+  </svg>
+);
+
+const VideocamOffIcon = () => (
+  <svg viewBox="0 0 24 24">
+    <path d="M21 6.5l-4 4V7c0-.55-.45-1-1-1H9.82L21 17.18V6.5zM3.27 2L2 3.27 4.73 6H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.21 0 .39-.08.54-.18L19.73 21 21 19.73 3.27 2z" />
+  </svg>
+);
+
+const ScreenShareIcon = () => (
+  <svg viewBox="0 0 24 24">
+    <path d="M20 18c1.1 0 1.99-.9 1.99-2L22 6c0-1.1-.9-2-2-2H4c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2H0v2h24v-2h-4zm-7-3.53v-2.19c-2.78 0-4.61.85-6 2.72.56-2.67 2.11-5.33 6-5.87V7l4 3.73-4 3.74z" />
+  </svg>
+);
+
+const StopScreenShareIcon = () => (
+  <svg viewBox="0 0 24 24">
+    <path d="M21.22 18.02l2 2H24v-2h-2.78zm.77-2l.01-10c0-1.11-.9-2-2-2H7.22l5.23 5.23c.18-.04.36-.07.55-.1V7l4 3.73-1.58 1.47 5.54 5.54c.61-.33 1.03-.93 1.03-1.72zM2.39 1.73L1.11 3l1.54 1.54c-.4.36-.65.89-.65 1.46v10c0 1.1.89 2 2 2H0v2h18.13l2.71 2.71 1.27-1.27L2.39 1.73zM4 6.27L14.73 17H4V6.27z" />
+  </svg>
+);
+
+const MoreVertIcon = () => (
+  <svg viewBox="0 0 24 24">
+    <path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z" />
+  </svg>
+);
+
+const CallEndIcon = () => (
+  <svg viewBox="0 0 24 24">
+    <path d="M12 9c-1.6 0-3.15.25-4.6.72v3.1c0 .39-.23.74-.56.9-.98.49-1.87 1.12-2.66 1.85-.18.18-.43.28-.7.28-.28 0-.53-.11-.71-.29L.29 13.08c-.18-.17-.29-.42-.29-.7 0-.28.11-.53.29-.71C3.34 8.78 7.46 7 12 7s8.66 1.78 11.71 4.67c.18.18.29.43.29.71 0 .28-.11.53-.29.71l-2.48 2.48c-.18.18-.43.29-.71.29-.27 0-.52-.11-.7-.28-.79-.74-1.69-1.36-2.67-1.85-.33-.16-.56-.5-.56-.9v-3.1C15.15 9.25 13.6 9 12 9z" />
+  </svg>
+);
 
 const PiPParticipant: React.FC<PiPParticipantProps> = ({
   participant,
@@ -542,43 +752,185 @@ const PiPParticipant: React.FC<PiPParticipantProps> = ({
   );
 };
 
+const PiPControlBar: React.FC<{
+  isMyMicMuted?: boolean;
+  isMyCamTurnedOff?: boolean;
+  isScreenShared?: boolean;
+  onToggleMic?: () => void;
+  onToggleCamera?: () => void;
+  onToggleScreenShare?: () => void;
+  onLeaveRoom?: () => void;
+}> = ({
+  isMyMicMuted = false,
+  isMyCamTurnedOff = false,
+  isScreenShared = false,
+  onToggleMic,
+  onToggleCamera,
+  onToggleScreenShare,
+  onLeaveRoom,
+}) => {
+  return (
+    <div className="pip-control-bar">
+      <button
+        className={`pip-ctrl-btn ${isMyMicMuted ? 'muted' : 'active'}`}
+        onClick={onToggleMic}
+        title={isMyMicMuted ? 'Unmute microphone' : 'Mute microphone'}
+      >
+        {isMyMicMuted ? <MicOffIcon /> : <MicIcon />}
+      </button>
+
+      <button
+        className={`pip-ctrl-btn ${isMyCamTurnedOff ? 'muted' : 'active'}`}
+        onClick={onToggleCamera}
+        title={isMyCamTurnedOff ? 'Turn on camera' : 'Turn off camera'}
+      >
+        {isMyCamTurnedOff ? <VideocamOffIcon /> : <VideocamIcon />}
+      </button>
+
+      <button
+        className={`pip-ctrl-btn ${isScreenShared ? 'active' : ''}`}
+        onClick={onToggleScreenShare}
+        title={isScreenShared ? 'Stop sharing' : 'Share screen'}
+      >
+        {isScreenShared ? <StopScreenShareIcon /> : <ScreenShareIcon />}
+      </button>
+
+      <button className="pip-ctrl-btn" title="More options">
+        <MoreVertIcon />
+      </button>
+
+      <button className="pip-ctrl-btn end-call" onClick={onLeaveRoom} title="Leave meeting">
+        <CallEndIcon />
+      </button>
+    </div>
+  );
+};
+
 const PiPGridContent: React.FC<PiPGridContentProps> = ({
   participants = [],
   onClose,
+  onToggleMic,
+  onToggleCamera,
+  onToggleScreenShare,
+  onLeaveRoom,
+  isMyMicMuted,
+  isMyCamTurnedOff,
+  isScreenShared,
+  screenShareStream,
   talkers = [],
   streamName,
 }) => {
   const speakingIds = talkers.map((t) => t.streamId);
+  const gridClass = `pip-participants-grid${participants.length <= 1 ? ' single-participant' : ''}`;
+
+  // Screen share video component
+  const PiPScreenShareVideo: React.FC<{ stream?: MediaStream }> = ({ stream }) => {
+    const videoRef = useRef<HTMLVideoElement>(null);
+
+    useEffect(() => {
+      if (videoRef.current && stream) {
+        videoRef.current.srcObject = stream;
+      }
+    }, [stream]);
+
+    if (!stream) return null;
+
+    return (
+      <div className="pip-participant-tile">
+        <video ref={videoRef} className="pip-participant-video" autoPlay playsInline muted />
+        <div className="pip-name-pill">Screen Share</div>
+      </div>
+    );
+  };
+
+  // When screen is shared, show the screen share video on top and all participants in a strip below
+  const renderScreenShareLayout = () => {
+    // Filter out the screen share participant entry (joins with uid containing '-screenshare')
+    const stripParticipants = screenShareStream
+      ? participants.filter((pd) => {
+          const uid = pd.participant?.uid || '';
+          return !uid.includes('screenshare');
+        })
+      : participants;
+
+    return (
+      <div className="pip-screenshare-layout">
+        <div className="pip-screenshare-main">
+          {screenShareStream ? (
+            <PiPScreenShareVideo stream={screenShareStream} />
+          ) : (
+            // Fallback: show first participant (local user) if no screen share stream
+            participants[0] && (
+              <PiPParticipant
+                participant={participants[0].participant}
+                mediaStream={participants[0].mediaStream}
+                isSpeaking={speakingIds.includes(participants[0].participant?.uid)}
+                streamName={streamName}
+              />
+            )
+          )}
+        </div>
+        {stripParticipants.length > 0 && (
+          <div className="pip-screenshare-strip">
+            {stripParticipants.map((pd, i) => (
+              <PiPParticipant
+                key={pd.participant?.uid ?? i}
+                participant={pd.participant}
+                mediaStream={pd.mediaStream}
+                isSpeaking={speakingIds.includes(pd.participant?.uid)}
+                streamName={streamName}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const renderNormalGrid = () => (
+    <div className={gridClass}>
+      {participants.length > 0 ? (
+        participants.map((pd, i) => (
+          <PiPParticipant
+            key={pd.participant?.uid ?? i}
+            participant={pd.participant}
+            mediaStream={pd.mediaStream}
+            isSpeaking={speakingIds.includes(pd.participant?.uid)}
+            streamName={streamName}
+          />
+        ))
+      ) : (
+        <div className="pip-empty-state">
+          <div className="pip-empty-icon">📹</div>
+          <div>No participants to display</div>
+        </div>
+      )}
+    </div>
+  );
 
   return (
     <div className="pip-container">
       <div className="pip-header">
         <span className="pip-title">
-          Conference · {participants.length} participant{participants.length !== 1 ? 's' : ''}
+          {isScreenShared ? 'Screen Sharing' : 'Conference'} · {participants.length} participant
+          {participants.length !== 1 ? 's' : ''}
         </span>
         <button className="pip-close-btn" onClick={onClose} title="Close Picture-in-Picture">
           ×
         </button>
       </div>
 
-      <div className="pip-participants-grid" style={getGridStyle(participants.length)}>
-        {participants.length > 0 ? (
-          participants.map((pd, i) => (
-            <PiPParticipant
-              key={pd.participant?.uid ?? i}
-              participant={pd.participant}
-              mediaStream={pd.mediaStream}
-              isSpeaking={speakingIds.includes(pd.participant?.uid)}
-              streamName={streamName}
-            />
-          ))
-        ) : (
-          <div className="pip-empty-state">
-            <div className="pip-empty-icon">📹</div>
-            <div>No participants to display</div>
-          </div>
-        )}
-      </div>
+      {isScreenShared ? renderScreenShareLayout() : renderNormalGrid()}
+
+      <PiPControlBar
+        isMyMicMuted={isMyMicMuted}
+        isMyCamTurnedOff={isMyCamTurnedOff}
+        isScreenShared={isScreenShared}
+        onToggleMic={onToggleMic}
+        onToggleCamera={onToggleCamera}
+        onToggleScreenShare={onToggleScreenShare}
+        onLeaveRoom={onLeaveRoom}
+      />
     </div>
   );
 };
@@ -602,11 +954,19 @@ export const usePictureInPicture = (): UsePictureInPictureReturn => {
   const openPiP = useCallback(
     async ({
       participants = [],
-      width = 800,
-      height = 600,
+      width = 360,
+      height = 640,
       onMuteToggle,
       onVideoToggle,
       onVolumeToggle,
+      onToggleMic,
+      onToggleCamera,
+      onToggleScreenShare,
+      onLeaveRoom,
+      isMyMicMuted,
+      isMyCamTurnedOff,
+      isScreenShared,
+      screenShareStream,
       talkers = [],
       streamName,
     }: PiPOpenOptions): Promise<boolean> => {
@@ -619,25 +979,10 @@ export const usePictureInPicture = (): UsePictureInPictureReturn => {
       try {
         setError(null);
 
-        // Dynamic sizing by participant count
-        const count = participants.length;
-        const adjustedWidth =
-          count <= 4
-            ? Math.max(600, width)
-            : count <= 9
-              ? Math.max(800, width)
-              : Math.max(1000, width);
-        const adjustedHeight =
-          count <= 4
-            ? Math.max(400, height)
-            : count <= 9
-              ? Math.max(600, height)
-              : Math.max(700, height);
-
         await pipManager.openWindow({
-          width: adjustedWidth,
-          height: adjustedHeight,
-          title: `Conference · ${count} participant${count !== 1 ? 's' : ''}`,
+          width,
+          height,
+          title: `Conference · ${participants.length} participant${participants.length !== 1 ? 's' : ''}`,
         });
 
         pipManager.renderContent(
@@ -650,6 +995,14 @@ export const usePictureInPicture = (): UsePictureInPictureReturn => {
             onMuteToggle={onMuteToggle}
             onVideoToggle={onVideoToggle}
             onVolumeToggle={onVolumeToggle}
+            onToggleMic={onToggleMic}
+            onToggleCamera={onToggleCamera}
+            onToggleScreenShare={onToggleScreenShare}
+            onLeaveRoom={onLeaveRoom}
+            isMyMicMuted={isMyMicMuted}
+            isMyCamTurnedOff={isMyCamTurnedOff}
+            isScreenShared={isScreenShared}
+            screenShareStream={screenShareStream}
             talkers={talkers}
             streamName={streamName}
           />,
@@ -674,6 +1027,14 @@ export const usePictureInPicture = (): UsePictureInPictureReturn => {
       onMuteToggle,
       onVideoToggle,
       onVolumeToggle,
+      onToggleMic,
+      onToggleCamera,
+      onToggleScreenShare,
+      onLeaveRoom,
+      isMyMicMuted,
+      isMyCamTurnedOff,
+      isScreenShared,
+      screenShareStream,
       talkers = [],
       streamName,
     }: PiPUpdateOptions): void => {
@@ -690,6 +1051,14 @@ export const usePictureInPicture = (): UsePictureInPictureReturn => {
           onMuteToggle={onMuteToggle}
           onVideoToggle={onVideoToggle}
           onVolumeToggle={onVolumeToggle}
+          onToggleMic={onToggleMic}
+          onToggleCamera={onToggleCamera}
+          onToggleScreenShare={onToggleScreenShare}
+          onLeaveRoom={onLeaveRoom}
+          isMyMicMuted={isMyMicMuted}
+          isMyCamTurnedOff={isMyCamTurnedOff}
+          isScreenShared={isScreenShared}
+          screenShareStream={screenShareStream}
           talkers={talkers}
           streamName={streamName}
         />,
