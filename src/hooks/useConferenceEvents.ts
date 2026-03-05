@@ -462,8 +462,8 @@ export const useConferenceEvents = (
 
         if (newParticipant.role !== 'subscriber') {
           setTimeout(async () => {
-            await eventHandlersRef.current.subscribeToParticipant(newParticipant);
-          }, 3000);
+            eventHandlersRef.current.subscribeToParticipant(newParticipant);
+          }, 2000);
         }
       },
 
@@ -530,7 +530,7 @@ export const useConferenceEvents = (
           };
         }
 
-        await eventHandlersRef.current.subscribeToParticipants(data.participants);
+        eventHandlersRef.current.subscribeToParticipants(data.participants);
       },
 
       webrtcIssuesDetected: (issues: any) => {
@@ -599,7 +599,7 @@ export const useConferenceEvents = (
         for (const [_userId, participant] of Object.entries(participantsObj)) {
           // @ts-ignore
           if (participant.role !== 'subscriber') {
-            await eventHandlersRef.current.subscribeToParticipant(participant);
+            eventHandlersRef.current.subscribeToParticipant(participant);
           }
         }
       },
