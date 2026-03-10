@@ -347,6 +347,7 @@ function Red5(props: Red5Props) {
               handleStopScreenShare={conference.features.screenShare.handleStopScreenShare}
               // Recording
               isRecordingActive={conference.features.recording.isRecordingActive}
+              didIStartServerRecording={conference.features.recording.didIStartServerRecording}
               startRecord={(
                 recordSeparately?: boolean,
                 serverRecording?: boolean,

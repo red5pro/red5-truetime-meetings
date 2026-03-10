@@ -70,6 +70,7 @@ export interface MeetingPageProps {
   isMobile: boolean;
   updateAudioOutput?: () => void;
   isRecordingActive?: boolean;
+  didIStartServerRecording?: boolean;
   isMuteParticipantDialogOpen?: boolean;
   participantIdMuted?: string;
   turnOffYourMicNotification?: (streamId: string) => void;
