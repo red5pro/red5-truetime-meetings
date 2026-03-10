@@ -21,8 +21,13 @@ interface TalkerAudioLevels {
   [streamId: string]: number;
 }
 
+interface SubscribeAttemptEntry {
+  retryCount: number;
+  inProgress: boolean;
+}
+
 interface SubscribeAttempts {
-  [streamId: string]: number;
+  [streamId: string]: SubscribeAttemptEntry;
 }
 
 interface UseParticipantsReturn {
@@ -38,6 +43,7 @@ interface UseParticipantsReturn {
   raisedHands: string[];
   setRaisedHands: React.Dispatch<React.SetStateAction<string[]>>;
   subscribeAttemptsRef: MutableRefObject<SubscribeAttempts>;
+  retryTimeoutsRef: MutableRefObject<Record<string, ReturnType<typeof setTimeout>>>;
   talkerAudioLevelsRef: MutableRefObject<TalkerAudioLevels>;
   pinnedParticipantIdRef: MutableRefObject<string | null>;
   updateTalkerLevel: (userId: string, level: number) => void;
@@ -55,6 +61,7 @@ export const useParticipants = (): UseParticipantsReturn => {
   const [talkers, setTalkers] = useState<string[]>([]);
   const [raisedHands, setRaisedHands] = useState<string[]>([]);
   const subscribeAttemptsRef = useRef<SubscribeAttempts>({});
+  const retryTimeoutsRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
   const talkerAudioLevelsRef = useRef<TalkerAudioLevels>({});
   const pinnedParticipantIdRef = useRef<string | null>(null);
 
@@ -121,6 +128,7 @@ export const useParticipants = (): UseParticipantsReturn => {
     raisedHands,
     setRaisedHands,
     subscribeAttemptsRef,
+    retryTimeoutsRef,
     talkerAudioLevelsRef,
     pinnedParticipantIdRef,
     updateTalkerLevel,

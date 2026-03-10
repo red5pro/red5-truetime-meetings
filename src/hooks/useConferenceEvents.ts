@@ -4,8 +4,8 @@ import { useEffect, useRef } from 'react';
 import { isNull, parseMetaData } from '../utils/utils';
 import { MetaDataKeys } from '../constants/metaDataKeys';
 import log from 'loglevel';
-import globals from 'globals';
 import { LayoutOptions } from '../utils/layoutOptions';
+import { sharedVariables } from '../constants/config';
 
 // ---- Types ----
 type NetworkScore = {
@@ -43,6 +43,7 @@ type ParticipantsHook = {
   subscribeAttemptsRef: React.MutableRefObject<
     Record<string, { retryCount: number; inProgress: boolean }>
   >;
+  retryTimeoutsRef: React.MutableRefObject<Record<string, ReturnType<typeof setTimeout>>>;
   talkerAudioLevelsRef: React.MutableRefObject<Record<string, any>>;
   pinnedParticipantIdRef: React.MutableRefObject<string | null>;
   guestsWaitingApproval?: Record<string, any>;
@@ -242,24 +243,55 @@ export const useConferenceEvents = (
 
         if (isNull(data.user.uid)) return;
 
+        const uid = data.user.uid;
         const participantsHook = depsRef.current.participantsHook;
 
-        if (!participantsHook.subscribeAttemptsRef.current[data.user.uid]) {
-          participantsHook.subscribeAttemptsRef.current[data.user.uid] = {
+        if (!participantsHook.subscribeAttemptsRef.current[uid]) {
+          participantsHook.subscribeAttemptsRef.current[uid] = {
             retryCount: 0,
             inProgress: false,
           };
         }
 
-        participantsHook.subscribeAttemptsRef.current[data.user.uid].retryCount++;
-        participantsHook.subscribeAttemptsRef.current[data.user.uid].inProgress = false;
+        const attempt = participantsHook.subscribeAttemptsRef.current[uid];
+        attempt.inProgress = false;
+        attempt.retryCount++;
 
-        // @ts-ignore
+        // Check max retries before scheduling another attempt
+        if (attempt.retryCount > sharedVariables.maxRetries) {
+          log.error(`Max subscription attempts reached for ${uid}. Giving up.`);
+          // Clean up attempt tracking
+          delete participantsHook.subscribeAttemptsRef.current[uid];
+          // Remove participant tile from UI
+          participantsHook.setParticipants((prev: ParticipantsMap) => {
+            const next = { ...prev };
+            delete next[uid];
+            return next;
+          });
+          return;
+        }
+
         log.warn(
-          `Subscription failed for ${data.user.uid}. Attempt ${participantsHook.subscribeAttemptsRef.current[data.user.uid].retryCount}/${globals.maxRetries}. Will retry on next opportunity.`,
+          `Subscription failed for ${uid}. Attempt ${attempt.retryCount}/${sharedVariables.maxRetries}. Retrying with backoff...`,
         );
 
-        eventHandlersRef.current.subscribeToParticipant(data.user);
+        // Exponential backoff: 2s, 4s, 8s, 16s, capped at 30s
+        const delay = Math.min(
+          sharedVariables.retryBaseDelayMs * Math.pow(2, attempt.retryCount - 1),
+          sharedVariables.retryMaxDelayMs,
+        );
+
+        // Cancel any existing pending retry for this uid to avoid stacking
+        if (participantsHook.retryTimeoutsRef.current[uid]) {
+          clearTimeout(participantsHook.retryTimeoutsRef.current[uid]);
+          delete participantsHook.retryTimeoutsRef.current[uid];
+        }
+
+        log.log(`Scheduling retry for ${uid} in ${delay}ms`);
+        participantsHook.retryTimeoutsRef.current[uid] = setTimeout(() => {
+          delete participantsHook.retryTimeoutsRef.current[uid];
+          eventHandlersRef.current.subscribeToParticipant(data.user);
+        }, delay);
       },
 
       handleAudioLevel: (data: any) => {
@@ -268,8 +300,15 @@ export const useConferenceEvents = (
 
       handleSubscribeStop: (data: any) => {
         console.log('handleSubscribeStop', data);
+        // Cancel any pending retry for this subscriber
+        const participantsHook = depsRef.current.participantsHook;
+        if (participantsHook.retryTimeoutsRef.current[data.uid]) {
+          clearTimeout(participantsHook.retryTimeoutsRef.current[data.uid]);
+          delete participantsHook.retryTimeoutsRef.current[data.uid];
+        }
+        delete participantsHook.subscribeAttemptsRef.current[data.uid];
         eventHandlersRef.current.clearRemoteSubscriber(data.uid);
-        depsRef.current.participantsHook.clearParticipant(data.uid);
+        participantsHook.clearParticipant(data.uid);
       },
 
       handleAudioMuted: (_data: any) => {
@@ -371,6 +410,11 @@ export const useConferenceEvents = (
         const displayMessage = depsRef.current.displayMessage;
         const pinVideo = depsRef.current.pinVideo;
 
+        // Cancel any pending retry and reset attempt tracking
+        if (participantsHook.retryTimeoutsRef.current[data.uid]) {
+          clearTimeout(participantsHook.retryTimeoutsRef.current[data.uid]);
+          delete participantsHook.retryTimeoutsRef.current[data.uid];
+        }
         participantsHook.subscribeAttemptsRef.current[data.uid] = {
           retryCount: 0,
           inProgress: false,
@@ -471,8 +515,16 @@ export const useConferenceEvents = (
         log.log('Participant disconnected:', data.participant);
 
         const participantsHook = depsRef.current.participantsHook;
+        const uid = data.participant.uid;
 
-        eventHandlersRef.current.clearRemoteSubscriber(data.participant.uid);
+        // Cancel any pending retry for this participant so we don't subscribe to a gone user
+        if (participantsHook.retryTimeoutsRef.current[uid]) {
+          clearTimeout(participantsHook.retryTimeoutsRef.current[uid]);
+          delete participantsHook.retryTimeoutsRef.current[uid];
+        }
+        delete participantsHook.subscribeAttemptsRef.current[uid];
+
+        eventHandlersRef.current.clearRemoteSubscriber(uid);
 
         // Remove from participants
         // @ts-ignore
@@ -607,41 +659,45 @@ export const useConferenceEvents = (
       subscribeToParticipant: async (participant: any) => {
         if (isNull(participant) || isNull(participant.uid)) return;
 
+        const uid = participant.uid;
         const participantsHook = depsRef.current.participantsHook;
 
+        // Guard: participant must still be in the room before we attempt to subscribe
+        if (!participantsHook.participants[uid]) {
+          log.warn(`Participant ${uid} is no longer in the room. Skipping subscription.`);
+          // Clean up any stale attempt tracking
+          delete participantsHook.subscribeAttemptsRef.current[uid];
+          if (participantsHook.retryTimeoutsRef.current[uid]) {
+            clearTimeout(participantsHook.retryTimeoutsRef.current[uid]);
+            delete participantsHook.retryTimeoutsRef.current[uid];
+          }
+          return;
+        }
+
+        // Ensure attempt entry exists
+        if (!participantsHook.subscribeAttemptsRef.current[uid]) {
+          participantsHook.subscribeAttemptsRef.current[uid] = {
+            retryCount: 0,
+            inProgress: false,
+          };
+        }
+
+        if (participantsHook.subscribeAttemptsRef.current[uid].inProgress) {
+          log.warn(`Already attempting to subscribe to ${uid}. Skipping...`);
+          return;
+        }
+
+        log.log(`Subscribing to participant: ${uid}`);
+
         try {
-          if (participantsHook.subscribeAttemptsRef.current[participant.uid]?.inProgress) {
-            log.warn(`Already attempting to subscribe to ${participant.uid}. Skipping...`);
-            return;
-          }
-          // @ts-ignore
-          if (
-            participantsHook.subscribeAttemptsRef.current[participant.uid]?.retryCount >=
-            globals.maxRetries
-          ) {
-            log.error(
-              `Max subscription attempts reached for ${participant.uid}. Removing participant.`,
-            );
-            // Remove from participants (this will remove their video from DOM)
-            // @ts-ignore
-            participantsHook.setParticipants((prev) => {
-              const newParticipants = { ...prev };
-              delete newParticipants[participant.uid];
-              return newParticipants;
-            });
-
-            log.log(
-              `Removed participant ${participant.uid} from DOM due to repeated subscription failure`,
-            );
-            return;
-          }
-
-          console.log(`Subscribing to participant: ${participant.uid}`);
-
-          participantsHook.subscribeAttemptsRef.current[participant.uid].inProgress = true;
+          participantsHook.subscribeAttemptsRef.current[uid].inProgress = true;
           await client.subscribe(participant);
         } catch (error) {
-          console.error(`Failed to subscribe to ${participant.uid}:`, error);
+          // Mark as no longer in progress; handleSubscribeFailed will handle the retry
+          if (participantsHook.subscribeAttemptsRef.current[uid]) {
+            participantsHook.subscribeAttemptsRef.current[uid].inProgress = false;
+          }
+          log.error(`Failed to subscribe to ${uid}:`, error);
         }
       },
 

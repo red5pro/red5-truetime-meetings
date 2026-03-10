@@ -5,6 +5,9 @@ export const sharedVariables = {
   desiredTileCount: 30,
   maxRetries: 5,
   retryInterval: 5000,
+  // Exponential backoff for subscription retries
+  retryBaseDelayMs: 2000,
+  retryMaxDelayMs: 30000,
 };
 
 export const peerConfig = {
