@@ -61,6 +61,7 @@ interface UseRecordingReturn {
   uploadError: string | null;
   hasS3Config: boolean;
   recordingStartTime: number | null;
+  didIStartServerRecording: boolean;
 
   // Setters
   setIsRecordingActive: React.Dispatch<React.SetStateAction<boolean>>;
@@ -101,6 +102,7 @@ export const useRecording = (
   const [isRecordingActive, setIsRecordingActive] = useState<boolean>(false);
   const [isRecordingStarting, setIsRecordingStarting] = useState<boolean>(false);
   const [isRecordingStopping, setIsRecordingStopping] = useState<boolean>(false);
+  const [didIStartServerRecording, setDidIStartServerRecording] = useState<boolean>(false);
 
   // Local Recording State
   const [isLocalRecordingActive, setIsLocalRecordingActive] = useState<boolean>(false);
@@ -358,6 +360,7 @@ export const useRecording = (
 
         if (response) {
           setIsRecordingActive(true);
+          setDidIStartServerRecording(true);
           log.log('Recording started successfully');
           if (displayMessageRef.current) {
             displayMessageRef.current('Recording started', 'success');
@@ -414,6 +417,7 @@ export const useRecording = (
 
         if (response) {
           setIsRecordingActive(false);
+          setDidIStartServerRecording(false);
           log.log('Recording stopped successfully');
           if (displayMessageRef.current) {
             displayMessageRef.current('Recording stopped', 'success');
@@ -810,6 +814,7 @@ export const useRecording = (
     isRecordingActive,
     isRecordingStarting,
     isRecordingStopping,
+    didIStartServerRecording,
 
     // Local Recording State
     isLocalRecordingActive,
