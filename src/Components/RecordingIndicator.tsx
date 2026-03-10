@@ -11,15 +11,22 @@ const formatElapsed = (totalSeconds: number): string => {
   return hrs > 0 ? `${pad(hrs)}:${pad(mins)}:${pad(secs)}` : `${pad(mins)}:${pad(secs)}`;
 };
 
-const RecordingIndicator: React.FC = () => {
+export interface RecordingIndicatorProps {
+  didIStart?: boolean;
+}
+
+const RecordingIndicator: React.FC<RecordingIndicatorProps> = ({ didIStart }) => {
   const [elapsed, setElapsed] = useState(0);
 
   useEffect(() => {
+    // Only run timer if we started the recording
+    if (!didIStart) return;
+
     const interval = setInterval(() => {
       setElapsed((prev) => prev + 1);
     }, 1000);
     return () => clearInterval(interval);
-  }, []);
+  }, [didIStart]);
 
   const buttonStyle = {
     display: 'flex',
@@ -56,7 +63,7 @@ const RecordingIndicator: React.FC = () => {
     <Box style={buttonStyle}>
       <Box style={iconStyle} />
       <span>Recording</span>
-      <span style={timerStyle}>{formatElapsed(elapsed)}</span>
+      {didIStart && <span style={timerStyle}>{formatElapsed(elapsed)}</span>}
     </Box>
   );
 };

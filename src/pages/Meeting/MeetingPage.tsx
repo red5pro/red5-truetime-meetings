@@ -413,7 +413,9 @@ const MeetingPage = React.memo<MeetingPageProps>((props) => {
       </Box>
 
       {/* Recording Indicator */}
-      {props?.isRecordingActive && <RecordingIndicator />}
+      {props?.isRecordingActive && (
+        <RecordingIndicator didIStart={props?.didIStartServerRecording} />
+      )}
 
       {/* Mute Participant Dialog */}
       <MuteParticipantDialog
