@@ -733,6 +733,7 @@ const PiPParticipant: React.FC<PiPParticipantProps> = ({
           autoPlay
           playsInline
           muted={isLocalUser}
+          style={isLocalUser ? { transform: 'scaleX(-1)' } : undefined}
         />
       ) : (
         <div className="pip-audio-only">
