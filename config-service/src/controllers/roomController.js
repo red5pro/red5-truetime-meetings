@@ -23,10 +23,8 @@ class RoomController {
       }
       res.json({
         success: false,
-        users: {
-          userCount: 0,
-          users: [],
-        },
+        userCount: 0,
+        users: [],
       });
     }
   }
