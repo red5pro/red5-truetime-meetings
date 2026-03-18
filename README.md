@@ -7,7 +7,7 @@ A real-time video conferencing application built with React and Red5 Pro, featur
 ### Core Video Conferencing
 
 - **Multi-participant video calls** with up to 30 participants by default
-- **Real-time audio/video streaming** using Red5 Pro WebRTC technology
+- **Real-time audio/video streaming** using [Red5 Pro WebRTC technology](https://www.red5.net/webrtc-server/)
 - **Screen sharing** with audio support
 - **Play-only mode** for viewers without publishing capabilities
 - **Automatic device switching** when devices become unavailable
