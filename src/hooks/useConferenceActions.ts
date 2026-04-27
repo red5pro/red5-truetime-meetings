@@ -49,6 +49,8 @@ interface RoomState {
   isPlayOnly: boolean;
   setIsJoining: (joining: boolean) => void;
   setIsWaitingApproval: (waitingApproval: boolean) => void;
+  setIsPublished: (published: boolean) => void;
+  setIsPlayed: (played: boolean) => void;
 }
 
 interface MediaControls {
@@ -287,6 +289,8 @@ export const useConferenceActions = (
       participantsHook.talkerAudioLevelsRef.current = {};
       roomState.setIsJoining(false);
       roomState.setIsWaitingApproval(false);
+      roomState.setIsPublished(false);
+      roomState.setIsPlayed(false);
     } catch (error) {
       log.error('Leave failed:', error);
     }
