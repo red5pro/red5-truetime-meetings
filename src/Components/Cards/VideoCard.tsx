@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo, VideoHTMLAttributes } from 'react';
+import React, { useState, useCallback, useMemo, useRef, VideoHTMLAttributes } from 'react';
 import { alpha, styled } from '@mui/material/styles';
 import { Typography, useTheme, Box, Tooltip, Theme, Slider } from '@mui/material';
 import Grid from '@mui/material/Grid2';
@@ -503,14 +503,19 @@ const VideoCard = React.memo<VideoCardProps>((props) => {
   const theme = useTheme();
 
   const [displayHover, setDisplayHover] = useState(false);
+  const leaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Event handlers
   const handleMouseEnter = useCallback(() => {
+    if (leaveTimerRef.current) {
+      clearTimeout(leaveTimerRef.current);
+      leaveTimerRef.current = null;
+    }
     setDisplayHover(true);
   }, []);
 
   const handleMouseLeave = useCallback(() => {
-    setDisplayHover(false);
+    leaveTimerRef.current = setTimeout(() => setDisplayHover(false), 200);
   }, []);
 
   // Memoized styles
