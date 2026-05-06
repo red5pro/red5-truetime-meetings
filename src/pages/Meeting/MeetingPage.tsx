@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Container, Box, IconButton } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
+import useMediaQuery from '@mui/material/useMediaQuery';
 import { ReactionBarSelector } from '@charkour/react-reactions';
 import { Close } from '@mui/icons-material';
 import cloneDeep from 'lodash/cloneDeep';
@@ -35,6 +36,9 @@ const REACTION_LIST: Reaction[] = [
 ];
 
 const AUTO_LAYOUT_PARTICIPANT_LIMIT = 8;
+const FOOTER_HEIGHT = 80;
+const CAPTIONS_PANEL_HEIGHT_DESKTOP = 240;
+const CAPTIONS_PANEL_HEIGHT_MOBILE = 180;
 
 const MeetingPage = React.memo<MeetingPageProps>((props) => {
   const [pushToTalkEnabled, setPushToTalkEnabled] = useState<boolean>(
@@ -42,6 +46,7 @@ const MeetingPage = React.memo<MeetingPageProps>((props) => {
   );
   const [gallerySize, setGallerySize] = useState<GallerySize>({ w: 100, h: 100 });
   const theme = useTheme();
+  const isSmallScreen = useMediaQuery(theme.breakpoints.down('sm'));
 
   // Create refs for props functions to prevent dependency issues
   const propsRef = useRef(props);
@@ -404,9 +409,13 @@ const MeetingPage = React.memo<MeetingPageProps>((props) => {
       <Box
         id="stream-gallery"
         sx={{
+          // Keep gallery space in sync with captions panel + footer heights.
           height: props?.closedCaptions.captionsVisible
-            ? 'calc(100vh - 320px) !important'
-            : 'calc(100vh - 80px) !important',
+            ? `calc(100vh - ${
+                FOOTER_HEIGHT +
+                (isSmallScreen ? CAPTIONS_PANEL_HEIGHT_MOBILE : CAPTIONS_PANEL_HEIGHT_DESKTOP)
+              }px) !important`
+            : `calc(100vh - ${FOOTER_HEIGHT}px) !important`,
         }}
       >
         {pipIsOpen ? pipOverlay() : renderLayout()}
