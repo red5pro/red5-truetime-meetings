@@ -255,7 +255,7 @@ function MoreOptionsButton(props: MoreOptionsButtonProps) {
           horizontal: 'left',
         }}
       >
-        <MenuItem disabled={!props?.captionsVisible} onClick={handleCaptionsClick}>
+        <MenuItem disabled={!isCaptionEnabled} onClick={handleCaptionsClick}>
           <ListItemIcon>
             {props?.captionsVisible ? (
               <ClosedCaption sx={{ color: '#fff' }} />
@@ -267,7 +267,7 @@ function MoreOptionsButton(props: MoreOptionsButtonProps) {
             id="more-options-captions-button"
             sx={{
               '& .MuiListItemText-primary': {
-                color: !props?.captionsVisible ? 'text.disabled' : 'text.primary',
+                color: !isCaptionEnabled ? 'text.disabled' : 'text.primary',
               },
             }}
           >
