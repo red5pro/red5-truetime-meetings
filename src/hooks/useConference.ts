@@ -574,6 +574,10 @@ export const useConference = (roomId: string): UseConferenceReturn => {
         closedCaptions,
         transcription,
         externalStreams,
+        locations: {
+          list: participantLocations.participantLocations,
+          sendRandomMockLocation: participantLocations.sendRandomMockLocation,
+        },
       },
 
       // Client and utilities

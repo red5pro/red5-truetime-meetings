@@ -578,6 +578,7 @@ const MeetingPage = React.memo<MeetingPageProps>((props) => {
         handleTranscriptionDrawerOpen={props?.handleTranscriptionDrawerOpen}
         externalStreamsDrawerOpen={props?.externalStreamsDrawerOpen}
         handleExternalStreamsDrawerOpen={props?.handleExternalStreamsDrawerOpen}
+        sendRandomMockLocation={props?.sendRandomMockLocation}
       />
     </Container>
   );

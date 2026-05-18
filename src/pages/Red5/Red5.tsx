@@ -437,6 +437,7 @@ function Red5(props: Red5Props) {
               // External Streams
               externalStreamsDrawerOpen={conference.ui.externalStreamsDrawerOpen}
               handleExternalStreamsDrawerOpen={conference.ui.handleExternalStreamsDrawerOpen}
+              sendRandomMockLocation={conference.features.locations.sendRandomMockLocation}
             />
 
             {/* Drawers */}

@@ -121,6 +121,7 @@ export interface MeetingPageProps {
   setPrintStatLogs?: (print: boolean) => void;
   updateDevicesList?: () => void;
   transcription: any;
+  sendRandomMockLocation?: () => void;
 }
 
 export interface GallerySize {

@@ -20,6 +20,7 @@ import ReactionsButton from './Components/ReactionsButton.tsx';
 import MoreOptionsButton from './Components/MoreOptionsButton.tsx';
 import { useTheme } from '@mui/material/styles';
 import RaiseHandButton from './Components/RaiseHandButton.tsx';
+import MockLocationButton from './Components/MockLocationButton.tsx';
 import CaptionsButton from './Components/CaptionsButton.tsx';
 import { Devices } from '../DeviceSelector.tsx';
 import LocalRecordingButton from './Components/LocalRecordingButton.tsx';
@@ -107,6 +108,7 @@ interface FooterProps {
   externalStreamsDrawerOpen?: boolean;
   handleExternalStreamsDrawerOpen?: (open: boolean) => void;
   hideExternalStreams?: boolean;
+  sendRandomMockLocation?: () => void;
 }
 
 const getCustomizedGridStyle = (theme: Theme) => {
@@ -316,6 +318,16 @@ function Footer(props: FooterProps) {
                   rounded={!props?.showRaiseHand}
                   isRaiseHand={props?.isRaiseHand}
                   setIsRaiseHand={(isRaiseHand: boolean) => props?.setIsRaiseHand?.(isRaiseHand)}
+                />
+              </Grid>
+            ) : null}
+
+            {props?.isPlayOnly === false ? (
+              <Grid size="auto" style={{ display: '-webkit-inline-box' }}>
+                <MockLocationButton
+                  footer={true}
+                  glass={props?.glass}
+                  onSendRandomMockLocation={props?.sendRandomMockLocation}
                 />
               </Grid>
             ) : null}

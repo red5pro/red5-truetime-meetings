@@ -4,6 +4,7 @@ import { MetaDataKeys, LocationEventTypes } from '../constants/metaDataKeys';
 import { parseMetaData } from '../utils/utils';
 import {
   getCurrentLocation,
+  getRandomMockLocation,
   watchLocation,
   clearLocationWatch,
   hasLocationChanged,
@@ -30,6 +31,7 @@ interface UseParticipantLocationsReturn {
   startLocationTracking: () => void;
   stopLocationTracking: () => void;
   clearAllLocations: () => void;
+  sendRandomMockLocation: () => void;
 }
 
 export const useParticipantLocations = (
@@ -185,6 +187,12 @@ export const useParticipantLocations = (
     log.log('Participant location tracking stopped');
   }, []);
 
+  const sendRandomMockLocation = useCallback(() => {
+    const location = getRandomMockLocation();
+    log.log('Sending random mock location', location);
+    publishLocationUpdate(location);
+  }, [publishLocationUpdate]);
+
   return {
     participantLocations,
     syncLocationsFromParticipants,
@@ -193,5 +201,6 @@ export const useParticipantLocations = (
     startLocationTracking,
     stopLocationTracking,
     clearAllLocations,
+    sendRandomMockLocation,
   };
 };

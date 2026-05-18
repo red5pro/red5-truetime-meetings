@@ -33,6 +33,20 @@ export function getMockLocation(): ParticipantLocation {
   };
 }
 
+/** Random coordinates near the default mock center (~±5 km). */
+export function getRandomMockLocation(): ParticipantLocation {
+  const base = getMockLocation();
+  const jitter = () => (Math.random() - 0.5) * 0.09;
+
+  return {
+    latitude: base.latitude + jitter(),
+    longitude: base.longitude + jitter(),
+    accuracy: Math.floor(Math.random() * 450) + 50,
+    timestamp: Date.now(),
+    isMock: true,
+  };
+}
+
 const isValidPosition = (position: GeolocationPosition): boolean => {
   const { latitude, longitude } = position.coords;
   return Number.isFinite(latitude) && Number.isFinite(longitude);
