@@ -18,6 +18,7 @@ import { useTranscription } from './useTranscription';
 import { useExternalStreams } from './useExternalStreams';
 import { useConferenceState } from './useConferenceState';
 import { useConferenceEvents } from './useConferenceEvents';
+import { useParticipantLocations } from './useParticipantLocations';
 import { useGoogleAuth } from '../contexts/GoogleAuthContext';
 import { useCustomNotification } from '../CustomNotification';
 import { usePostRequest } from './usePostRequest';
@@ -344,6 +345,13 @@ export const useConference = (roomId: string): UseConferenceReturn => {
     googleToken,
   );
 
+  const participantLocations = useParticipantLocations(
+    // @ts-ignore
+    client.conferenceClient,
+    roomState.publishStreamIdRef,
+    conferenceActions.sendNotificationEvent,
+  );
+
   const recording = useRecording(
     conferenceState.roomName,
     conferenceState.token,
@@ -385,6 +393,7 @@ export const useConference = (roomId: string): UseConferenceReturn => {
     participants.setRaisedHands,
     mediaControls.toggleMic,
     showInfo,
+    participantLocations.handleRemoteLocationUpdate,
   );
 
   const transcription = useTranscription(conferenceState.roomName, conferenceState.token);
@@ -416,7 +425,20 @@ export const useConference = (roomId: string): UseConferenceReturn => {
     conferenceActions.unpinVideo,
     conferenceState.layoutRef,
     conferenceState.role,
+    participantLocations,
   );
+
+  useEffect(() => {
+    if (!roomState.isPublished && !roomState.isPlayed) {
+      participantLocations.stopLocationTracking();
+      participantLocations.clearAllLocations();
+    }
+  }, [
+    roomState.isPublished,
+    roomState.isPlayed,
+    participantLocations.stopLocationTracking,
+    participantLocations.clearAllLocations,
+  ]);
 
   // Enhanced action handlers - memoized to prevent recreation
   const enhancedActions: EnhancedActions = useMemo(
@@ -530,7 +552,10 @@ export const useConference = (roomId: string): UseConferenceReturn => {
       },
 
       // Participants management
-      participants,
+      participants: {
+        ...participants,
+        locations: participantLocations.participantLocations,
+      },
 
       // UI state and controls
       ui: {
@@ -569,6 +594,7 @@ export const useConference = (roomId: string): UseConferenceReturn => {
       deviceManagement,
       localVideoCreate,
       participants,
+      participantLocations,
       drawerStates,
       permissions,
       chat,

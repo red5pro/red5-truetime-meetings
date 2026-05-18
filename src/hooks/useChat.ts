@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback, useEffect, MutableRefObject } from 'react';
 import { truncateText, getLang, truncateFileName } from '../utils/utils';
+import { LocationEventTypes } from '../constants/metaDataKeys';
 import { FileType } from 'red5pro-conference-sdk';
 
 // Type definitions
@@ -9,6 +10,13 @@ interface Message {
   name: string;
   date: string;
   files?: FileType[];
+}
+
+interface ParticipantLocationPayload {
+  latitude: number;
+  longitude: number;
+  accuracy?: number;
+  timestamp?: number;
 }
 
 interface NotificationEvent {
@@ -23,6 +31,7 @@ interface NotificationEvent {
   streamId?: string;
   files?: FileType[];
   metadata?: any;
+  location?: ParticipantLocationPayload;
 }
 
 interface MessageEvent {
@@ -76,6 +85,10 @@ export const useChat = (
   setRaisedHands: React.Dispatch<React.SetStateAction<string[]>>,
   toggleMic: (muted: boolean) => void,
   showInfo: (message: string, options?: ShowInfoOptions) => void,
+  onLocationUpdate?: (
+    senderStreamId: string | undefined,
+    location: ParticipantLocationPayload | undefined,
+  ) => void,
 ): UseChatReturn => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [numberOfUnReadMessages, setNumberOfUnReadMessages] = useState<number>(0);
@@ -87,6 +100,7 @@ export const useChat = (
   const toggleMicRef = useRef(toggleMic);
   const showInfoRef = useRef(showInfo);
   const setMessageDrawerOpenRef = useRef(setMessageDrawerOpen);
+  const onLocationUpdateRef = useRef(onLocationUpdate);
 
   // Keep refs up to date
   useEffect(() => {
@@ -108,6 +122,10 @@ export const useChat = (
   useEffect(() => {
     setMessageDrawerOpenRef.current = setMessageDrawerOpen;
   }, [setMessageDrawerOpen]);
+
+  useEffect(() => {
+    onLocationUpdateRef.current = onLocationUpdate;
+  }, [onLocationUpdate]);
 
   const handleSendMessage = useCallback(
     async (message: string, files?: File[]) => {
@@ -297,6 +315,8 @@ export const useChat = (
           showInfoRef.current(notificationEvent.senderStreamName + ' is muted you.');
           toggleMicRef.current(true);
         }
+      } else if (eventType === LocationEventTypes.LOCATION_UPDATE) {
+        onLocationUpdateRef.current?.(notificationEvent.senderStreamId, notificationEvent.location);
       }
     },
     [publishStreamIdRef, messageDrawerOpen, handleSetMessages, conferenceClientRef],

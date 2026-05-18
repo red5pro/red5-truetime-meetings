@@ -3,6 +3,7 @@ import { useCallback, useRef, useEffect, MutableRefObject } from 'react';
 import { USER_ROLES, UserRole } from '../constants/userRoles';
 import { isConfigServiceAvailable, isNull, updateMetaData } from '../utils/utils';
 import { MetaDataKeys } from '../constants/metaDataKeys';
+import { getCurrentLocation } from '../utils/geolocation';
 import log from 'loglevel';
 import { getRuntimeConfig } from '../utils/configStore';
 import { getBackendConfig } from '../utils/conferenceConfig';
@@ -218,7 +219,15 @@ export const useConferenceActions = (
         client.conferenceClient.current.mediaStreamManager.publisherName = roomState.streamName;
       }
 
-      const metadata = updateMetaData(null, MetaDataKeys.NAME, roomState.streamName);
+      let metadata = updateMetaData(null, MetaDataKeys.NAME, roomState.streamName);
+      const location = await getCurrentLocation();
+      metadata = updateMetaData(metadata, MetaDataKeys.LOCATION, location);
+      log.log(
+        location.isMock
+          ? 'Including mock location in join metadata:'
+          : 'Including location in join metadata:',
+        location,
+      );
       let result;
 
       const backendConfig = getBackendConfig();

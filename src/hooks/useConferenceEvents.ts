@@ -99,6 +99,11 @@ export const useConferenceEvents = (
   unpinVideo: (uid: string) => void,
   layoutRef: React.MutableRefObject<typeof LayoutOptions>,
   role: string,
+  participantLocations?: {
+    syncLocationsFromParticipants: (participants: ParticipantsMap) => void;
+    removeParticipantLocation: (streamId: string) => void;
+    startLocationTracking: () => void;
+  },
 ) => {
   // Store all dependencies in a ref to avoid closure issues
   const depsRef = useRef<any>({});
@@ -127,6 +132,7 @@ export const useConferenceEvents = (
     unpinVideo,
     layoutRef,
     role,
+    participantLocations,
   };
 
   // Event handlers stored in ref
@@ -282,6 +288,7 @@ export const useConferenceEvents = (
 
       handleDataChannelAvailable: () => {
         log.log('Data channel available');
+        depsRef.current.participantLocations?.startLocationTracking();
       },
 
       handleJoinFail: async (data: any) => {
@@ -448,10 +455,14 @@ export const useConferenceEvents = (
         const participantsHook = depsRef.current.participantsHook;
 
         // @ts-ignore
-        participantsHook.setParticipants((prev) => ({
-          ...prev,
-          [newParticipant.uid]: newParticipant,
-        }));
+        participantsHook.setParticipants((prev) => {
+          const updated = {
+            ...prev,
+            [newParticipant.uid]: newParticipant,
+          };
+          depsRef.current.participantLocations?.syncLocationsFromParticipants(updated);
+          return updated;
+        });
 
         log.log('participants', participantsHook.participants);
 
@@ -493,6 +504,8 @@ export const useConferenceEvents = (
         const newTalkers = { ...participantsHook.talkerAudioLevelsRef.current };
         delete newTalkers[data.participant.uid];
         participantsHook.talkerAudioLevelsRef.current = newTalkers;
+
+        depsRef.current.participantLocations?.removeParticipantLocation(data.participant.uid);
       },
 
       handleUserPublished: async (data: any) => {
@@ -522,6 +535,8 @@ export const useConferenceEvents = (
           participants[userId] = updatedParticipant;
         }
         participantsHook.setParticipants(data.participants);
+        depsRef.current.participantLocations?.syncLocationsFromParticipants(data.participants);
+        depsRef.current.participantLocations?.startLocationTracking();
 
         for (const [userId, _participant] of Object.entries(participants)) {
           participantsHook.subscribeAttemptsRef.current[userId] = {
