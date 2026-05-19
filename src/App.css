@@ -296,8 +296,9 @@ form {
   flex-wrap: wrap;
   justify-content: center;
   align-items: center;
-  gap: 8px;
-  padding: 15px;
+  column-gap: 8px;
+  row-gap: 2px;
+  padding: 40px 15px;
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   grid-template-rows: repeat(auto-fit, minmax(200px, 1fr));
@@ -330,6 +331,7 @@ form {
 .layout-tiled.participants-6 {
   grid-template-columns: 1fr 1fr 1fr;
   grid-template-rows: 1fr 1fr;
+  grid-auto-rows: 1fr;
 }
 
 /* Handle 3 participants - 2 on top, 1 positioned better below */
@@ -427,7 +429,7 @@ form {
   border-radius: 8px;
   overflow: hidden;
   width: 100%;
-  height: calc(100% - 80px) !important;
+  height: calc(100% - 20px) !important;
   min-height: 200px;
 }
 
