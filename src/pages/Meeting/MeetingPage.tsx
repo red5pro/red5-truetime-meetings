@@ -47,6 +47,7 @@ const MeetingPage = React.memo<MeetingPageProps>((props) => {
   const [gallerySize, setGallerySize] = useState<GallerySize>({ w: 100, h: 100 });
   const theme = useTheme();
   const isSmallScreen = useMediaQuery(theme.breakpoints.down('sm'));
+  const isMobileLayout = isSmallScreen || props.isMobile;
 
   // Create refs for props functions to prevent dependency issues
   const propsRef = useRef(props);
@@ -290,7 +291,7 @@ const MeetingPage = React.memo<MeetingPageProps>((props) => {
           pinnedParticipantId={currentProps.pinnedParticipantId}
           isScreenShared={currentProps.isScreenShared}
           isStartingScreenShare={currentProps.isStartingScreenShare}
-          isMobile={currentProps.isMobile}
+          isMobile={isMobileLayout}
         />
       );
     }
@@ -302,6 +303,7 @@ const MeetingPage = React.memo<MeetingPageProps>((props) => {
           // @ts-ignore
           pinnedParticipantId={currentProps.pinnedParticipantId}
           layout={currentProps.layout}
+          isMobile={isMobileLayout}
         />
       );
     }
@@ -315,7 +317,7 @@ const MeetingPage = React.memo<MeetingPageProps>((props) => {
         layout={currentProps.layout}
       />
     );
-  }, [allParticipants, gallerySize, pipSupported]);
+  }, [allParticipants, gallerySize, pipSupported, isMobileLayout]);
 
   // Effects
   useEffect(() => {

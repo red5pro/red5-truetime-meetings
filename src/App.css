@@ -417,9 +417,16 @@ form {
   cursor: pointer;
 }
 
-/* Hide videos that should be in "others" in pinned mode */
-.layout-pinned .in-others {
-  display: none !important;
+/* Keep overflow participants off-screen but mounted so audio can play */
+.layout-pinned .in-others,
+.audio-only-participant {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  opacity: 0;
+  pointer-events: none;
+  z-index: -1;
 }
 
 /* Show all videos in tiled mode */

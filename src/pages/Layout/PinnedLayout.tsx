@@ -1,5 +1,6 @@
 import React, { useMemo, useCallback } from 'react';
 import { Box } from '@mui/system';
+import useMediaQuery from '@mui/material/useMediaQuery';
 
 import VideoCard from '../../Components/Cards/VideoCard.tsx';
 import OthersCard from '../../Components/Cards/OthersCard.tsx';
@@ -29,6 +30,9 @@ const LayoutPinned = React.memo<LayoutPinnedProps>((props) => {
     currentConferenceClient,
     isMobile,
   } = props;
+
+  const isMobileViewport = useMediaQuery('(max-width:600px)');
+  const isMobileLayout = isMobile ?? isMobileViewport;
 
   // Memoized calculations
   const participantCounts = useMemo<ParticipantCounts>(() => {
@@ -289,7 +293,7 @@ const LayoutPinned = React.memo<LayoutPinnedProps>((props) => {
   );
 
   // Mobile layout structure
-  if (isMobile) {
+  if (isMobileLayout) {
     return (
       <>
         {renderPinnedVideo()}
