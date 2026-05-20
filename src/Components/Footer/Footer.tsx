@@ -408,7 +408,10 @@ function Footer(props: FooterProps) {
       <Grid sx={{ display: { xs: 'none', sm: 'block' } }} style={{ zIndex: 999999 }}>
         <Grid container alignItems="center">
           <Grid size="auto">
-            <InfoButton handleInfoDrawerOpen={props?.handleInfoDrawerOpen} />
+            <InfoButton
+              infoDrawerOpen={props?.infoDrawerOpen}
+              handleInfoDrawerOpen={props?.handleInfoDrawerOpen}
+            />
           </Grid>
           {isExternalStreamsEnabled && (
             <Grid size="auto">
