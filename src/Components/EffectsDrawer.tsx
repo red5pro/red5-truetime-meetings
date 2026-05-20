@@ -121,6 +121,7 @@ const EffectsDrawer = React.memo<EffectsDrawerProps>((props) => {
                 handleBackgroundReplacement={(mode: BackgroundReplacement) =>
                   props.handleBackgroundReplacement?.(mode)
                 }
+                handleEffectsOpen={props.handleEffectsOpen}
               />
             </TabGrid>
           </TabPanel>

@@ -66,6 +66,7 @@ interface VirtualBackgroundImage {
 interface EffectsTabProps {
   setVirtualBackgroundImage: (image: VirtualBackgroundImage) => void;
   handleBackgroundReplacement: (replacement: BackgroundReplacement) => void;
+  handleEffectsOpen?: (open: boolean) => void;
 }
 
 // Global image cache to persist across renders
@@ -336,6 +337,7 @@ const VirtualBackgroundButton = React.memo<VirtualBackgroundButtonProps>(
 function EffectsTab({
   setVirtualBackgroundImage,
   handleBackgroundReplacement,
+  handleEffectsOpen,
 }: EffectsTabProps): JSX.Element {
   const { t } = useTranslation();
   const theme = useTheme();
@@ -367,8 +369,9 @@ function EffectsTab({
       setSelectedEffect(effectType);
       setSelectedBackground(null);
       handleBackgroundReplacement({ type: effectType });
+      handleEffectsOpen?.(false);
     },
-    [handleBackgroundReplacement],
+    [handleBackgroundReplacement, handleEffectsOpen],
   );
 
   const handleBackgroundSelection = React.useCallback(
@@ -380,8 +383,9 @@ function EffectsTab({
       } else {
         setVirtualBackgroundImage({ type: 'image', value: imageSrc });
       }
+      handleEffectsOpen?.(false);
     },
-    [handleBackgroundReplacement, setVirtualBackgroundImage],
+    [handleBackgroundReplacement, setVirtualBackgroundImage, handleEffectsOpen],
   );
 
   const handleFileChange = React.useCallback(

@@ -5,6 +5,14 @@ export const sharedVariables = {
   desiredTileCount: 30,
   maxRetries: 5,
   retryInterval: 5000,
+  /** Internal health poll interval (ms) when SDK events may not fire */
+  healthCheckInterval: 3000,
+  /** Max wait for publish after join before fatal error (ms) */
+  publishTimeoutMs: 30000,
+  /** Grace period after reconnect before treating publish as failed (ms) */
+  publishRecoveryGraceMs: 8000,
+  /** How long a subscribe may stay pending before health monitor retries (ms) */
+  subscribeStaleMs: 10000,
 };
 
 export const peerConfig = {
