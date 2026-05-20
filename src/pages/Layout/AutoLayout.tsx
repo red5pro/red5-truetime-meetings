@@ -91,13 +91,13 @@ const LayoutAuto = React.memo<LayoutAutoProps>((props) => {
 
   // Render individual video
   const renderVideo = useCallback(
-    (participantObject: ParticipantObject, _index: number) => {
+    (participantObject: ParticipantObject, _index: number, forceAudioOnly: boolean = false) => {
       const { participant } = participantObject;
       const layoutClass = getLayoutClass(participant);
       const isOwnScreenShare =
         participant.isScreenSharing === true && participant.ownerStreamId === publishStreamId;
       const isMine = participant.uid === streamName;
-      const isHidden = layoutClass === LAYOUT_CLASSES.IN_OTHERS;
+      const isHidden = forceAudioOnly || layoutClass === LAYOUT_CLASSES.IN_OTHERS;
 
       // Calculate sidebar index for CSS positioning
       const sidebarIndex =
@@ -119,7 +119,7 @@ const LayoutAuto = React.memo<LayoutAutoProps>((props) => {
       return (
         <Box
           key={`video-${participant.uid}`}
-          className={`single-video-container ${layoutClass}`}
+          className={`single-video-container ${isHidden ? 'audio-only-participant' : layoutClass}`}
           style={containerStyle}
         >
           <VideoCard
@@ -193,17 +193,44 @@ const LayoutAuto = React.memo<LayoutAutoProps>((props) => {
     );
   }, [pinLayout, othersCount, sidebarVideos.length]);
 
-  // Get visible participants based on desired tile count
-  const visibleParticipants = useMemo(() => {
+  // Split visible and audio-only participants for pinned mode
+  const { visibleParticipants, audioOnlyParticipants } = useMemo(() => {
     const tileCount = globals?.desiredTileCount || allParticipants.length;
-    return allParticipants.slice(0, tileCount);
-  }, [allParticipants, globals?.desiredTileCount]);
+
+    if (!pinLayout) {
+      return {
+        visibleParticipants: allParticipants.slice(0, tileCount),
+        audioOnlyParticipants: [] as ParticipantObject[],
+      };
+    }
+
+    const visible: ParticipantObject[] = [];
+    const audioOnly: ParticipantObject[] = [];
+
+    allParticipants.forEach((participantObject) => {
+      const layoutClass = getLayoutClass(participantObject.participant);
+      if (layoutClass === LAYOUT_CLASSES.IN_OTHERS) {
+        audioOnly.push(participantObject);
+      } else {
+        visible.push(participantObject);
+      }
+    });
+
+    return { visibleParticipants: visible, audioOnlyParticipants: audioOnly };
+  }, [allParticipants, globals?.desiredTileCount, pinLayout, getLayoutClass]);
 
   return (
-    <Box className={containerClass}>
-      {visibleParticipants.map(renderVideo)}
-      {renderOthersCard()}
-    </Box>
+    <>
+      <Box className={containerClass}>
+        {visibleParticipants.map((participantObject, index) =>
+          renderVideo(participantObject, index),
+        )}
+        {renderOthersCard()}
+      </Box>
+      {audioOnlyParticipants.map((participantObject, index) =>
+        renderVideo(participantObject, index, true),
+      )}
+    </>
   );
 });
 

@@ -1,4 +1,12 @@
-import React, { useState, useCallback, useMemo, useRef, VideoHTMLAttributes } from 'react';
+import React, {
+  useState,
+  useCallback,
+  useMemo,
+  useRef,
+  useLayoutEffect,
+  useEffect,
+  VideoHTMLAttributes,
+} from 'react';
 import { alpha, styled } from '@mui/material/styles';
 import { Typography, useTheme, Box, Tooltip, Theme, Slider } from '@mui/material';
 import Grid from '@mui/material/Grid2';
@@ -10,7 +18,6 @@ import DummyCard from './DummyCard';
 import CustomCard from '../CustomCard.tsx';
 import { CustomizedBtn, roundStyle } from '../CustomizedBtn.tsx';
 import { SvgIcon } from '../SvgIcon';
-import { LayoutOptions } from '../../utils/layoutOptions.ts';
 import CustomSpinner from '../CustomSpinner.tsx';
 import { ConnectionQualityBar } from '../ConnectionQualityBar.tsx';
 import TalkingIndicator from '../TalkingIndicator.tsx';
@@ -248,7 +255,7 @@ const PinButton = React.memo<PinButtonProps>(({ pinned, name, pinVideo, unpinVid
   );
 
   const handleClick = useCallback(() => {
-    pinned ? unpinVideo(true) : pinVideo(streamId);
+    pinned ? unpinVideo() : pinVideo(streamId);
   }, [pinned, unpinVideo, pinVideo, streamId]);
 
   return (
@@ -389,8 +396,7 @@ const OverlayButtons = React.memo<OverlayButtonsProps>(
   }) => {
     if (hidePin) return null;
 
-    const shouldShowPinButton =
-      !isMobile && !isTablet && !(pinned && layout === LayoutOptions.Sidebar);
+    const shouldShowPinButton = !isMobile && !isTablet;
 
     const isExternalStream = metaData === 'external-stream';
     const [volume, setVolume] = useState<number>(1);
@@ -409,12 +415,15 @@ const OverlayButtons = React.memo<OverlayButtonsProps>(
       [isMine, streamId],
     );
 
+    const showOverlay = displayHover || pinned;
+
     return (
       <Box
         className="pin-overlay"
         sx={{
           ...OVERLAY_STYLE,
-          opacity: displayHover ? 1 : 0,
+          opacity: showOverlay ? 1 : 0,
+          pointerEvents: showOverlay ? 'auto' : 'none',
           display: 'flex',
           justifyContent: 'center',
           alignItems: 'center',
@@ -504,6 +513,26 @@ const VideoCard = React.memo<VideoCardProps>((props) => {
 
   const [displayHover, setDisplayHover] = useState(false);
   const leaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const containerRef = useRef<HTMLDivElement | null>(null);
+
+  // Pinned cards remount after pin/unpin; mouse does not move so :hover state is lost.
+  useLayoutEffect(() => {
+    if (pinned) {
+      setDisplayHover(true);
+      return;
+    }
+    if (containerRef.current?.matches(':hover')) {
+      setDisplayHover(true);
+    }
+  }, [pinned, streamId, layout]);
+
+  useEffect(() => {
+    return () => {
+      if (leaveTimerRef.current) {
+        clearTimeout(leaveTimerRef.current);
+      }
+    };
+  }, []);
 
   // Event handlers
   const handleMouseEnter = useCallback(() => {
@@ -515,8 +544,9 @@ const VideoCard = React.memo<VideoCardProps>((props) => {
   }, []);
 
   const handleMouseLeave = useCallback(() => {
+    if (pinned) return;
     leaveTimerRef.current = setTimeout(() => setDisplayHover(false), 200);
-  }, []);
+  }, [pinned]);
 
   // Memoized styles
   const cardStyle = useMemo(
@@ -559,6 +589,7 @@ const VideoCard = React.memo<VideoCardProps>((props) => {
   return (
     <Grid
       container
+      ref={containerRef}
       style={containerStyle}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
