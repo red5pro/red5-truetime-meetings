@@ -10,6 +10,10 @@ interface UseRoomStateReturn {
   setLobbyOrMeetingPage: React.Dispatch<React.SetStateAction<PageType>>;
   leftTheRoom: boolean;
   setLeftTheRoom: React.Dispatch<React.SetStateAction<boolean>>;
+  leaveRoomError: string | null;
+  setLeaveRoomError: React.Dispatch<React.SetStateAction<string | null>>;
+  isReconnecting: boolean;
+  setIsReconnecting: React.Dispatch<React.SetStateAction<boolean>>;
   isJoining: boolean;
   setIsJoining: React.Dispatch<React.SetStateAction<boolean>>;
   isWaitingApproval: boolean;
@@ -29,6 +33,8 @@ interface UseRoomStateReturn {
 export const useRoomState = (): UseRoomStateReturn => {
   const [lobbyOrMeetingPage, setLobbyOrMeetingPage] = useState<PageType>('lobby');
   const [leftTheRoom, setLeftTheRoom] = useState<boolean>(false);
+  const [leaveRoomError, setLeaveRoomError] = useState<string | null>(null);
+  const [isReconnecting, setIsReconnecting] = useState<boolean>(false);
   const [isJoining, setIsJoining] = useState<boolean>(false);
   const [isWaitingApproval, setIsWaitingApproval] = useState<boolean>(false);
   const [isPublished, setIsPublished] = useState<boolean>(false);
@@ -43,6 +49,10 @@ export const useRoomState = (): UseRoomStateReturn => {
     setLobbyOrMeetingPage,
     leftTheRoom,
     setLeftTheRoom,
+    leaveRoomError,
+    setLeaveRoomError,
+    isReconnecting,
+    setIsReconnecting,
     isJoining,
     setIsJoining,
     isWaitingApproval,

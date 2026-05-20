@@ -4,7 +4,7 @@ import { useEffect, useRef } from 'react';
 import { isNull, parseMetaData } from '../utils/utils';
 import { MetaDataKeys } from '../constants/metaDataKeys';
 import log from 'loglevel';
-import globals from 'globals';
+import { sharedVariables } from '../constants/config';
 import { LayoutOptions } from '../utils/layoutOptions';
 
 // ---- Types ----
@@ -40,6 +40,7 @@ type ParticipantsHook = {
   setSubscribedParticipants: React.Dispatch<React.SetStateAction<Record<string, any>>>;
   updateTalkerLevel: (id: string, level: number) => void;
   clearParticipant: (uid: string) => void;
+  subscribedParticipants: Record<string, { participant: Participant; mediaStream: MediaStream }>;
   subscribeAttemptsRef: React.MutableRefObject<
     Record<string, { retryCount: number; inProgress: boolean }>
   >;
@@ -50,11 +51,18 @@ type ParticipantsHook = {
 };
 
 type RoomState = {
+  lobbyOrMeetingPage: 'lobby' | 'meeting';
+  isJoining: boolean;
+  isPublished: boolean;
+  isPlayOnly: boolean;
   setIsJoining: (val: boolean) => void;
   setIsWaitingApproval: (val: boolean) => void;
   setIsPublished: (val: boolean) => void;
   setIsPlayed: (val: boolean) => void;
   setLobbyOrMeetingPage: (page: 'lobby' | 'meeting') => void;
+  setLeftTheRoom: (val: boolean) => void;
+  setLeaveRoomError: (msg: string | null) => void;
+  setIsReconnecting: (val: boolean) => void;
   publishStreamIdRef: React.MutableRefObject<string | null>;
   streamNameRef: React.MutableRefObject<string | null>;
 };
@@ -131,10 +139,193 @@ export const useConferenceEvents = (
 
   // Event handlers stored in ref
   const eventHandlersRef = useRef<any>({});
+  const subscribeRetryTimersRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
+  const joinStartedAtRef = useRef<number | null>(null);
+  const publishFailureReportedRef = useRef(false);
+  const subscribeStaleSinceRef = useRef<Record<string, number>>({});
+  const publishUnhealthySinceRef = useRef<number | null>(null);
+
+  const scheduleSubscribeRetry = (participant: Participant, retryCount: number) => {
+    const uid = participant.uid;
+    if (subscribeRetryTimersRef.current[uid]) {
+      clearTimeout(subscribeRetryTimersRef.current[uid]);
+    }
+    const delay = Math.min(
+      sharedVariables.retryInterval * Math.pow(2, Math.max(0, retryCount - 1)),
+      30000,
+    );
+    subscribeRetryTimersRef.current[uid] = setTimeout(() => {
+      delete subscribeRetryTimersRef.current[uid];
+      eventHandlersRef.current.subscribeToParticipant(participant);
+    }, delay);
+  };
 
   if (!eventHandlersRef.current.initialized) {
     eventHandlersRef.current = {
       initialized: true,
+
+      handlePublishFailure: async (reason: string) => {
+        if (publishFailureReportedRef.current) return;
+        publishFailureReportedRef.current = true;
+
+        log.error('[StreamHealth] Publish failure:', reason);
+        const roomState = depsRef.current.roomState;
+
+        roomState.setIsJoining(false);
+        roomState.setIsWaitingApproval(false);
+        roomState.setIsPublished(false);
+        roomState.setIsPlayed(false);
+        roomState.setIsReconnecting(false);
+        roomState.setLeaveRoomError(
+          reason || 'Unable to publish your stream. Please check your connection and try again.',
+        );
+        roomState.setLeftTheRoom(true);
+
+        await depsRef.current.handleLeaveFromRoom();
+      },
+
+      resubscribeMissingParticipants: () => {
+        const participantsHook = depsRef.current.participantsHook;
+        const roomState = depsRef.current.roomState;
+        const selfId = roomState.publishStreamIdRef.current;
+
+        Object.values(participantsHook.participants).forEach((participant: Participant) => {
+          if (participant.role === 'subscriber' || participant.uid === selfId) return;
+
+          const subscribed = participantsHook.subscribedParticipants?.[participant.uid];
+          const hasLiveStream =
+            subscribed?.mediaStream &&
+            subscribed.mediaStream
+              .getTracks()
+              .some((t: MediaStreamTrack) => t.readyState === 'live');
+
+          if (!hasLiveStream) {
+            eventHandlersRef.current.subscribeToParticipant(participant);
+          }
+        });
+      },
+
+      checkStreamHealth: () => {
+        const clientInstance = client.conferenceClient.current;
+        const roomState = depsRef.current.roomState;
+        const participantsHook = depsRef.current.participantsHook;
+
+        if (!clientInstance) return;
+
+        const isInMeeting = roomState.lobbyOrMeetingPage === 'meeting';
+        const isJoined = clientInstance.getIsJoined?.() ?? false;
+        const isPublishing = clientInstance.getIsPublishing?.() ?? false;
+        const isSdkReconnecting = clientInstance.getIsReconnecting?.() ?? false;
+
+        // Publish watchdog while joining (SDK event may not fire)
+        if (roomState.isJoining && !roomState.isPublished && !roomState.isPlayOnly) {
+          if (!joinStartedAtRef.current) {
+            joinStartedAtRef.current = Date.now();
+          }
+          const elapsed = Date.now() - joinStartedAtRef.current;
+          if (elapsed > sharedVariables.publishTimeoutMs) {
+            eventHandlersRef.current.handlePublishFailure(
+              'Publishing timed out. The server did not confirm your stream.',
+            );
+          }
+          return;
+        }
+
+        if (!isInMeeting || roomState.isPlayOnly) return;
+
+        // Publish health while in meeting (with grace period for transient states)
+        if (isSdkReconnecting || roomState.isReconnecting) {
+          publishUnhealthySinceRef.current = null;
+          return;
+        }
+
+        if (isJoined && !isPublishing) {
+          const streamName = clientInstance.streamName;
+          let connectionBad = false;
+          if (streamName) {
+            const stats = clientInstance.getConnectionStats?.(streamName);
+            const state = stats?.current?.connectionState ?? stats?.current?.iceConnectionState;
+            connectionBad = state === 'failed' || state === 'closed' || state === 'disconnected';
+          }
+
+          if (!publishUnhealthySinceRef.current) {
+            publishUnhealthySinceRef.current = Date.now();
+          }
+
+          const unhealthyFor = Date.now() - publishUnhealthySinceRef.current;
+          if (connectionBad || unhealthyFor > sharedVariables.publishRecoveryGraceMs) {
+            eventHandlersRef.current.handlePublishFailure(
+              connectionBad
+                ? 'Your publish connection was lost unexpectedly.'
+                : 'Your publish stream is no longer active.',
+            );
+          }
+          return;
+        }
+
+        publishUnhealthySinceRef.current = null;
+
+        if (isSdkReconnecting || roomState.isReconnecting) return;
+
+        // Subscribe health: participants missing live media
+        const selfId = roomState.publishStreamIdRef.current;
+        const now = Date.now();
+
+        Object.values(participantsHook.participants).forEach((participant: Participant) => {
+          if (participant.role === 'subscriber' || participant.uid === selfId) return;
+
+          const subscribed = participantsHook.subscribedParticipants?.[participant.uid];
+          const hasLiveStream =
+            subscribed?.mediaStream &&
+            subscribed.mediaStream
+              .getTracks()
+              .some((t: MediaStreamTrack) => t.readyState === 'live');
+
+          if (hasLiveStream) {
+            delete subscribeStaleSinceRef.current[participant.uid];
+            return;
+          }
+
+          if (!subscribeStaleSinceRef.current[participant.uid]) {
+            subscribeStaleSinceRef.current[participant.uid] = now;
+            return;
+          }
+
+          if (
+            now - subscribeStaleSinceRef.current[participant.uid] <
+            sharedVariables.subscribeStaleMs
+          ) {
+            return;
+          }
+
+          const attempts = participantsHook.subscribeAttemptsRef.current[participant.uid];
+          if (attempts?.inProgress) return;
+
+          if ((attempts?.retryCount ?? 0) >= sharedVariables.maxRetries) {
+            log.error(
+              `[StreamHealth] Max subscribe retries for ${participant.uid}; participant stays pending`,
+            );
+            depsRef.current.showError(
+              `Could not connect to ${participant.name || participant.uid}. Retrying in background.`,
+            );
+            participantsHook.subscribeAttemptsRef.current[participant.uid] = {
+              retryCount: 0,
+              inProgress: false,
+            };
+          }
+
+          log.warn(`[StreamHealth] Stale subscribe for ${participant.uid}, triggering retry`);
+          subscribeStaleSinceRef.current[participant.uid] = now;
+          if (!attempts) {
+            participantsHook.subscribeAttemptsRef.current[participant.uid] = {
+              retryCount: 0,
+              inProgress: false,
+            };
+          }
+          participantsHook.subscribeAttemptsRef.current[participant.uid].retryCount++;
+          scheduleSubscribeRetry(participant, attempts?.retryCount ?? 1);
+        });
+      },
 
       handleLocalRecordingEnabled: () => {
         console.log('Local recording enabled!');
@@ -231,10 +422,46 @@ export const useConferenceEvents = (
 
       handleConnectionClosed: () => {
         log.log('Connection closed');
+        const clientInstance = client.conferenceClient.current;
+        const isSdkReconnecting = clientInstance?.getIsReconnecting?.() ?? false;
+
+        if (isSdkReconnecting || clientInstance?.config?.reconnectionEnabled) {
+          depsRef.current.roomState.setIsReconnecting(true);
+          depsRef.current.displayMessage('Connection lost. Reconnecting...');
+          return;
+        }
+
         depsRef.current.displayMessage('Connection closed');
-        depsRef.current
-          .handleLeaveFromRoom()
-          .then(() => depsRef.current.roomState.setLobbyOrMeetingPage('lobby'));
+        eventHandlersRef.current.handlePublishFailure(
+          'The meeting connection was closed unexpectedly.',
+        );
+      },
+
+      handleReconnectionAttempt: (data: any) => {
+        log.log('Reconnection attempt', data);
+        depsRef.current.roomState.setIsReconnecting(true);
+        depsRef.current.displayMessage('Reconnecting to the meeting...');
+      },
+
+      handleReconnectionSuccess: () => {
+        log.log('Reconnection success');
+        depsRef.current.roomState.setIsReconnecting(false);
+        publishFailureReportedRef.current = false;
+        depsRef.current.showSuccess('Reconnected successfully');
+        eventHandlersRef.current.resubscribeMissingParticipants();
+      },
+
+      handleReconnectionFailed: () => {
+        log.error('Reconnection failed');
+        depsRef.current.roomState.setIsReconnecting(false);
+        eventHandlersRef.current.handlePublishFailure(
+          'Could not reconnect to the meeting. Please try again.',
+        );
+      },
+
+      handleReconnectionError: (data: any) => {
+        log.error('Reconnection error', data);
+        depsRef.current.roomState.setIsReconnecting(false);
       },
 
       handleSubscribeFailed: (data: any) => {
@@ -254,12 +481,20 @@ export const useConferenceEvents = (
         participantsHook.subscribeAttemptsRef.current[data.user.uid].retryCount++;
         participantsHook.subscribeAttemptsRef.current[data.user.uid].inProgress = false;
 
-        // @ts-ignore
+        const retryCount = participantsHook.subscribeAttemptsRef.current[data.user.uid].retryCount;
         log.warn(
-          `Subscription failed for ${data.user.uid}. Attempt ${participantsHook.subscribeAttemptsRef.current[data.user.uid].retryCount}/${globals.maxRetries}. Will retry on next opportunity.`,
+          `Subscription failed for ${data.user.uid}. Attempt ${retryCount}/${sharedVariables.maxRetries}. Retrying with backoff.`,
         );
 
-        eventHandlersRef.current.subscribeToParticipant(data.user);
+        if (retryCount >= sharedVariables.maxRetries) {
+          log.error(`Max subscription attempts reached for ${data.user.uid}`);
+          depsRef.current.showError(
+            `Could not subscribe to ${data.user.name || data.user.uid}. Will keep retrying.`,
+          );
+          participantsHook.subscribeAttemptsRef.current[data.user.uid].retryCount = 0;
+        }
+
+        scheduleSubscribeRetry(data.user, retryCount);
       },
 
       handleAudioLevel: (data: any) => {
@@ -291,18 +526,26 @@ export const useConferenceEvents = (
 
         log.log('Join fail:', data);
 
-        depsRef.current
-          .handleLeaveFromRoom()
-          .then(() => console.log('handleLeaveFromRoom due to join fail'));
-
-        if (data.statusCode === 401) {
+        if (data?.statusCode === 401) {
+          await depsRef.current.handleLeaveFromRoom();
           depsRef.current.roomState.setIsJoining(false);
           depsRef.current.roomState.setIsWaitingApproval(false);
           depsRef.current.setUnAuthorizedDialogMessage(
             'Publish failed, due to an error. Please try again.',
           );
           depsRef.current.setUnAuthorizedDialogOpen(true);
+          return;
         }
+
+        const message =
+          data?.error || data?.message || 'Failed to join the meeting due to an unexpected error.';
+        await eventHandlersRef.current.handlePublishFailure(message);
+      },
+
+      handlePublishFailed: async (data: any) => {
+        log.error('Publish failed (init):', data);
+        const message = data?.error || 'Failed to start publishing your stream.';
+        await eventHandlersRef.current.handlePublishFailure(message);
       },
 
       handleJoinBlock: async (data: any) => {
@@ -364,6 +607,12 @@ export const useConferenceEvents = (
 
       handleSubscribeSuccess: (data: any) => {
         log.log('Subscribe success:', data.uid);
+
+        delete subscribeStaleSinceRef.current[data.uid];
+        if (subscribeRetryTimersRef.current[data.uid]) {
+          clearTimeout(subscribeRetryTimersRef.current[data.uid]);
+          delete subscribeRetryTimersRef.current[data.uid];
+        }
 
         const participantsHook = depsRef.current.participantsHook;
         const roomState = depsRef.current.roomState;
@@ -500,6 +749,9 @@ export const useConferenceEvents = (
         const recording = depsRef.current.recording;
         const participantsHook = depsRef.current.participantsHook;
 
+        joinStartedAtRef.current = null;
+        publishFailureReportedRef.current = false;
+
         roomState.setIsJoining(false);
         roomState.setIsWaitingApproval(false);
         roomState.setIsPublished(true);
@@ -617,7 +869,7 @@ export const useConferenceEvents = (
           // @ts-ignore
           if (
             participantsHook.subscribeAttemptsRef.current[participant.uid]?.retryCount >=
-            globals.maxRetries
+            sharedVariables.maxRetries
           ) {
             log.error(
               `Max subscription attempts reached for ${participant.uid}. Removing participant.`,
@@ -642,6 +894,12 @@ export const useConferenceEvents = (
           await client.subscribe(participant);
         } catch (error) {
           console.error(`Failed to subscribe to ${participant.uid}:`, error);
+          participantsHook.subscribeAttemptsRef.current[participant.uid].inProgress = false;
+          participantsHook.subscribeAttemptsRef.current[participant.uid].retryCount++;
+          scheduleSubscribeRetry(
+            participant,
+            participantsHook.subscribeAttemptsRef.current[participant.uid].retryCount,
+          );
         }
       },
 
@@ -677,6 +935,11 @@ export const useConferenceEvents = (
       [ConferenceEvents.JOIN_FAILED]: eventHandlersRef.current.handleJoinFail,
       [ConferenceEvents.JOIN_BLOCKED]: eventHandlersRef.current.handleJoinBlock,
       [ConferenceEvents.PUBLISH_FAIL]: eventHandlersRef.current.handleJoinFail,
+      [ConferenceEvents.PUBLISH_FAILED]: eventHandlersRef.current.handlePublishFailed,
+      [ConferenceEvents.RECONNECTION_ATTEMPT]: eventHandlersRef.current.handleReconnectionAttempt,
+      [ConferenceEvents.RECONNECTION_SUCCESS]: eventHandlersRef.current.handleReconnectionSuccess,
+      [ConferenceEvents.RECONNECTION_FAILED]: eventHandlersRef.current.handleReconnectionFailed,
+      [ConferenceEvents.RECONNECTION_ERROR]: eventHandlersRef.current.handleReconnectionError,
       [ConferenceEvents.USER_PUBLISHED]: eventHandlersRef.current.handleUserPublished,
       [ConferenceEvents.NEW_PARTICIPANT]: eventHandlersRef.current.handleNewParticipant,
       [ConferenceEvents.GUEST_JOIN_REQUEST]: eventHandlersRef.current.handleGuestJoinRequest,
@@ -734,6 +997,34 @@ export const useConferenceEvents = (
       if (clientInstance) {
         clientInstance._eventsRegistered = false;
       }
+    };
+  }, [client.conferenceClient]);
+
+  // Track join start for publish timeout watchdog
+  useEffect(() => {
+    const { isJoining, isPublished } = depsRef.current.roomState;
+    if (isJoining && !isPublished) {
+      if (!joinStartedAtRef.current) {
+        joinStartedAtRef.current = Date.now();
+        publishFailureReportedRef.current = false;
+      }
+    } else if (!isJoining) {
+      joinStartedAtRef.current = null;
+    }
+  });
+
+  // Internal health monitor when SDK events may not fire
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (eventHandlersRef.current.checkStreamHealth) {
+        eventHandlersRef.current.checkStreamHealth();
+      }
+    }, sharedVariables.healthCheckInterval);
+
+    return () => {
+      clearInterval(interval);
+      Object.values(subscribeRetryTimersRef.current).forEach(clearTimeout);
+      subscribeRetryTimersRef.current = {};
     };
   }, [client.conferenceClient]);
 };
