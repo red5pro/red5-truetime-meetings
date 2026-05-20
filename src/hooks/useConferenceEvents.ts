@@ -6,6 +6,7 @@ import { MetaDataKeys } from '../constants/metaDataKeys';
 import log from 'loglevel';
 import { sharedVariables } from '../constants/config';
 import { LayoutOptions } from '../utils/layoutOptions';
+import { useDataChannelHeartbeat } from './useDataChannelHeartbeat';
 
 // ---- Types ----
 type NetworkScore = {
@@ -108,6 +109,13 @@ export const useConferenceEvents = (
   layoutRef: React.MutableRefObject<typeof LayoutOptions>,
   role: string,
 ) => {
+  const { startHeartbeat, stopHeartbeat, sendHeartbeat } = useDataChannelHeartbeat(
+    client.conferenceClient,
+  );
+  const heartbeatControlRef = useRef({ startHeartbeat, stopHeartbeat, sendHeartbeat });
+
+  heartbeatControlRef.current = { startHeartbeat, stopHeartbeat, sendHeartbeat };
+
   // Store all dependencies in a ref to avoid closure issues
   const depsRef = useRef<any>({});
 
@@ -394,6 +402,7 @@ export const useConferenceEvents = (
         }
         depsRef.current.screenShare.setIsScreenShared(true);
         depsRef.current.screenShare.setIsStartingScreenShare(false);
+        heartbeatControlRef.current.sendHeartbeat();
       },
 
       handleScreenShareStopped: () => {
@@ -415,6 +424,7 @@ export const useConferenceEvents = (
 
       handleConnectFail: () => {
         log.log('Connect fail');
+        heartbeatControlRef.current.stopHeartbeat();
         depsRef.current.roomState.setIsJoining(false);
         depsRef.current.roomState.setIsWaitingApproval(false);
         depsRef.current.displayMessage('Failed to join: Connection failed');
@@ -422,6 +432,8 @@ export const useConferenceEvents = (
 
       handleConnectionClosed: () => {
         log.log('Connection closed');
+        heartbeatControlRef.current.stopHeartbeat();
+
         const clientInstance = client.conferenceClient.current;
         const isSdkReconnecting = clientInstance?.getIsReconnecting?.() ?? false;
 
@@ -517,6 +529,7 @@ export const useConferenceEvents = (
 
       handleDataChannelAvailable: () => {
         log.log('Data channel available');
+        heartbeatControlRef.current.startHeartbeat();
       },
 
       handleJoinFail: async (data: any) => {
@@ -783,6 +796,7 @@ export const useConferenceEvents = (
         }
 
         eventHandlersRef.current.subscribeToParticipants(data.participants);
+        heartbeatControlRef.current.startHeartbeat();
       },
 
       webrtcIssuesDetected: (issues: any) => {
