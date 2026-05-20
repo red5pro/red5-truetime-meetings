@@ -469,6 +469,7 @@ export const useConference = (roomId: string): UseConferenceReturn => {
       roomState.setLobbyOrMeetingPage('meeting');
       roomState.setIsJoining(false);
       roomState.setIsWaitingApproval(false);
+      drawerStates.handleEffectsOpen(false);
     }
   }, [roomState.isPublished, roomState.isPlayed, roomState.isPlayOnly]);
 
