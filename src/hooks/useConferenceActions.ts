@@ -210,6 +210,9 @@ export const useConferenceActions = (
 
       roomState.publishStreamIdRef.current = generatedStreamId;
       roomState.setIsJoining(true);
+      roomState.setLeaveRoomError(null);
+      roomState.setLeftTheRoom(false);
+      roomState.setIsReconnecting(false);
       if (role === USER_ROLES.GUEST) {
         roomState.setIsWaitingApproval(true);
       }
@@ -291,6 +294,7 @@ export const useConferenceActions = (
       roomState.setIsWaitingApproval(false);
       roomState.setIsPublished(false);
       roomState.setIsPlayed(false);
+      roomState.setIsReconnecting(false);
     } catch (error) {
       log.error('Leave failed:', error);
     }
