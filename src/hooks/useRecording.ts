@@ -9,6 +9,7 @@ import { useTranslation } from 'react-i18next';
 import { ConferenceClient } from 'red5pro-conference-sdk';
 import { ConferenceEvents } from 'red5pro-conference-sdk';
 import { MediabunnyRecorder } from '../utils/MediabunnyRecorder';
+import { createCompositeStream } from '../utils/compositeStream';
 import JSZip from 'jszip';
 import { S3Client } from '@aws-sdk/client-s3';
 import { Upload } from '@aws-sdk/lib-storage';
@@ -89,6 +90,9 @@ export const useRecording = (
   conferenceClientRef?: React.MutableRefObject<ConferenceClient | null>,
   onRecordingStop?: () => void,
   onRecordingClear?: () => void,
+  subscribedParticipants?: Record<string, { participant: any; mediaStream: MediaStream }>,
+  isLocalCamOff?: boolean,
+  isLocalMicMuted?: boolean,
 ): UseRecordingReturn => {
   const { t } = useTranslation();
   const config = getRuntimeConfig();
@@ -147,6 +151,38 @@ export const useRecording = (
   useEffect(() => {
     isRecordingStoppingRef.current = isRecordingStopping;
   }, [isRecordingStopping]);
+
+  // Dynamically add/remove streams in the composite when participants join or leave mid-recording
+  useEffect(() => {
+    if (!isLocalRecordingActive || !compositeHandleRef.current) return; // not recording or not compositing
+
+    const current = subscribedParticipants ?? {};
+    const prev = prevSubscribedParticipantsRef.current;
+
+    Object.entries(current).forEach(([uid, { mediaStream }]) => {
+      if (!prev[uid] && mediaStream) {
+        compositeHandleRef.current!.addStream(mediaStream);
+      }
+    });
+
+    Object.entries(prev).forEach(([uid, { mediaStream }]) => {
+      if (!current[uid] && mediaStream) {
+        compositeHandleRef.current!.removeStream(mediaStream);
+      }
+    });
+
+    prevSubscribedParticipantsRef.current = current;
+  }, [subscribedParticipants, isLocalRecordingActive]);
+
+  // Sync local cam/mic mute state into the composite stream while recording
+  useEffect(() => {
+    if (!compositeHandleRef.current || !localStreamRef.current) return;
+    compositeHandleRef.current.setStreamEnabled(
+      localStreamRef.current,
+      !isLocalCamOff,
+      !isLocalMicMuted,
+    );
+  }, [isLocalCamOff, isLocalMicMuted]);
 
   // Setup event listeners for local recording events
   useEffect(() => {
@@ -453,6 +489,18 @@ export const useRecording = (
   const recordedSegmentsRef = useRef<Blob[]>([]);
   const recordingStartTimeRef = useRef<number | null>(null);
   const currentRecordingStreamRef = useRef<MediaStream | null>(null);
+  // Stable ref to the latest subscribedParticipants for use inside callbacks
+  const subscribedParticipantsRef = useRef(subscribedParticipants ?? {});
+  subscribedParticipantsRef.current = subscribedParticipants ?? {};
+
+  // Tracks which participants were present when the composite was last synced
+  const prevSubscribedParticipantsRef = useRef<
+    Record<string, { participant: any; mediaStream: MediaStream }>
+  >({});
+
+  const compositeHandleRef = useRef<ReturnType<typeof createCompositeStream> | null>(null);
+  // Tracks the local user's stream so mute changes can be applied to the composite
+  const localStreamRef = useRef<MediaStream | null>(null);
 
   /**
    * Start local recording using Mediabunny
@@ -477,11 +525,27 @@ export const useRecording = (
         setLocalRecordingStatus(null); // Reset status for new recording
         recordedSegmentsRef.current = []; // Clear previous segments
 
-        // Get the stream to record - use provided stream or get from client
-        const recordingStream = stream || client.mediaStreamManager?.getCurrentStream();
-        if (!recordingStream) {
+        // Get the local stream
+        const localStream = stream || client.mediaStreamManager?.getCurrentStream();
+        if (!localStream) {
           throw new Error('No media stream available for recording');
         }
+
+        // Always create a composite stream so participants who join later can be added dynamically
+        const currentParticipants = subscribedParticipantsRef.current;
+        const remoteStreams: MediaStream[] = Object.values(currentParticipants)
+          .map((p) => p.mediaStream)
+          .filter(Boolean);
+
+        const handle = createCompositeStream([localStream, ...remoteStreams]);
+        compositeHandleRef.current = handle;
+        localStreamRef.current = localStream;
+        const recordingStream = handle.stream;
+        // Seed prev-state so the useEffect doesn't re-add the initial streams
+        prevSubscribedParticipantsRef.current = { ...currentParticipants };
+
+        // Apply the current local mute state immediately
+        handle.setStreamEnabled(localStream, !isLocalCamOff, !isLocalMicMuted);
 
         // Create and start Mediabunny recorder
         const recorder = new MediabunnyRecorder({
@@ -652,6 +716,12 @@ export const useRecording = (
       setIsLocalRecordingActive(false);
       setIsLocalRecordingPaused(false);
       currentRecordingStreamRef.current = null;
+      localStreamRef.current = null;
+
+      // Release composite stream resources if one was created
+      compositeHandleRef.current?.cleanup();
+      compositeHandleRef.current = null;
+      prevSubscribedParticipantsRef.current = {};
 
       // Auto-upload if S3 config is present
       if (hasS3Config) {
