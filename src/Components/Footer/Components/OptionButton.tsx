@@ -29,6 +29,7 @@ import { getGlassMenuStyle } from '../../../styles/themeUtil.js';
 import { PictureInPicture, PictureInPictureAlt } from '@mui/icons-material';
 import log from 'loglevel';
 import { getRuntimeConfig } from '../../../utils/configStore';
+import { isMobile } from 'react-device-detect';
 
 interface Device {
   deviceId: string;
@@ -163,6 +164,7 @@ function OptionButton(props: OptionButtonProps) {
   const themeContext = React.useContext(ThemeContext);
 
   const isRecordingEnabled = getRuntimeConfig().VITE_ENABLE_RECORDING === 'true';
+  const isCaptionEnabled = getRuntimeConfig().VITE_ENABLE_CLOSED_CAPTION === 'true';
 
   // Language and theme states
   const [currentLanguage, setCurrentLanguage] = React.useState<string>(
@@ -520,45 +522,47 @@ function OptionButton(props: OptionButtonProps) {
         )}
 
         {/* Picture-in-Picture Menu Item */}
-        <MenuItem
-          key="picture-in-picture"
-          onClick={handlePiPClick}
-          disabled={pipInfo.disabled}
-          id="picture-in-picture-button"
-          sx={{
-            backgroundColor: pipInfo.active ? 'rgba(25, 118, 210, 0.12)' : 'transparent',
-            '&:hover': {
-              backgroundColor: pipInfo.active ? 'rgba(25, 118, 210, 0.2)' : undefined,
-            },
-          }}
-        >
-          <ListItemIcon>
-            {props?.pipSupported ? (
-              <PictureInPicture
-                sx={{
-                  color: getMenuIconColor(),
-                  opacity: pipInfo.disabled ? 0.5 : 1,
-                }}
-              />
-            ) : (
-              <PictureInPictureAlt
-                sx={{
-                  color: getMenuIconColor(),
-                  opacity: 0.5,
-                }}
-              />
-            )}
-          </ListItemIcon>
-          <ListItemText
-            primary={pipInfo.text}
+        {!isMobile && (
+          <MenuItem
+            key="picture-in-picture"
+            onClick={handlePiPClick}
+            disabled={pipInfo.disabled}
+            id="picture-in-picture-button"
             sx={{
-              '& .MuiListItemText-primary': {
-                color: pipInfo.disabled ? 'text.disabled' : 'text.primary',
-                fontWeight: pipInfo.active ? 500 : 400,
+              backgroundColor: pipInfo.active ? 'rgba(25, 118, 210, 0.12)' : 'transparent',
+              '&:hover': {
+                backgroundColor: pipInfo.active ? 'rgba(25, 118, 210, 0.2)' : undefined,
               },
             }}
-          />
-        </MenuItem>
+          >
+            <ListItemIcon>
+              {props?.pipSupported ? (
+                <PictureInPicture
+                  sx={{
+                    color: getMenuIconColor(),
+                    opacity: pipInfo.disabled ? 0.5 : 1,
+                  }}
+                />
+              ) : (
+                <PictureInPictureAlt
+                  sx={{
+                    color: getMenuIconColor(),
+                    opacity: 0.5,
+                  }}
+                />
+              )}
+            </ListItemIcon>
+            <ListItemText
+              primary={pipInfo.text}
+              sx={{
+                '& .MuiListItemText-primary': {
+                  color: pipInfo.disabled ? 'text.disabled' : 'text.primary',
+                  fontWeight: pipInfo.active ? 500 : 400,
+                },
+              }}
+            />
+          </MenuItem>
+        )}
 
         {props?.isRecordingActive === false && props?.isLocalRecordingActive === false && (
           <MenuItem
@@ -636,7 +640,7 @@ function OptionButton(props: OptionButtonProps) {
           </ListItemText>
         </MenuItem>
 
-        {props?.isPlayOnly === false && (
+        {props?.isPlayOnly === false && !isMobile && (
           <MenuItem key="virtual-effects" onClick={handleVirtualEffects} id="virtual-effects">
             <ListItemIcon>
               <SvgIcon
@@ -662,16 +666,34 @@ function OptionButton(props: OptionButtonProps) {
           <ListItemText>{t('Diagnostic')}</ListItemText>
         </MenuItem>
 
-        <MenuItem key="transcription" onClick={handleTranscriptionToggle} id="transcription">
+        <MenuItem
+          key="transcription"
+          onClick={isCaptionEnabled ? handleTranscriptionToggle : undefined}
+          disabled={!isCaptionEnabled}
+          id="transcription"
+        >
           <ListItemIcon>
             <SvgIcon
               size={24}
               viewBox="0 0 500 500"
-              name={'call-settings'} // Reusing call-settings icon if no specific transcription icon exists
+              name={'call-settings'}
               color={getMenuIconColor()}
+              // @ts-ignore
+              style={{ opacity: !isCaptionEnabled ? 0.5 : 1 }}
             />
           </ListItemIcon>
-          <ListItemText>{t('Transcriptions')}</ListItemText>
+          <ListItemText
+            primary={
+              !isCaptionEnabled
+                ? t('Upgrade your plan to support closed captioning')
+                : t('Transcriptions')
+            }
+            sx={{
+              '& .MuiListItemText-primary': {
+                color: !isCaptionEnabled ? 'text.disabled' : 'text.primary',
+              },
+            }}
+          />
         </MenuItem>
 
         <MenuItem

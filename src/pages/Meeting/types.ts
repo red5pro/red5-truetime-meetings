@@ -121,6 +121,8 @@ export interface MeetingPageProps {
   setPrintStatLogs?: (print: boolean) => void;
   updateDevicesList?: () => void;
   transcription: any;
+  onAddFakeParticipant?: () => void;
+  onRemoveFakeParticipant?: () => void;
 }
 
 export interface GallerySize {
