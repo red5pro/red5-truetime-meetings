@@ -451,6 +451,9 @@ function Red5(props: Red5Props) {
               // External Streams
               externalStreamsDrawerOpen={conference.ui.externalStreamsDrawerOpen}
               handleExternalStreamsDrawerOpen={conference.ui.handleExternalStreamsDrawerOpen}
+              // Fake participants (dev/testing)
+              onAddFakeParticipant={conference.participants.addFakeParticipant}
+              onRemoveFakeParticipant={conference.participants.removeFakeParticipant}
             />
 
             {/* Drawers */}

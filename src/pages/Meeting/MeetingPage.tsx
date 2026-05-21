@@ -83,12 +83,13 @@ const MeetingPage = React.memo<MeetingPageProps>((props) => {
     Object.entries(props.participants || {}).forEach(([uid, participant]) => {
       if (!participants[uid]) {
         // This participant is not subscribed yet, add them
+        const isFake = (participant as any).isFake === true;
         participants[uid] = {
           mediaStream: undefined,
           participant: {
             ...participant,
-            isPending: true,
-            audioEnabled: true,
+            isPending: !isFake,
+            audioEnabled: isFake ? false : true,
             videoEnabled: false,
             isRaiseHand: props.raisedHands?.includes(uid) || false,
           },
@@ -580,6 +581,8 @@ const MeetingPage = React.memo<MeetingPageProps>((props) => {
         handleTranscriptionDrawerOpen={props?.handleTranscriptionDrawerOpen}
         externalStreamsDrawerOpen={props?.externalStreamsDrawerOpen}
         handleExternalStreamsDrawerOpen={props?.handleExternalStreamsDrawerOpen}
+        onAddFakeParticipant={props?.onAddFakeParticipant}
+        onRemoveFakeParticipant={props?.onRemoveFakeParticipant}
       />
     </Container>
   );

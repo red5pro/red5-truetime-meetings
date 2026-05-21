@@ -4,9 +4,11 @@ import { useState, useRef, useCallback, MutableRefObject } from 'react';
 // Type definitions
 interface Participant {
   streamId: string;
+  uid?: string;
   name?: string;
   streamName?: string;
-  // Add other participant properties as needed based on your implementation
+  isFake?: boolean;
+  [key: string]: any;
 }
 
 interface Participants {
@@ -46,10 +48,24 @@ interface UseParticipantsReturn {
   setGuestParticipantRequestList: React.Dispatch<React.SetStateAction<string[]>>;
   guestsWaitingApproval: Participants;
   setGuestsWaitingApproval: React.Dispatch<React.SetStateAction<Participants>>;
+  addFakeParticipant: () => void;
+  removeFakeParticipant: () => void;
 }
+
+const FAKE_PARTICIPANT_NAMES = [
+  'Alice',
+  'Bob',
+  'Charlie',
+  'Diana',
+  'Eve',
+  'Frank',
+  'Grace',
+  'Henry',
+];
 
 export const useParticipants = (): UseParticipantsReturn => {
   const [participants, setParticipants] = useState<Participants>({});
+  const fakeParticipantCounterRef = useRef(0);
   const [subscribedParticipants, setSubscribedParticipants] = useState<SubscribedParticipants>({});
   const [pinnedParticipantId, setPinnedParticipantId] = useState<string | null>(null);
   const [talkers, setTalkers] = useState<string[]>([]);
@@ -87,6 +103,39 @@ export const useParticipants = (): UseParticipantsReturn => {
 
   const [guestParticipantRequestList, setGuestParticipantRequestList] = useState<string[]>([]);
   const [guestsWaitingApproval, setGuestsWaitingApproval] = useState<Participants>({});
+
+  const addFakeParticipant = useCallback((): void => {
+    fakeParticipantCounterRef.current += 1;
+    const fakeId = `fake-participant-${fakeParticipantCounterRef.current}`;
+    const fakeName =
+      FAKE_PARTICIPANT_NAMES[
+        (fakeParticipantCounterRef.current - 1) % FAKE_PARTICIPANT_NAMES.length
+      ];
+    setParticipants((prev) => ({
+      ...prev,
+      [fakeId]: {
+        uid: fakeId,
+        streamId: fakeId,
+        name: fakeName,
+        isFake: true,
+        role: 'fake',
+        audioEnabled: false,
+        videoEnabled: false,
+        isRaiseHand: false,
+      },
+    }));
+  }, []);
+
+  const removeFakeParticipant = useCallback((): void => {
+    setParticipants((prev) => {
+      const fakeKeys = Object.keys(prev).filter((key) => key.startsWith('fake-participant-'));
+      if (fakeKeys.length === 0) return prev;
+      const lastFakeKey = fakeKeys[fakeKeys.length - 1];
+      const next = { ...prev };
+      delete next[lastFakeKey];
+      return next;
+    });
+  }, []);
 
   const clearParticipant = useCallback((streamId: string): void => {
     setParticipants((prev) => {
@@ -127,5 +176,7 @@ export const useParticipants = (): UseParticipantsReturn => {
     clearParticipant,
     guestsWaitingApproval,
     setGuestsWaitingApproval,
+    addFakeParticipant,
+    removeFakeParticipant,
   };
 };

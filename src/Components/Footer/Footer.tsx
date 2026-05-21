@@ -2,6 +2,10 @@ import React from 'react';
 import Grid from '@mui/material/Grid2';
 import Typography from '@mui/material/Typography';
 import { styled, Theme } from '@mui/material';
+import { Tooltip } from '@mui/material';
+import Button from '@mui/material/Button';
+import PersonAddAlt1Icon from '@mui/icons-material/PersonAddAlt1';
+import PersonRemoveAlt1Icon from '@mui/icons-material/PersonRemoveAlt1';
 import InfoButton from './Components/InfoButton.tsx';
 import MicButton from './Components/MicButton.tsx';
 import CameraButton from './Components/CameraButton.tsx';
@@ -107,6 +111,8 @@ interface FooterProps {
   externalStreamsDrawerOpen?: boolean;
   handleExternalStreamsDrawerOpen?: (open: boolean) => void;
   hideExternalStreams?: boolean;
+  onAddFakeParticipant?: () => void;
+  onRemoveFakeParticipant?: () => void;
 }
 
 const getCustomizedGridStyle = (theme: Theme) => {
@@ -428,6 +434,32 @@ function Footer(props: FooterProps) {
                 isActive={props?.isLocalRecordingActive}
                 onClick={props?.handleLocalRecordingDrawerOpen}
               />
+            </Grid>
+          )}
+          {import.meta.env.DEV && (
+            <Grid size="auto">
+              <Tooltip title="Add Fake Participant" placement="top">
+                <Button
+                  variant="text"
+                  onClick={() => props?.onAddFakeParticipant?.()}
+                  sx={{ ml: 0.5, px: 1, py: 1.5, minWidth: 'unset' }}
+                >
+                  <PersonAddAlt1Icon sx={{ color: '#FFF', fontSize: 24 }} />
+                </Button>
+              </Tooltip>
+            </Grid>
+          )}
+          {import.meta.env.DEV && (
+            <Grid size="auto">
+              <Tooltip title="Remove Fake Participant" placement="top">
+                <Button
+                  variant="text"
+                  onClick={() => props?.onRemoveFakeParticipant?.()}
+                  sx={{ ml: 0.5, px: 1, py: 1.5, minWidth: 'unset' }}
+                >
+                  <PersonRemoveAlt1Icon sx={{ color: '#FFF', fontSize: 24 }} />
+                </Button>
+              </Tooltip>
             </Grid>
           )}
           <Grid size="auto">
