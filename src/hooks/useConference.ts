@@ -355,6 +355,10 @@ export const useConference = (roomId: string): UseConferenceReturn => {
     () => drawerStates.handleLocalRecordingDrawerOpen(false),
     // @ts-ignore
     (participants as any).subscribedParticipants,
+    // @ts-ignore
+    (mediaControls as any).isMyCamTurnedOff as boolean,
+    // @ts-ignore
+    (mediaControls as any).isMyMicMuted as boolean,
   );
 
   const localRecording = recording;

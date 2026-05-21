@@ -91,6 +91,8 @@ export const useRecording = (
   onRecordingStop?: () => void,
   onRecordingClear?: () => void,
   subscribedParticipants?: Record<string, { participant: any; mediaStream: MediaStream }>,
+  isLocalCamOff?: boolean,
+  isLocalMicMuted?: boolean,
 ): UseRecordingReturn => {
   const { t } = useTranslation();
   const config = getRuntimeConfig();
@@ -171,6 +173,16 @@ export const useRecording = (
 
     prevSubscribedParticipantsRef.current = current;
   }, [subscribedParticipants, isLocalRecordingActive]);
+
+  // Sync local cam/mic mute state into the composite stream while recording
+  useEffect(() => {
+    if (!compositeHandleRef.current || !localStreamRef.current) return;
+    compositeHandleRef.current.setStreamEnabled(
+      localStreamRef.current,
+      !isLocalCamOff,
+      !isLocalMicMuted,
+    );
+  }, [isLocalCamOff, isLocalMicMuted]);
 
   // Setup event listeners for local recording events
   useEffect(() => {
@@ -487,6 +499,8 @@ export const useRecording = (
   >({});
 
   const compositeHandleRef = useRef<ReturnType<typeof createCompositeStream> | null>(null);
+  // Tracks the local user's stream so mute changes can be applied to the composite
+  const localStreamRef = useRef<MediaStream | null>(null);
 
   /**
    * Start local recording using Mediabunny
@@ -525,9 +539,13 @@ export const useRecording = (
 
         const handle = createCompositeStream([localStream, ...remoteStreams]);
         compositeHandleRef.current = handle;
+        localStreamRef.current = localStream;
         const recordingStream = handle.stream;
         // Seed prev-state so the useEffect doesn't re-add the initial streams
         prevSubscribedParticipantsRef.current = { ...currentParticipants };
+
+        // Apply the current local mute state immediately
+        handle.setStreamEnabled(localStream, !isLocalCamOff, !isLocalMicMuted);
 
         // Create and start Mediabunny recorder
         const recorder = new MediabunnyRecorder({
@@ -698,6 +716,7 @@ export const useRecording = (
       setIsLocalRecordingActive(false);
       setIsLocalRecordingPaused(false);
       currentRecordingStreamRef.current = null;
+      localStreamRef.current = null;
 
       // Release composite stream resources if one was created
       compositeHandleRef.current?.cleanup();
