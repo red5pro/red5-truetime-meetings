@@ -353,6 +353,8 @@ export const useConference = (roomId: string): UseConferenceReturn => {
     client.conferenceClient,
     () => drawerStates.handleLocalRecordingDrawerOpen(true),
     () => drawerStates.handleLocalRecordingDrawerOpen(false),
+    // @ts-ignore
+    (participants as any).subscribedParticipants,
   );
 
   const localRecording = recording;
