@@ -354,9 +354,13 @@ export const useRecording = (
           displayMessageRef.current('Recording is starting...', 'info');
         }
 
-        const response = await postDataRef.current(url, null, {
-          headers: token ? { Authorization: `Bearer ${token}` } : {},
-        });
+        const response = await postDataRef.current(
+          url,
+          {},
+          {
+            headers: token ? { Authorization: `Bearer ${token}` } : {},
+          },
+        );
 
         if (response) {
           setIsRecordingActive(true);
@@ -411,9 +415,13 @@ export const useRecording = (
           displayMessageRef.current('Recording is stopping...', 'info');
         }
 
-        const response = await postDataRef.current(url, null, {
-          headers: token ? { Authorization: `Bearer ${token}` } : {},
-        });
+        const response = await postDataRef.current(
+          url,
+          {},
+          {
+            headers: token ? { Authorization: `Bearer ${token}` } : {},
+          },
+        );
 
         if (response) {
           setIsRecordingActive(false);
