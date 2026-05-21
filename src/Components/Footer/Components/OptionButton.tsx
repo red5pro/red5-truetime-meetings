@@ -394,7 +394,13 @@ function OptionButton(props: OptionButtonProps) {
               control={
                 <Checkbox
                   checked={recordSeparately}
-                  onChange={(e) => setRecordSeparately(e.target.checked)}
+                  onChange={(e) => {
+                    const checked = e.target.checked;
+                    setRecordSeparately(checked);
+                    if (checked && !serverSideRecordingChecked && !localRecordingChecked) {
+                      setServerSideRecordingChecked(true);
+                    }
+                  }}
                 />
               }
               label={t('Record participants separately')}
@@ -421,7 +427,11 @@ function OptionButton(props: OptionButtonProps) {
         </DialogContent>
         <DialogActions>
           <Button onClick={handleRecordingModalClose}>{t('Cancel')}</Button>
-          <Button onClick={handleRecordingConfirm} variant="contained">
+          <Button
+            onClick={handleRecordingConfirm}
+            variant="contained"
+            disabled={!serverSideRecordingChecked && !localRecordingChecked}
+          >
             {t('Start Recording')}
           </Button>
         </DialogActions>
