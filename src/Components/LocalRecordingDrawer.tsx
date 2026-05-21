@@ -351,7 +351,7 @@ const LocalRecordingDrawer = React.memo<LocalRecordingDrawerProps>((props) => {
 
         <Divider sx={{ my: 3, opacity: 0.1 }} />
 
-        <Grid container spacing={2}>
+        <Grid container spacing={2} justifyContent="center">
           {!isActive && status && (
             <>
               <Grid size={6}>
@@ -359,7 +359,6 @@ const LocalRecordingDrawer = React.memo<LocalRecordingDrawerProps>((props) => {
                   fullWidth
                   variant="contained"
                   color="primary"
-                  startIcon={<SvgIcon size={18} name="download" color="#FFF" />}
                   onClick={() => onDownload()}
                   sx={{ borderRadius: 6, py: 1 }}
                 >
