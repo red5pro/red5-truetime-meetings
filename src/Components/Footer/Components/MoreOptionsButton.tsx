@@ -349,18 +349,33 @@ function MoreOptionsButton(props: MoreOptionsButtonProps) {
           </ListItemText>
         </MenuItem>
 
-        <MenuItem onClick={handleTranscriptionToggle}>
+        <MenuItem
+          onClick={isCaptionEnabled ? handleTranscriptionToggle : undefined}
+          disabled={!isCaptionEnabled}
+        >
           <ListItemIcon>
             <SvgIcon
               size={24}
               viewBox="0 0 500 500"
               name={'call-settings'}
               color={getMenuIconColor()}
+              // @ts-ignore
+              style={{ opacity: !isCaptionEnabled ? 0.5 : 1 }}
             />
           </ListItemIcon>
-          <ListItemText id={'more-options-transcription-button'}>
-            {t('Transcriptions')}
-          </ListItemText>
+          <ListItemText
+            id={'more-options-transcription-button'}
+            primary={
+              !isCaptionEnabled
+                ? t('Upgrade your plan to support closed captioning')
+                : t('Transcriptions')
+            }
+            sx={{
+              '& .MuiListItemText-primary': {
+                color: !isCaptionEnabled ? 'text.disabled' : 'text.primary',
+              },
+            }}
+          />
         </MenuItem>
 
         {!props?.hideExternalStreams && (

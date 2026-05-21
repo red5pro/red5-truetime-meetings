@@ -198,7 +198,8 @@ export const useConferenceEvents = (
         const selfId = roomState.publishStreamIdRef.current;
 
         Object.values(participantsHook.participants).forEach((participant: Participant) => {
-          if (participant.role === 'subscriber' || participant.uid === selfId) return;
+          if (participant.isFake || participant.role === 'subscriber' || participant.uid === selfId)
+            return;
 
           const subscribed = participantsHook.subscribedParticipants?.[participant.uid];
           const hasLiveStream =
@@ -280,7 +281,8 @@ export const useConferenceEvents = (
         const now = Date.now();
 
         Object.values(participantsHook.participants).forEach((participant: Participant) => {
-          if (participant.role === 'subscriber' || participant.uid === selfId) return;
+          if (participant.isFake || participant.role === 'subscriber' || participant.uid === selfId)
+            return;
 
           const subscribed = participantsHook.subscribedParticipants?.[participant.uid];
           const hasLiveStream =
