@@ -96,8 +96,11 @@ class RoomController {
         return res.status(400).json({ error: 'roomName is required' });
       }
 
+      const body = Object.keys(req.body || {}).length > 0 ? req.body : null;
+      const query = Object.keys(req.query || {}).length > 0 ? req.query : null;
+
       const red5Client = await red5Service.getClient();
-      const result = await red5Client.startRecording(roomName);
+      const result = await red5Client.startRecording(roomName, body, query);
       res.json(result);
     } catch (error) {
       console.error('Error starting recording:', error);
@@ -112,8 +115,11 @@ class RoomController {
         return res.status(400).json({ error: 'roomName is required' });
       }
 
+      const body = Object.keys(req.body || {}).length > 0 ? req.body : null;
+      const query = Object.keys(req.query || {}).length > 0 ? req.query : null;
+
       const red5Client = await red5Service.getClient();
-      const result = await red5Client.stopRecording(roomName);
+      const result = await red5Client.stopRecording(roomName, body, query);
       res.json(result);
     } catch (error) {
       console.error('Error stopping recording:', error);
