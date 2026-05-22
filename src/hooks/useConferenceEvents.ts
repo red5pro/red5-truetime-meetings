@@ -921,20 +921,13 @@ export const useConferenceEvents = (
 
       clearRemoteSubscriber: (streamId: any) => {
         const participantsHook = depsRef.current.participantsHook;
-        const roomState = depsRef.current.roomState;
-        const layoutRef = depsRef.current.layoutRef;
-        const pinVideo = depsRef.current.pinVideo;
         const unpinVideo = depsRef.current.unpinVideo;
 
         if (
           participantsHook.pinnedParticipantIdRef.current &&
           streamId.localeCompare(participantsHook.pinnedParticipantIdRef.current) === 0
         ) {
-          if (layoutRef.current === LayoutOptions.Sidebar) {
-            pinVideo(roomState.streamNameRef.current);
-          } else {
-            unpinVideo(streamId);
-          }
+          unpinVideo(streamId);
         }
       },
     };
