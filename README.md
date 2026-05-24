@@ -32,7 +32,6 @@ A real-time video conferencing application built with React and Red5 Pro, featur
 
 - **Auto layout** - Automatically adjusts based on participant count
 - **Tiled layout** - Equal-sized video tiles for all participants
-- **Sidebar layout** - Pinned main speaker with participant sidebar
 - **Pin/unpin participants** for focused viewing
 
 ### User Experience

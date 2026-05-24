@@ -21,6 +21,7 @@ import {
   ExpandMore,
   BarChart,
 } from '@mui/icons-material';
+import { isMobile } from 'react-device-detect';
 
 // Interfaces
 interface Device {
@@ -77,6 +78,12 @@ const DeviceSelector: React.FC<DeviceSelectorProps> = ({
   const [micMenuAnchor, setMicMenuAnchor] = useState<HTMLElement | null>(null);
   const [speakerMenuAnchor, setSpeakerMenuAnchor] = useState<HTMLElement | null>(null);
   const [audioLevel, setAudioLevel] = useState<number>(0);
+  const [selectedFacingMode, setSelectedFacingMode] = useState<'user' | 'environment' | null>(null);
+
+  const mobileCameraOptions = [
+    { id: 'facingMode:user', label: 'Front Camera', facingMode: 'user' as const },
+    { id: 'facingMode:environment', label: 'Back Camera', facingMode: 'environment' as const },
+  ];
 
   const audioContextRef = useRef<AudioContext | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
@@ -188,6 +195,10 @@ const DeviceSelector: React.FC<DeviceSelectorProps> = ({
 
   const handleCameraSelect = useCallback(
     (deviceId: string) => {
+      if (deviceId.startsWith('facingMode:')) {
+        const facingMode = deviceId.split(':')[1] as 'user' | 'environment';
+        setSelectedFacingMode(facingMode);
+      }
       onCameraChange?.(deviceId);
       handleMenuClose();
     },
@@ -364,32 +375,52 @@ const DeviceSelector: React.FC<DeviceSelectorProps> = ({
           Select Camera
         </Typography>
         <Divider sx={{ borderColor: alpha('#fff', 0.1) }} />
-        {devices.videoInputs?.map((device) => (
-          <MenuItem
-            key={device.deviceId}
-            onClick={() => handleCameraSelect(device.deviceId)}
-            selected={selectedCamera === device.deviceId}
-          >
-            <ListItemIcon>
-              {selectedCamera === device.deviceId ? (
-                <Check sx={{ color: '#4CAF50' }} />
-              ) : (
-                <Videocam sx={{ color: alpha('#fff', 0.7) }} />
-              )}
-            </ListItemIcon>
-            <ListItemText
-              primary={device.label}
-              primaryTypographyProps={{
-                variant: 'body2',
-                sx: {
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap',
-                },
-              }}
-            />
-          </MenuItem>
-        ))}
+        {isMobile
+          ? mobileCameraOptions.map((option) => (
+              <MenuItem
+                key={option.id}
+                onClick={() => handleCameraSelect(option.id)}
+                selected={selectedFacingMode === option.facingMode}
+              >
+                <ListItemIcon>
+                  {selectedFacingMode === option.facingMode ? (
+                    <Check sx={{ color: '#4CAF50' }} />
+                  ) : (
+                    <Videocam sx={{ color: alpha('#fff', 0.7) }} />
+                  )}
+                </ListItemIcon>
+                <ListItemText
+                  primary={option.label}
+                  primaryTypographyProps={{ variant: 'body2' }}
+                />
+              </MenuItem>
+            ))
+          : devices.videoInputs?.map((device) => (
+              <MenuItem
+                key={device.deviceId}
+                onClick={() => handleCameraSelect(device.deviceId)}
+                selected={selectedCamera === device.deviceId}
+              >
+                <ListItemIcon>
+                  {selectedCamera === device.deviceId ? (
+                    <Check sx={{ color: '#4CAF50' }} />
+                  ) : (
+                    <Videocam sx={{ color: alpha('#fff', 0.7) }} />
+                  )}
+                </ListItemIcon>
+                <ListItemText
+                  primary={device.label}
+                  primaryTypographyProps={{
+                    variant: 'body2',
+                    sx: {
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                    },
+                  }}
+                />
+              </MenuItem>
+            ))}
       </Menu>
 
       {/* Microphone Menu */}
