@@ -50,11 +50,13 @@ const LoginPage = (): JSX.Element => {
           <Box
             sx={{
               display: 'flex',
-              flexDirection: 'row',
+              flexDirection: { xs: 'column', sm: 'row' },
               alignItems: 'center',
               justifyContent: 'center',
               mt: 4,
               gap: 2,
+              width: '100%',
+              maxWidth: '100%',
             }}
           >
             <GoogleLogin

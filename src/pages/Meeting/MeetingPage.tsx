@@ -44,7 +44,16 @@ const MeetingPage = React.memo<MeetingPageProps>((props) => {
   const [pushToTalkEnabled, setPushToTalkEnabled] = useState<boolean>(
     localStorage.getItem('isPushToTalkEnabled') === 'true',
   );
-  const [gallerySize, setGallerySize] = useState<GallerySize>({ w: 100, h: 100 });
+  const [gallerySize, setGallerySize] = useState<GallerySize>(() => {
+    if (typeof window === 'undefined') {
+      return { w: 100, h: 100 };
+    }
+
+    return {
+      w: window.innerWidth,
+      h: Math.max(window.innerHeight - FOOTER_HEIGHT, 0),
+    };
+  });
   const theme = useTheme();
   const isSmallScreen = useMediaQuery(theme.breakpoints.down('sm'));
   const isMobileLayout = isSmallScreen || props.isMobile;
@@ -408,7 +417,7 @@ const MeetingPage = React.memo<MeetingPageProps>((props) => {
   };
 
   return (
-    <Container id="meeting-page">
+    <Container id="meeting-page" maxWidth={false} sx={{ width: '100%', maxWidth: '100%', px: 0 }}>
       <Box
         id="stream-gallery"
         sx={{
