@@ -122,7 +122,8 @@ form {
 }
 .lobby-page-video {
   aspect-ratio: 16 / 9;
-  width: auto !important;
+  width: 100% !important;
+  max-width: 100%;
 }
 /*-------- end attendee video style --------*/
 
@@ -255,6 +256,11 @@ form {
   }
   .single-video-container.pinned {
     height: auto;
+  }
+
+  .layout-tiled {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
+    padding: 16px 8px;
   }
 }
 

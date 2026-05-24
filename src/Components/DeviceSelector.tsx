@@ -326,7 +326,8 @@ const DeviceSelector: React.FC<DeviceSelectorProps> = ({
         backdropFilter: 'blur(20px)',
         borderRadius: 2,
         border: `1px solid ${alpha('#fff', 0.1)}`,
-        width: 'fit-content',
+        width: { xs: '100%', sm: 'fit-content' },
+        maxWidth: '100%',
         flexWrap: 'wrap',
       }}
     >

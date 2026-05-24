@@ -11,7 +11,10 @@ function CustomRoutes(): JSX.Element {
   const theme = useTheme();
 
   return (
-    <Grid container style={{ background: theme.palette.background.default }}>
+    <Grid
+      container
+      sx={{ width: '100%', maxWidth: '100%', background: theme.palette.background.default }}
+    >
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<LoginPage />} />

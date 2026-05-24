@@ -122,7 +122,7 @@ const getCustomizedGridStyle = (theme: Theme) => {
     bottom: 0,
     left: 0,
     padding: 16,
-    width: '100vw',
+    width: '100%',
     zIndex: 101,
   };
 
