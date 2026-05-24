@@ -422,6 +422,7 @@ export const useConference = (roomId: string): UseConferenceReturn => {
     conferenceActions.unpinVideo,
     conferenceState.layoutRef,
     conferenceState.role,
+    localVideoCreate,
   );
 
   // Enhanced action handlers - memoized to prevent recreation

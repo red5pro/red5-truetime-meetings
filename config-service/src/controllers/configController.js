@@ -5,7 +5,7 @@ class ConfigController {
   async getConfig(req, res) {
     try {
       const config = await configService.read();
-      res.json(config);
+      res.json(configService.maskSensitiveFields(config));
     } catch {
       res.status(500).json({ error: 'Failed to read configuration' });
     }
@@ -37,7 +37,7 @@ class ConfigController {
       res.json({
         success: true,
         message: 'Configuration updated successfully',
-        config: updatedConfig,
+        config: configService.maskSensitiveFields(updatedConfig),
       });
     } catch (error) {
       console.error('Error updating config:', error);
@@ -71,7 +71,7 @@ class ConfigController {
       res.json({
         success: true,
         message: 'Configuration replaced successfully',
-        config: newConfig,
+        config: configService.maskSensitiveFields(newConfig),
       });
     } catch (error) {
       console.error('Error replacing config:', error);
