@@ -108,6 +108,7 @@ export const useConferenceEvents = (
   unpinVideo: (uid: string) => void,
   layoutRef: React.MutableRefObject<typeof LayoutOptions>,
   role: string,
+  localVideoCreate: () => Promise<void>,
 ) => {
   const { startHeartbeat, stopHeartbeat, sendHeartbeat } = useDataChannelHeartbeat(
     client.conferenceClient,
@@ -143,6 +144,7 @@ export const useConferenceEvents = (
     unpinVideo,
     layoutRef,
     role,
+    localVideoCreate,
   };
 
   // Event handlers stored in ref
@@ -463,6 +465,7 @@ export const useConferenceEvents = (
         publishFailureReportedRef.current = false;
         depsRef.current.showSuccess('Reconnected successfully');
         eventHandlersRef.current.resubscribeMissingParticipants();
+        depsRef.current.localVideoCreate();
       },
 
       handleReconnectionFailed: () => {
