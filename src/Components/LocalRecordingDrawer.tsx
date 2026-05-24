@@ -162,6 +162,7 @@ const LocalRecordingDrawer = React.memo<LocalRecordingDrawerProps>((props) => {
     uploadProgress,
     uploadStatus,
     uploadError,
+    hasS3Config,
     recordingStartTime,
   } = props;
 
@@ -344,6 +345,27 @@ const LocalRecordingDrawer = React.memo<LocalRecordingDrawerProps>((props) => {
             <Box sx={{ textAlign: 'center', mt: 4, px: 2 }}>
               <Typography variant="body2" color="text.secondary">
                 {t('No active local recording. Start recording below.')}
+              </Typography>
+            </Box>
+          )}
+
+          {!hasS3Config && uploadStatus !== 'uploading' && uploadStatus !== 'success' && (
+            <Box
+              sx={{
+                mt: 2,
+                px: 2,
+                py: 1.5,
+                borderRadius: 2,
+                backgroundColor: 'rgba(255, 193, 7, 0.08)',
+                border: '1px solid rgba(255, 193, 7, 0.25)',
+                display: 'flex',
+                alignItems: 'flex-start',
+                gap: 1.5,
+              }}
+            >
+              <SvgIcon size={18} name="alert-circle" color="#FFC107" />
+              <Typography variant="caption" color="text.secondary" sx={{ lineHeight: 1.5 }}>
+                {t('Set up your S3 credentials to upload recordings automatically.')}
               </Typography>
             </Box>
           )}
