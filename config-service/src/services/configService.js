@@ -3,6 +3,16 @@ import path from 'path';
 
 const CONFIG_FILE = process.env.CONFIG_FILE || '/data/config.json';
 
+const SENSITIVE_FIELDS = [
+  'VITE_GOOGLE_CLIENT_ID',
+  'VITE_PUBNUB_PUBLISH_KEY',
+  'VITE_PUBNUB_SUBSCRIBE_KEY',
+  'VITE_AWS_ACCESS_KEY',
+  'VITE_AWS_SECRET_ACCESS_KEY',
+  'VITE_AWS_BUCKET_NAME',
+  'VITE_AWS_BUCKET_LOCATION',
+];
+
 class ConfigService {
   async initialize() {
     try {
@@ -24,6 +34,15 @@ class ConfigService {
         VITE_LOGO_URL: process.env.VITE_LOGO_URL || '',
         VITE_BASENAME: process.env.VITE_BASENAME || '/meetings',
         VITE_ANALYTICS_ENDPOINT: process.env.VITE_ANALYTICS_ENDPOINT,
+        VITE_VIRTUAL_BACKGROUND_IMAGES: process.env.VITE_VIRTUAL_BACKGROUND_IMAGES || '',
+        VITE_GOOGLE_CLIENT_ID: process.env.VITE_GOOGLE_CLIENT_ID || '',
+        VITE_ENABLE_GOOGLE_AUTH: process.env.VITE_ENABLE_GOOGLE_AUTH || 'false',
+        VITE_PUBNUB_PUBLISH_KEY: process.env.VITE_PUBNUB_PUBLISH_KEY || '',
+        VITE_PUBNUB_SUBSCRIBE_KEY: process.env.VITE_PUBNUB_SUBSCRIBE_KEY || '',
+        VITE_AWS_ACCESS_KEY: process.env.VITE_AWS_ACCESS_KEY || '',
+        VITE_AWS_SECRET_ACCESS_KEY: process.env.VITE_AWS_SECRET_ACCESS_KEY || '',
+        VITE_AWS_BUCKET_NAME: process.env.VITE_AWS_BUCKET_NAME || '',
+        VITE_AWS_BUCKET_LOCATION: process.env.VITE_AWS_BUCKET_LOCATION || '',
       };
 
       await fs.mkdir(path.dirname(CONFIG_FILE), { recursive: true });
@@ -62,6 +81,16 @@ class ConfigService {
   async replace(newConfig) {
     await fs.writeFile(CONFIG_FILE, JSON.stringify(newConfig, null, 2));
     return newConfig;
+  }
+
+  maskSensitiveFields(config) {
+    const masked = { ...config };
+    for (const field of SENSITIVE_FIELDS) {
+      if (masked[field]) {
+        masked[field] = '***';
+      }
+    }
+    return masked;
   }
 
   getConfigFilePath() {
