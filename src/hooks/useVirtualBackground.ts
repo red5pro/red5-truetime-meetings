@@ -81,7 +81,7 @@ export const useVirtualBackground = (
     VirtualBackgroundTypes.NONE,
   );
 
-  // Use ref to store latest function reference without triggering re-renders
+  // showWarning is kept for the "camera is off" warning (not for SDK events)
   const showWarningRef = useRef(showWarning);
 
   // Keep ref up to date
@@ -102,9 +102,6 @@ export const useVirtualBackground = (
       log.log('Virtual background enabled:', data.type);
       setIsVirtualBackgroundEnabled(true);
       setCurrentBackgroundType(data.type);
-      if (showWarningRef.current) {
-        showWarningRef.current(`Virtual background effect ${data.type} enabled`);
-      }
     };
 
     const handleDisabled = (): void => {
@@ -112,24 +109,15 @@ export const useVirtualBackground = (
       setIsVirtualBackgroundEnabled(false);
       // @ts-ignore
       setCurrentBackgroundType(VirtualBackgroundTypes.NONE);
-      if (showWarningRef.current) {
-        showWarningRef.current('Virtual background disabled');
-      }
     };
 
     const handleChanged = (data: VirtualBackgroundEventData): void => {
       log.log('Virtual background changed:', data.type);
       setCurrentBackgroundType(data.type);
-      if (showWarningRef.current) {
-        showWarningRef.current(`Virtual background effect ${data.type} enabled`);
-      }
     };
 
     const handleEnableFailed = (data: VirtualBackgroundEventData): void => {
       log.error('Virtual background enable failed:', data);
-      if (showWarningRef.current && data.error) {
-        showWarningRef.current('Virtual background failed: ' + data.error);
-      }
     };
 
     conferenceClientRef.current.on('virtual-background-initialized', handleInitialized);
