@@ -463,7 +463,6 @@ export const useConferenceEvents = (
       handleReconnectionAttempt: (data: any) => {
         log.log('Reconnection attempt', data);
         depsRef.current.roomState.setIsReconnecting(true);
-        depsRef.current.displayMessage('Reconnecting to the meeting...');
       },
 
       handleReconnectionSuccess: () => {
