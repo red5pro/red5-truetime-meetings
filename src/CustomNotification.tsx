@@ -1,4 +1,4 @@
-import { JSX, ReactNode, useCallback, useRef } from 'react';
+import { JSX, ReactNode, useCallback } from 'react';
 import { useSnackbar, SnackbarKey, VariantType } from 'notistack';
 import { SvgIcon } from '@mui/material';
 import { useTheme, Theme } from '@mui/material/styles';
@@ -75,19 +75,8 @@ export const useCustomNotification = (): CustomNotificationHook => {
   const { enqueueSnackbar, closeSnackbar } = useSnackbar();
   const theme = useTheme();
 
-  // Deduplication: suppress identical message+variant shown within 800 ms
-  const lastNotifRef = useRef<{ message: string; variant: string; at: number } | null>(null);
-
   const displayMessage = useCallback(
     (message: string, variant: VariantType = 'info', options: NotificationOptions = {}): void => {
-      // Deduplicate: ignore the same message+variant fired twice within 800 ms
-      const now = Date.now();
-      const last = lastNotifRef.current;
-      if (last && last.message === message && last.variant === variant && now - last.at < 800) {
-        return;
-      }
-      lastNotifRef.current = { message, variant, at: now };
-
       // Close existing notifications to avoid spam
       closeSnackbar();
 
