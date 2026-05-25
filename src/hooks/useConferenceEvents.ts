@@ -427,6 +427,14 @@ export const useConferenceEvents = (
       },
 
       handleConnectFail: () => {
+        // Ignore connection failures while the SDK is actively reconnecting —
+        // each retry attempt legitimately fails before the network comes back.
+        const clientInstance = client.conferenceClient.current;
+        const isSdkReconnecting = clientInstance?.getIsReconnecting?.() ?? false;
+        if (isSdkReconnecting || depsRef.current.roomState.isReconnecting) {
+          log.log('Connect fail during reconnection, ignoring');
+          return;
+        }
         log.log('Connect fail');
         heartbeatControlRef.current.stopHeartbeat();
         depsRef.current.roomState.setIsJoining(false);
@@ -561,6 +569,14 @@ export const useConferenceEvents = (
       },
 
       handlePublishFailed: async (data: any) => {
+        // During reconnection, publish failures are expected (the SDK will retry).
+        // Treating them as fatal here would show "something went wrong" prematurely.
+        const clientInstance = client.conferenceClient.current;
+        const isSdkReconnecting = clientInstance?.getIsReconnecting?.() ?? false;
+        if (isSdkReconnecting || depsRef.current.roomState.isReconnecting) {
+          log.log('Publish failed during reconnection (SDK will retry):', data);
+          return;
+        }
         log.error('Publish failed (init):', data);
         const message = data?.error || 'Failed to start publishing your stream.';
         await eventHandlersRef.current.handlePublishFailure(message);
