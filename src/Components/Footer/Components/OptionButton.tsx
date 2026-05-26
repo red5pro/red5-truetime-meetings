@@ -300,8 +300,7 @@ function OptionButton(props: OptionButtonProps) {
   };
 
   const handleStopRecording = (): void => {
-    // We can expose these options to the UI if needed later. For now, default to true or respect configured behavior if any.
-    props?.stopRecord?.(serverSideRecordingChecked, props.isLocalRecordingActive);
+    props?.stopRecord?.(props.isRecordingActive, props.isLocalRecordingActive);
     if (props.isLocalRecordingActive && props.stopLocalRecording) {
       props.stopLocalRecording();
     }
