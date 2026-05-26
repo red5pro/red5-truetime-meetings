@@ -789,7 +789,9 @@ export const useConferenceEvents = (
         roomState.setIsPublished(true);
         roomState.setIsPlayed(true);
 
-        recording.setIsRecordingActive(data.roomState.recording);
+        recording.setIsRecordingActive(
+          data.roomState.conferenceRoom?.recording ?? data.roomState.recording,
+        );
 
         participantsHook.setGuestsWaitingApproval(data.guestsWaitingApproval);
 
