@@ -159,9 +159,11 @@ export const useRecording = (
     const current = subscribedParticipants ?? {};
     const prev = prevSubscribedParticipantsRef.current;
 
-    Object.entries(current).forEach(([uid, { mediaStream }]) => {
+    Object.entries(current).forEach(([uid, { participant, mediaStream }]) => {
       if (!prev[uid] && mediaStream) {
-        compositeHandleRef.current!.addStream(mediaStream);
+        compositeHandleRef.current!.addStream(mediaStream, {
+          isScreenShare: participant?.isScreenSharing ?? false,
+        });
       }
     });
 
@@ -537,7 +539,19 @@ export const useRecording = (
           .map((p) => p.mediaStream)
           .filter(Boolean);
 
-        const handle = createCompositeStream([localStream, ...remoteStreams]);
+        const screenShareStreams = new Set<MediaStream>(
+          Object.values(currentParticipants)
+            .filter((p) => p.participant?.isScreenSharing && p.mediaStream)
+            .map((p) => p.mediaStream),
+        );
+
+        const handle = createCompositeStream(
+          [localStream, ...remoteStreams],
+          1280,
+          720,
+          30,
+          screenShareStreams,
+        );
         compositeHandleRef.current = handle;
         localStreamRef.current = localStream;
         const recordingStream = handle.stream;
