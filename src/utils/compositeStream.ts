@@ -5,13 +5,19 @@
  * Audio tracks from all streams are mixed via the Web Audio API.
  * Streams can be added or removed dynamically while the compositor is running.
  * Mute state is respected: disabled tracks are excluded from the grid and audio mix.
+ *
+ * When one or more streams are marked as screen shares, the layout switches to a
+ * "presenter" mode: screen shares fill the left 75% of the canvas and camera feeds
+ * are stacked in a sidebar on the right.
  */
 export interface CompositeStreamHandle {
   stream: MediaStream;
-  addStream: (stream: MediaStream) => void;
+  addStream: (stream: MediaStream, options?: { isScreenShare?: boolean }) => void;
   removeStream: (stream: MediaStream) => void;
   /** Override mute state for a specific stream (e.g. local user's cam/mic). */
   setStreamEnabled: (stream: MediaStream, videoEnabled: boolean, audioEnabled: boolean) => void;
+  /** Mark or unmark a stream as a screen share, changing the canvas layout. */
+  setStreamScreenShare: (stream: MediaStream, isScreenShare: boolean) => void;
   cleanup: () => void;
 }
 
@@ -22,6 +28,7 @@ type Entry = {
   gainNode: GainNode | null;
   videoEnabled: boolean;
   audioEnabled: boolean;
+  isScreenShare: boolean;
 };
 
 export function createCompositeStream(
@@ -29,6 +36,7 @@ export function createCompositeStream(
   width = 1280,
   height = 720,
   fps = 30,
+  screenShareStreams?: Set<MediaStream>,
 ): CompositeStreamHandle {
   const canvas = document.createElement('canvas');
   canvas.width = width;
@@ -40,7 +48,12 @@ export function createCompositeStream(
 
   const entries: Entry[] = [];
 
-  const addEntry = (stream: MediaStream, videoEnabled = true, audioEnabled = true) => {
+  const addEntry = (
+    stream: MediaStream,
+    videoEnabled = true,
+    audioEnabled = true,
+    isScreenShare = false,
+  ) => {
     let videoElement: HTMLVideoElement | null = null;
     let audioSource: MediaStreamAudioSourceNode | null = null;
     let gainNode: GainNode | null = null;
@@ -62,14 +75,39 @@ export function createCompositeStream(
       gainNode.connect(destination);
     }
 
-    entries.push({ stream, videoElement, audioSource, gainNode, videoEnabled, audioEnabled });
+    entries.push({
+      stream,
+      videoElement,
+      audioSource,
+      gainNode,
+      videoEnabled,
+      audioEnabled,
+      isScreenShare,
+    });
   };
 
-  streams.forEach((s) => addEntry(s));
+  streams.forEach((s) => addEntry(s, true, true, screenShareStreams?.has(s) ?? false));
 
-  // Continuously draw all video frames to the canvas in a grid layout.
-  // Only streams whose video track is enabled (both at the track level and via explicit flag)
-  // are included — disabled cameras don't consume grid space.
+  const drawTile = (
+    video: HTMLVideoElement,
+    cellX: number,
+    cellY: number,
+    cellW: number,
+    cellH: number,
+  ) => {
+    const srcW = video.videoWidth || cellW;
+    const srcH = video.videoHeight || cellH;
+    const scale = Math.min(cellW / srcW, cellH / srcH);
+    const drawW = srcW * scale;
+    const drawH = srcH * scale;
+    const dx = cellX + (cellW - drawW) / 2;
+    const dy = cellY + (cellH - drawH) / 2;
+    ctx.drawImage(video, dx, dy, drawW, drawH);
+  };
+
+  // Continuously draw all video frames to the canvas.
+  // When screen shares are present, they take the left 75% of the canvas and camera
+  // feeds are stacked in a sidebar on the right. Otherwise a square grid is used.
   let animFrameId: number;
   const draw = () => {
     ctx.fillStyle = '#000';
@@ -83,27 +121,45 @@ export function createCompositeStream(
 
     const count = activeEntries.length;
     if (count > 0) {
-      const cols = Math.ceil(Math.sqrt(count));
-      const rows = Math.ceil(count / cols);
-      const cellW = width / cols;
-      const cellH = height / rows;
+      const screenShareEntries = activeEntries.filter((e) => e.isScreenShare);
+      const cameraEntries = activeEntries.filter((e) => !e.isScreenShare);
 
-      activeEntries.forEach(({ videoElement }, i) => {
-        const video = videoElement!;
-        const col = i % cols;
-        const row = Math.floor(i / cols);
+      if (screenShareEntries.length > 0) {
+        // Presenter layout: screen shares on the left, cameras in a right sidebar
+        const mainW = cameraEntries.length > 0 ? Math.round(width * 0.75) : width;
+        const sideW = width - mainW;
 
-        // Preserve original aspect ratio — letterbox inside the cell
-        const srcW = video.videoWidth || cellW;
-        const srcH = video.videoHeight || cellH;
-        const scale = Math.min(cellW / srcW, cellH / srcH);
-        const drawW = srcW * scale;
-        const drawH = srcH * scale;
-        const dx = col * cellW + (cellW - drawW) / 2;
-        const dy = row * cellH + (cellH - drawH) / 2;
+        const ssCount = screenShareEntries.length;
+        const ssCols = Math.ceil(Math.sqrt(ssCount));
+        const ssRows = Math.ceil(ssCount / ssCols);
+        const ssCellW = mainW / ssCols;
+        const ssCellH = height / ssRows;
 
-        ctx.drawImage(video, dx, dy, drawW, drawH);
-      });
+        screenShareEntries.forEach(({ videoElement }, i) => {
+          const col = i % ssCols;
+          const row = Math.floor(i / ssCols);
+          drawTile(videoElement!, col * ssCellW, row * ssCellH, ssCellW, ssCellH);
+        });
+
+        if (cameraEntries.length > 0) {
+          const camCellH = height / cameraEntries.length;
+          cameraEntries.forEach(({ videoElement }, i) => {
+            drawTile(videoElement!, mainW, i * camCellH, sideW, camCellH);
+          });
+        }
+      } else {
+        // Default grid layout
+        const cols = Math.ceil(Math.sqrt(count));
+        const rows = Math.ceil(count / cols);
+        const cellW = width / cols;
+        const cellH = height / rows;
+
+        activeEntries.forEach(({ videoElement }, i) => {
+          const col = i % cols;
+          const row = Math.floor(i / cols);
+          drawTile(videoElement!, col * cellW, row * cellH, cellW, cellH);
+        });
+      }
     }
 
     animFrameId = requestAnimationFrame(draw);
@@ -116,9 +172,9 @@ export function createCompositeStream(
     ...destination.stream.getAudioTracks(),
   ]);
 
-  const addStream = (stream: MediaStream) => {
+  const addStream = (stream: MediaStream, options?: { isScreenShare?: boolean }) => {
     if (entries.some((e) => e.stream === stream)) return;
-    addEntry(stream);
+    addEntry(stream, true, true, options?.isScreenShare ?? false);
   };
 
   const removeStream = (stream: MediaStream) => {
@@ -141,6 +197,12 @@ export function createCompositeStream(
     }
   };
 
+  const setStreamScreenShare = (stream: MediaStream, isScreenShare: boolean) => {
+    const entry = entries.find((e) => e.stream === stream);
+    if (!entry) return;
+    entry.isScreenShare = isScreenShare;
+  };
+
   const cleanup = () => {
     cancelAnimationFrame(animFrameId);
     audioContext.close().catch(() => {});
@@ -150,5 +212,12 @@ export function createCompositeStream(
     entries.length = 0;
   };
 
-  return { stream: compositeStream, addStream, removeStream, setStreamEnabled, cleanup };
+  return {
+    stream: compositeStream,
+    addStream,
+    removeStream,
+    setStreamEnabled,
+    setStreamScreenShare,
+    cleanup,
+  };
 }
