@@ -268,6 +268,9 @@ function Red5(props: Red5Props) {
             uploadProgress={conference.features.localRecording.uploadProgress}
             uploadStatus={conference.features.localRecording.uploadStatus}
             uploadError={conference.features.localRecording.uploadError}
+            hasRecording={!!conference.features.localRecording.localRecordingStatus?.segments}
+            downloadLocalRecording={conference.features.localRecording.downloadLocalRecording}
+            retryUploadLocalRecording={conference.features.localRecording.uploadLocalRecording}
           />
         ) : conference.room.lobbyOrMeetingPage === 'lobby' ? (
           <LobbyPage
