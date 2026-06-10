@@ -1,4 +1,5 @@
 import { Button, Typography } from '@mui/material';
+import { useTheme } from '@mui/material/styles';
 import Grid from '@mui/material/Grid2';
 import { Box } from '@mui/system';
 import React from 'react';
@@ -7,10 +8,22 @@ import { useTranslation } from 'react-i18next';
 interface LeftTheRoomProps {
   withError: string | null;
   handleLeaveFromRoom: () => void;
+  isUploading?: boolean;
+  uploadProgress?: number;
+  uploadStatus?: 'idle' | 'uploading' | 'success' | 'error';
+  uploadError?: string | null;
 }
 
-function LeftTheRoom({ withError: leaveRoomWithError, handleLeaveFromRoom }: LeftTheRoomProps) {
+function LeftTheRoom({
+  withError: leaveRoomWithError,
+  handleLeaveFromRoom,
+  isUploading,
+  uploadProgress = 0,
+  uploadStatus,
+  uploadError,
+}: LeftTheRoomProps) {
   const { t } = useTranslation();
+  const theme = useTheme();
 
   React.useEffect(() => {
     handleLeaveFromRoom();
@@ -35,6 +48,44 @@ function LeftTheRoom({ withError: leaveRoomWithError, handleLeaveFromRoom }: Lef
             {leaveRoomWithError !== null && (
               <Typography variant="body1" align="center" sx={{ mb: 4 }}>
                 {t(leaveRoomWithError)}
+              </Typography>
+            )}
+
+            {(isUploading || uploadStatus === 'uploading') && (
+              <Box sx={{ mb: 4, px: 1 }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                  <Typography variant="body2" color="text.secondary">
+                    {t('Uploading local recording...')}
+                  </Typography>
+                  <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                    {uploadProgress}%
+                  </Typography>
+                </Box>
+                <Box
+                  sx={{
+                    height: 4,
+                    width: '100%',
+                    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                    borderRadius: 2,
+                    overflow: 'hidden',
+                  }}
+                >
+                  <Box
+                    sx={{
+                      height: '100%',
+                      width: `${uploadProgress}%`,
+                      backgroundColor: theme.palette.primary.main,
+                      transition: 'width 0.3s ease-out',
+                    }}
+                  />
+                </Box>
+              </Box>
+            )}
+
+            {uploadStatus === 'error' && (
+              <Typography variant="body2" color="error" align="center" sx={{ mb: 4 }}>
+                {t('Recording upload failed')}
+                {uploadError ? `: ${uploadError}` : ''}
               </Typography>
             )}
 

@@ -115,7 +115,6 @@ export interface MeetingPageProps {
   stopLocalRecording?: () => void;
   downloadLocalRecording?: (filename?: string) => Promise<boolean>;
   localRecordingStatus?: string;
-  isLocalRecordingUploading?: boolean;
   currentIssues?: string[];
   printStatLogs?: boolean;
   setPrintStatLogs?: (print: boolean) => void;
