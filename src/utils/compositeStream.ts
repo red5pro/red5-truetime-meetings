@@ -46,6 +46,14 @@ export function createCompositeStream(
   const audioContext = new AudioContext();
   const destination = audioContext.createMediaStreamDestination();
 
+  // AudioContexts created without a direct user-gesture call stack (e.g. when local
+  // recording is auto-started via a room state event) can start in "suspended" state.
+  // While suspended, the destination's audio track produces no data, resulting in a
+  // recording with no sound even though the video track works fine.
+  if (audioContext.state === 'suspended') {
+    audioContext.resume().catch(() => {});
+  }
+
   const entries: Entry[] = [];
 
   const addEntry = (
