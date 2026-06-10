@@ -14,7 +14,6 @@ import ShareScreenButton from './Components/ShareScreenButton.tsx';
 import MessageButton from './Components/MessageButton.tsx';
 import ParticipantListButton from './Components/ParticipantListButton.tsx';
 import EndCallButton from './Components/EndCallButton.tsx';
-import EndCallConfirmationDialog from './Components/EndCallConfirmationDialog.tsx';
 import ExternalStreamsButton from './Components/ExternalStreamsButton.tsx';
 
 import TimeZone from './Components/TimeZone.tsx';
@@ -105,7 +104,6 @@ interface FooterProps {
   localRecordingStatus?: string;
   participantCount?: number;
   numberOfUnReadMessages?: number;
-  isLocalRecordingUploading?: boolean;
   transcriptionDrawerOpen?: boolean;
   handleTranscriptionDrawerOpen?: (open: boolean) => void;
   externalStreamsDrawerOpen?: boolean;
@@ -150,19 +148,11 @@ function Footer(props: FooterProps) {
     };
   }, []);
 
-  const [endCallConfirmationOpen, setEndCallConfirmationOpen] = React.useState(false);
-
   const handleLeaveRoom = () => {
-    if (props.isLocalRecordingActive || props.isLocalRecordingUploading) {
-      setEndCallConfirmationOpen(true);
-    } else {
-      props.setLeftTheRoom?.(true);
+    if (props.isLocalRecordingActive) {
+      props.stopLocalRecording?.();
     }
-  };
-
-  const handleConfirmEndCall = () => {
-    props.stopLocalRecording?.();
-    setEndCallConfirmationOpen(false);
+    props.setLeftTheRoom?.(true);
   };
 
   return (
@@ -341,10 +331,6 @@ function Footer(props: FooterProps) {
             <Grid size="auto">
               <EndCallButton footer={true} glass={props?.glass} onLeaveRoom={handleLeaveRoom} />
             </Grid>
-            <EndCallConfirmationDialog
-              open={endCallConfirmationOpen}
-              onClose={handleConfirmEndCall}
-            />
 
             {windowWidth <= mobileBreakpoint ? (
               <Grid size="auto">

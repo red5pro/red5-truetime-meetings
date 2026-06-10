@@ -264,6 +264,13 @@ function Red5(props: Red5Props) {
           <LeftTheRoom
             withError={conference.room.leaveRoomError}
             handleLeaveFromRoom={conference.room.leaveRoom}
+            isUploading={conference.features.localRecording.isUploading}
+            uploadProgress={conference.features.localRecording.uploadProgress}
+            uploadStatus={conference.features.localRecording.uploadStatus}
+            uploadError={conference.features.localRecording.uploadError}
+            hasRecording={!!conference.features.localRecording.localRecordingStatus?.segments}
+            downloadLocalRecording={conference.features.localRecording.downloadLocalRecording}
+            retryUploadLocalRecording={conference.features.localRecording.uploadLocalRecording}
           />
         ) : conference.room.lobbyOrMeetingPage === 'lobby' ? (
           <LobbyPage
@@ -382,7 +389,6 @@ function Red5(props: Red5Props) {
               stopLocalRecording={conference.features.localRecording.stopLocalRecording}
               downloadLocalRecording={conference.features.localRecording.downloadLocalRecording}
               localRecordingStatus={conference.features.localRecording.localRecordingStatus}
-              isLocalRecordingUploading={conference.features.localRecording.isUploading}
               // Chat
               numberOfUnReadMessages={conference.features.chat.numberOfUnReadMessages}
               toggleSetNumberOfUnreadMessages={toggleSetNumberOfUnreadMessages}
