@@ -189,6 +189,9 @@ const MeetingPage = React.memo<MeetingPageProps>((props) => {
       },
       onLeaveRoom: () => {
         closePiPRef.current?.();
+        if (propsRef.current.isLocalRecordingActive) {
+          propsRef.current.stopLocalRecording?.();
+        }
         propsRef.current.setLeftTheRoom?.(true);
       },
       isMyMicMuted: props.isMyMicMuted,
@@ -585,7 +588,6 @@ const MeetingPage = React.memo<MeetingPageProps>((props) => {
         stopLocalRecording={props?.stopLocalRecording}
         downloadLocalRecording={props?.downloadLocalRecording}
         localRecordingStatus={props?.localRecordingStatus}
-        isLocalRecordingUploading={props?.isLocalRecordingUploading}
         transcriptionDrawerOpen={props?.transcriptionDrawerOpen}
         handleTranscriptionDrawerOpen={props?.handleTranscriptionDrawerOpen}
         externalStreamsDrawerOpen={props?.externalStreamsDrawerOpen}
