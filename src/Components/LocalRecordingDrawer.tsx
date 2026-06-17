@@ -8,9 +8,6 @@ import { useTranslation } from 'react-i18next';
 import CloseDrawerButton from './DrawerButton';
 import { getRed5DrawerStyle } from '../styles/themeUtil';
 import { SvgIcon } from './SvgIcon';
-import Lottie from 'lottie-react';
-import recordingAnimation from '../styles/lottieFiles/recording-animation.json';
-import clockAnimation from '../styles/lottieFiles/clock.json';
 
 interface LocalRecordingStatus {
   isRecording: boolean;
@@ -43,6 +40,7 @@ interface LocalRecordingDrawerProps {
   uploadStatus?: 'idle' | 'uploading' | 'success' | 'error';
   uploadError?: string | null;
   hasS3Config?: boolean;
+  onSetUpS3?: () => void;
   recordingStartTime?: number | null;
 }
 
@@ -60,76 +58,6 @@ const ContentGrid = styled(Grid)(({ theme }: { theme: Theme }) => ({
   flexDirection: 'column',
   overflow: 'hidden',
 }));
-
-const StatusItem = ({
-  label,
-  value,
-  icon,
-  iconColor,
-  lottieType,
-}: {
-  label: string;
-  value: string | number;
-  icon: string;
-  iconColor?: string;
-  lottieType?: 'recording' | 'clock';
-}) => {
-  const theme = useTheme();
-
-  const getLottieAnimation = () => {
-    switch (lottieType) {
-      case 'recording':
-        return recordingAnimation;
-      case 'clock':
-        return clockAnimation;
-      default:
-        return null;
-    }
-  };
-
-  const animationData = getLottieAnimation();
-
-  return (
-    <Grid container alignItems="center" spacing={2} sx={{ mb: 2 }}>
-      <Grid>
-        <Box
-          sx={{
-            width: 40,
-            height: 40,
-            borderRadius: '50%',
-            backgroundColor: 'rgba(255, 255, 255, 0.05)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          {animationData ? (
-            <Lottie
-              animationData={animationData}
-              loop={true}
-              autoplay={true}
-              style={{ width: 32, height: 32 }}
-            />
-          ) : (
-            <SvgIcon size={20} name={icon} color={iconColor || theme.palette.text.primary} />
-          )}
-        </Box>
-      </Grid>
-      <Grid sx={{ flex: 1 }}>
-        <Typography
-          variant="caption"
-          color="text.secondary"
-          sx={{ display: 'block', textTransform: 'uppercase', letterSpacing: 1 }}
-        >
-          {label}
-        </Typography>
-        <Typography variant="body1" sx={{ fontWeight: 500 }}>
-          {value}
-        </Typography>
-      </Grid>
-    </Grid>
-  );
-};
 
 const formatDuration = (seconds: number): string => {
   const hrs = Math.floor(seconds / 3600);
@@ -157,6 +85,95 @@ interface StorageEstimate {
   quota: number;
 }
 
+type RecordingCardState = 'recording' | 'paused' | 'stopped' | 'inactive';
+
+const RECORDING_CARD_STYLES: Record<
+  RecordingCardState,
+  { background: string; border: string; accent: string }
+> = {
+  recording: {
+    background: 'rgba(231, 76, 60, 0.12)',
+    border: 'rgba(231, 76, 60, 0.4)',
+    accent: '#E74C3C',
+  },
+  paused: {
+    background: 'rgba(255, 193, 7, 0.1)',
+    border: 'rgba(255, 193, 7, 0.35)',
+    accent: '#FFC107',
+  },
+  stopped: {
+    background: 'rgba(255, 255, 255, 0.04)',
+    border: 'rgba(255, 255, 255, 0.12)',
+    accent: 'rgba(255, 255, 255, 0.6)',
+  },
+  inactive: {
+    background: 'rgba(255, 255, 255, 0.04)',
+    border: 'rgba(255, 255, 255, 0.12)',
+    accent: 'rgba(255, 255, 255, 0.6)',
+  },
+};
+
+const RecordingStatusCard = ({
+  cardState,
+  label,
+  value,
+}: {
+  cardState: RecordingCardState;
+  label: string;
+  value: string;
+}) => {
+  const styles = RECORDING_CARD_STYLES[cardState];
+
+  return (
+    <Box
+      sx={{
+        backgroundColor: styles.background,
+        border: '1px solid',
+        borderColor: styles.border,
+        borderRadius: 3,
+        p: 3,
+        mb: 3,
+      }}
+    >
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
+        <Box
+          sx={{
+            width: 10,
+            height: 10,
+            borderRadius: '50%',
+            backgroundColor: styles.accent,
+          }}
+        />
+        <Typography
+          variant="caption"
+          sx={{
+            color: styles.accent,
+            fontWeight: 700,
+            letterSpacing: 1.2,
+            textTransform: 'uppercase',
+          }}
+        >
+          {label}
+        </Typography>
+      </Box>
+      <Typography variant="h4" sx={{ fontWeight: 700 }}>
+        {value}
+      </Typography>
+    </Box>
+  );
+};
+
+const InfoRow = ({ label, value }: { label: string; value: string }) => (
+  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', py: 1.5 }}>
+    <Typography variant="body2" color="text.secondary">
+      {label}
+    </Typography>
+    <Typography variant="body1" sx={{ fontWeight: 600 }}>
+      {value}
+    </Typography>
+  </Box>
+);
+
 const LocalRecordingDrawer = React.memo<LocalRecordingDrawerProps>((props) => {
   const { t } = useTranslation();
   const theme = useTheme();
@@ -174,6 +191,7 @@ const LocalRecordingDrawer = React.memo<LocalRecordingDrawerProps>((props) => {
     uploadStatus,
     uploadError,
     hasS3Config,
+    onSetUpS3,
     recordingStartTime,
   } = props;
 
@@ -229,11 +247,28 @@ const LocalRecordingDrawer = React.memo<LocalRecordingDrawerProps>((props) => {
     return () => clearInterval(interval);
   }, [isActive, isPaused, recordingStartTime]);
 
-  const renderActiveStatus = () => {
-    if (isActive) return isPaused ? t('Paused') : t('Recording');
-    if (status && (status.chunks > 0 || status.segments > 0)) return t('Stopped');
-    return t('Inactive');
-  };
+  const cardState: RecordingCardState = isActive
+    ? isPaused
+      ? 'paused'
+      : 'recording'
+    : status && (status.chunks > 0 || status.segments > 0)
+      ? 'stopped'
+      : 'inactive';
+
+  const cardLabel = {
+    recording: t('Recording'),
+    paused: t('Paused'),
+    stopped: t('Stopped'),
+    inactive: t('Inactive'),
+  }[cardState];
+
+  const liveEstimatedSize = elapsedSeconds * ESTIMATED_BYTES_PER_SECOND;
+  const finalSize = status?.estimatedSize ?? 0;
+  const storageUsedBytes = isActive ? liveEstimatedSize : finalSize;
+  const storagePercentUsed =
+    storageEstimate && storageEstimate.quota > 0
+      ? Math.min((storageUsedBytes / storageEstimate.quota) * 100, 100)
+      : null;
 
   return (
     <Red5Drawer
@@ -259,12 +294,10 @@ const LocalRecordingDrawer = React.memo<LocalRecordingDrawerProps>((props) => {
         </Grid>
 
         <Box sx={{ flex: 1, overflowY: 'auto', pr: 1 }}>
-          <StatusItem
-            label={t('Status')}
-            value={renderActiveStatus()}
-            icon={isUploading ? 'cloud-upload' : isActive ? 'record' : 'stop'}
-            iconColor={isActive && !isPaused ? '#E74C3C' : undefined}
-            lottieType={isActive && !isPaused ? 'recording' : undefined}
+          <RecordingStatusCard
+            cardState={cardState}
+            label={cardLabel}
+            value={formatDuration(isActive ? elapsedSeconds : finalDuration)}
           />
 
           {uploadStatus === 'uploading' && (
@@ -347,48 +380,46 @@ const LocalRecordingDrawer = React.memo<LocalRecordingDrawerProps>((props) => {
             </Box>
           )}
 
-          {isActive && (
-            <>
-              <StatusItem
-                label={t('Duration')}
-                value={formatDuration(elapsedSeconds)}
-                icon="clock"
-                lottieType="clock"
-              />
-              <StatusItem
-                label={t('Estimated Size')}
-                value={formatSize(elapsedSeconds * ESTIMATED_BYTES_PER_SECOND)}
-                icon="database"
-              />
-            </>
-          )}
-
-          {!isActive && ((status?.estimatedSize ?? 0) > 0 || finalDuration > 0) && (
-            <>
-              <StatusItem
-                label={t('Final Duration')}
-                value={formatDuration(finalDuration)}
-                icon="clock"
-              />
-              {status && status.estimatedSize > 0 && (
-                <StatusItem
-                  label={t('File Size')}
-                  value={formatSize(status.estimatedSize)}
-                  icon="database"
-                />
-              )}
-            </>
-          )}
+          <InfoRow
+            label={isActive ? t('Estimated size') : t('File size')}
+            value={formatSize(storageUsedBytes)}
+          />
 
           {storageEstimate && storageEstimate.quota > 0 && (
-            <StatusItem
-              label={t('Available Storage')}
-              value={t('{{available}} free of {{total}}', {
-                available: formatSize(Math.max(storageEstimate.quota - storageEstimate.usage, 0)),
-                total: formatSize(storageEstimate.quota),
-              })}
-              icon="database"
-            />
+            <>
+              <Divider sx={{ opacity: 0.1 }} />
+              <InfoRow
+                label={t('Available storage')}
+                value={t('{{available}} free', {
+                  available: formatSize(Math.max(storageEstimate.quota - storageUsedBytes, 0)),
+                })}
+              />
+              <Box
+                sx={{
+                  height: 6,
+                  width: '100%',
+                  backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                  borderRadius: 3,
+                  overflow: 'hidden',
+                  mt: 0.5,
+                }}
+              >
+                <Box
+                  sx={{
+                    height: '100%',
+                    width: `${storagePercentUsed}%`,
+                    backgroundColor: '#E74C3C',
+                    transition: 'width 0.3s ease-out',
+                  }}
+                />
+              </Box>
+              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
+                {t('{{used}} used of {{total}}', {
+                  used: formatSize(storageUsedBytes),
+                  total: formatSize(storageEstimate.quota),
+                })}
+              </Typography>
+            </>
           )}
 
           {!isActive && !status && (
@@ -414,9 +445,24 @@ const LocalRecordingDrawer = React.memo<LocalRecordingDrawerProps>((props) => {
               }}
             >
               <SvgIcon size={18} name="alert-circle" color="#FFC107" />
-              <Typography variant="caption" color="text.secondary" sx={{ lineHeight: 1.5 }}>
-                {t('Set up your S3 credentials to upload recordings automatically.')}
-              </Typography>
+              <Box sx={{ flex: 1 }}>
+                <Typography variant="caption" color="text.secondary" sx={{ lineHeight: 1.5 }}>
+                  {t('Set up your S3 credentials to upload recordings automatically.')}
+                </Typography>
+                {onSetUpS3 && (
+                  <Box sx={{ mt: 1.5 }}>
+                    <Button
+                      size="small"
+                      variant="outlined"
+                      color="inherit"
+                      onClick={onSetUpS3}
+                      sx={{ textTransform: 'none', borderRadius: 6 }}
+                    >
+                      {t('Set up S3')}
+                    </Button>
+                  </Box>
+                )}
+              </Box>
             </Box>
           )}
         </Box>

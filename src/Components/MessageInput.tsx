@@ -36,6 +36,12 @@ const MessageTextField = styled(TextField)(({ theme }: { theme: Theme }) => ({
   '& .MuiOutlinedInput-root': {
     borderRadius: 30,
     backgroundColor: theme.palette.themeColor?.[30],
+    paddingLeft: 18,
+    paddingRight: 18,
+    '&:hover .MuiOutlinedInput-notchedOutline, &.Mui-focused .MuiOutlinedInput-notchedOutline': {
+      borderColor: theme.palette.themeColor?.[50],
+      borderWidth: 1,
+    },
   },
   '& .MuiOutlinedInput-input::placeholder': {
     color: theme.palette.themeColor?.[99],
@@ -43,6 +49,7 @@ const MessageTextField = styled(TextField)(({ theme }: { theme: Theme }) => ({
   },
   '& .MuiOutlinedInput-notchedOutline': {
     borderRadius: 30,
+    borderColor: theme.palette.themeColor?.[50],
   },
 }));
 
@@ -143,6 +150,8 @@ const MessageInput = React.memo<MessageInputProps>(({ handleSendMessage, handleS
     setSelectedFiles((prev) => prev.filter((_, i) => i !== index));
   };
 
+  const canSend = text.trim().length > 0 || selectedFiles.length > 0;
+
   const getFileIcon = (file: File) => {
     if (file.type.startsWith('image/')) {
       if (file.type === 'image/gif') {
@@ -226,12 +235,27 @@ const MessageInput = React.memo<MessageInputProps>(({ handleSendMessage, handleS
                 <InputAdornment position="end">
                   <IconButton
                     onClick={sendMessage}
+                    disabled={!canSend}
                     aria-label="send message"
                     size="medium"
                     edge="end"
                     id="message-send-button"
+                    sx={{
+                      backgroundColor: canSend ? '#E74C3C' : 'rgba(255, 255, 255, 0.08)',
+                      '&:hover': {
+                        backgroundColor: canSend ? '#D9432F' : 'rgba(255, 255, 255, 0.08)',
+                      },
+                      '&.Mui-disabled': {
+                        backgroundColor: 'rgba(255, 255, 255, 0.08)',
+                      },
+                    }}
                   >
-                    <SvgIcon size={20} viewBox="0 0 20 17" name="send" color="#FFF" />
+                    <SvgIcon
+                      size={19}
+                      viewBox="0 0 24 24"
+                      name="send"
+                      color={canSend ? '#FFF' : 'rgba(255, 255, 255, 0.35)'}
+                    />
                   </IconButton>
                 </InputAdornment>
               ),
