@@ -489,6 +489,11 @@ export const useRecording = (
   // Mediabunny recorder ref for local recording
   const mediabunnyRecorderRef = useRef<MediabunnyRecorder | null>(null);
   const recordedSegmentsRef = useRef<Blob[]>([]);
+  // Second recorder that captures only the local user's own camera/mic, independent of
+  // the composite (all-participants) stream, so it ends up as its own file in the ZIP.
+  const localOnlyRecorderRef = useRef<MediabunnyRecorder | null>(null);
+  const localOnlyRecordedSegmentsRef = useRef<Blob[]>([]);
+  const localOnlyStreamRef = useRef<MediaStream | null>(null);
   const recordingStartTimeRef = useRef<number | null>(null);
   const currentRecordingStreamRef = useRef<MediaStream | null>(null);
   // Stable ref to the latest subscribedParticipants for use inside callbacks
@@ -526,6 +531,7 @@ export const useRecording = (
       try {
         setLocalRecordingStatus(null); // Reset status for new recording
         recordedSegmentsRef.current = []; // Clear previous segments
+        localOnlyRecordedSegmentsRef.current = [];
 
         // Get the local stream
         const localStream = stream || client.mediaStreamManager?.getCurrentStream();
@@ -584,6 +590,30 @@ export const useRecording = (
 
         await recorder.start(recordingStream);
 
+        // Also record the local user's own camera/mic as a standalone second video.
+        // Clone the tracks so this recorder reads independently of the composite's
+        // <video> element draw loop and isn't affected by composite mute toggles.
+        const localOnlyRecorder = new MediabunnyRecorder({
+          videoCodec: 'avc',
+          audioCodec: 'aac',
+        });
+
+        localOnlyRecorder.onerror = (error) => {
+          log.error('Mediabunny local-only recording error:', error);
+        };
+
+        localOnlyRecorderRef.current = localOnlyRecorder;
+
+        try {
+          const localOnlyStream = new MediaStream(localStream.getTracks().map((t) => t.clone()));
+          localOnlyStreamRef.current = localOnlyStream;
+          await localOnlyRecorder.start(localOnlyStream);
+        } catch (error) {
+          log.error('Failed to start local-only recording:', error);
+          localOnlyRecorderRef.current = null;
+          localOnlyStreamRef.current = null;
+        }
+
         setIsLocalRecordingActive(true);
         setIsLocalRecordingPaused(false);
 
@@ -632,6 +662,13 @@ export const useRecording = (
       const zip = new JSZip();
       blobs.forEach((blob, index) => {
         const segmentFilename = blobs.length === 1 ? `recording.mp4` : `part${index + 1}.mp4`;
+        zip.file(segmentFilename, blob);
+      });
+      localOnlyRecordedSegmentsRef.current.forEach((blob, index) => {
+        const segmentFilename =
+          localOnlyRecordedSegmentsRef.current.length === 1
+            ? `local-video.mp4`
+            : `local-video-part${index + 1}.mp4`;
         zip.file(segmentFilename, blob);
       });
 
@@ -706,6 +743,21 @@ export const useRecording = (
     try {
       const blob = await mediabunnyRecorderRef.current.stop();
 
+      // Stop the local-only recorder alongside the composite one
+      if (localOnlyRecorderRef.current) {
+        try {
+          const localOnlyBlob = await localOnlyRecorderRef.current.stop();
+          if (localOnlyBlob) {
+            localOnlyRecordedSegmentsRef.current.push(localOnlyBlob);
+          }
+        } catch (error) {
+          log.error('Failed to stop local-only recording:', error);
+        }
+        localOnlyStreamRef.current?.getTracks().forEach((track) => track.stop());
+        localOnlyStreamRef.current = null;
+        localOnlyRecorderRef.current = null;
+      }
+
       if (blob) {
         // Add to segments
         recordedSegmentsRef.current.push(blob);
@@ -764,6 +816,7 @@ export const useRecording = (
 
     try {
       mediabunnyRecorderRef.current.pause();
+      localOnlyRecorderRef.current?.pause();
       setIsLocalRecordingPaused(true);
       log.log('Local recording paused');
       if (displayMessageRef.current) {
@@ -782,6 +835,7 @@ export const useRecording = (
 
     try {
       mediabunnyRecorderRef.current.resume();
+      localOnlyRecorderRef.current?.resume();
       setIsLocalRecordingPaused(false);
       log.log('Local recording resumed');
       if (displayMessageRef.current) {
@@ -812,6 +866,13 @@ export const useRecording = (
       // Add all segments to the ZIP
       blobs.forEach((blob, index) => {
         const segmentFilename = blobs.length === 1 ? `recording.mp4` : `part${index + 1}.mp4`;
+        zip.file(segmentFilename, blob);
+      });
+      localOnlyRecordedSegmentsRef.current.forEach((blob, index) => {
+        const segmentFilename =
+          localOnlyRecordedSegmentsRef.current.length === 1
+            ? `local-video.mp4`
+            : `local-video-part${index + 1}.mp4`;
         zip.file(segmentFilename, blob);
       });
 
@@ -877,10 +938,17 @@ export const useRecording = (
       if (mediabunnyRecorderRef.current?.isRecording) {
         mediabunnyRecorderRef.current.cancel();
       }
+      if (localOnlyRecorderRef.current?.isRecording) {
+        localOnlyRecorderRef.current.cancel();
+      }
+      localOnlyStreamRef.current?.getTracks().forEach((track) => track.stop());
 
       // Clear segments
       recordedSegmentsRef.current = [];
+      localOnlyRecordedSegmentsRef.current = [];
       mediabunnyRecorderRef.current = null;
+      localOnlyRecorderRef.current = null;
+      localOnlyStreamRef.current = null;
       recordingStartTimeRef.current = null;
       currentRecordingStreamRef.current = null;
 
