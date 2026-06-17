@@ -259,6 +259,20 @@ const LayoutPinned = React.memo<LayoutPinnedProps>((props) => {
     [participantGroups.visibleUnpinned, renderVideoCard],
   );
 
+  // All unpinned participants (used in mobile strip to show every participant scrollably)
+  const allUnpinnedParticipants = useMemo(
+    () => allParticipants.filter((p) => p.participant.uid !== pinnedParticipantId),
+    [allParticipants, pinnedParticipantId],
+  );
+
+  const renderAllUnpinnedMobile = useCallback(
+    () =>
+      allUnpinnedParticipants.map((participantObject, index) =>
+        renderVideoCard(participantObject, index, true, false),
+      ),
+    [allUnpinnedParticipants, renderVideoCard],
+  );
+
   // Render audio-only participants (for those in others card)
   const renderAudioOnlyParticipants = useCallback(() => {
     return participantGroups.audioOnlyParticipants.map((participantObject, index) =>
@@ -296,10 +310,10 @@ const LayoutPinned = React.memo<LayoutPinnedProps>((props) => {
   if (isMobileLayout) {
     return (
       <>
+        <Box className="mobile-unpinned-strip">
+          <Box className="mobile-unpinned-inner">{renderAllUnpinnedMobile()}</Box>
+        </Box>
         {renderPinnedVideo()}
-        {renderUnpinnedGallery(true)}
-        {renderVisibleVideoCards(true)}
-        {renderAudioOnlyParticipants()}
       </>
     );
   }
