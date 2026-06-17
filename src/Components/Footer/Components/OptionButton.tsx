@@ -18,6 +18,9 @@ import {
   FormControlLabel,
   Checkbox,
   Box,
+  Chip,
+  Typography,
+  Divider,
 } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 import GeneralSettingsDialog from './GeneralSettingsDialog.tsx';
@@ -384,45 +387,102 @@ function OptionButton(props: OptionButtonProps) {
         PaperProps={{
           sx: {
             borderRadius: 2,
-            minWidth: 300,
+            minWidth: 420,
           },
         }}
       >
         <DialogTitle>{t('Recording Options')}</DialogTitle>
         <DialogContent>
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            {t(
+              'Pick where this meeting is captured. Cloud and on-device are separate recordings — select either or both.',
+            )}
+          </Typography>
+          <Box
+            sx={{
+              border: '1px solid',
+              borderColor: serverSideRecordingChecked ? 'error.main' : 'divider',
+              borderRadius: 2,
+              p: 1,
+              mb: 1.5,
+            }}
+          >
             <FormControlLabel
-              control={
-                <Checkbox
-                  checked={recordSeparately}
-                  onChange={(e) => {
-                    const checked = e.target.checked;
-                    setRecordSeparately(checked);
-                    if (checked && !serverSideRecordingChecked && !localRecordingChecked) {
-                      setServerSideRecordingChecked(true);
-                    }
-                  }}
-                />
-              }
-              label={t('Record participants separately')}
-            />
-            <FormControlLabel
+              sx={{ alignItems: 'flex-start', width: '100%', m: 0 }}
               control={
                 <Checkbox
                   checked={serverSideRecordingChecked}
                   onChange={(e) => setServerSideRecordingChecked(e.target.checked)}
                 />
               }
-              label={t('Server Side Recording')}
+              label={
+                <Box sx={{ pt: 1 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Typography fontWeight={600}>{t('Cloud recording')}</Typography>
+                    <Chip label={t('SERVER-SIDE')} size="small" />
+                  </Box>
+                  <Typography variant="body2" color="text.secondary">
+                    {t(
+                      'Recorded and stored on Red5 Cloud. Best for sharing, long sessions, and high quality regardless of your connection.',
+                    )}
+                  </Typography>
+                </Box>
+              }
             />
+            {serverSideRecordingChecked && (
+              <>
+                <Divider sx={{ my: 1 }} />
+                <FormControlLabel
+                  sx={{ alignItems: 'flex-start', width: '100%', m: 0, pl: 1 }}
+                  control={
+                    <Checkbox
+                      checked={recordSeparately}
+                      onChange={(e) => setRecordSeparately(e.target.checked)}
+                    />
+                  }
+                  label={
+                    <Box sx={{ pt: 1 }}>
+                      <Typography>{t('Record participants separately')}</Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        {t(
+                          "Save each participant's audio and video as its own file. Available with cloud recording only.",
+                        )}
+                      </Typography>
+                    </Box>
+                  }
+                />
+              </>
+            )}
+          </Box>
+          <Box
+            sx={{
+              border: '1px solid',
+              borderColor: localRecordingChecked ? 'error.main' : 'divider',
+              borderRadius: 2,
+              p: 1,
+            }}
+          >
             <FormControlLabel
+              sx={{ alignItems: 'flex-start', width: '100%', m: 0 }}
               control={
                 <Checkbox
                   checked={localRecordingChecked}
                   onChange={(e) => setLocalRecordingChecked(e.target.checked)}
                 />
               }
-              label={t('Local Recording')}
+              label={
+                <Box sx={{ pt: 1 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Typography fontWeight={600}>{t('Local recording')}</Typography>
+                    <Chip label={t('ON DEVICE')} size="small" />
+                  </Box>
+                  <Typography variant="body2" color="text.secondary">
+                    {t(
+                      'Saved straight to this device as a single file. Captures the meeting exactly as you see it.',
+                    )}
+                  </Typography>
+                </Box>
+              }
             />
           </Box>
         </DialogContent>
