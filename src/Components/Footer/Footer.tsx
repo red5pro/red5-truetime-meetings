@@ -132,7 +132,7 @@ const CustomizedGrid = styled(Grid)(({ theme }: { theme: Theme }) => getCustomiz
 function Footer(props: FooterProps) {
   const { id } = useParams<{ id: string }>();
   const theme = useTheme();
-  const mobileBreakpoint = 900;
+  const mobileBreakpoint = 1000;
   const [windowWidth, setWindowWidth] = React.useState(window.innerWidth);
   const isExternalStreamsEnabled = getRuntimeConfig().VITE_ENABLE_EXTERNAL_STREAMS === 'true';
 
@@ -159,9 +159,9 @@ function Footer(props: FooterProps) {
     <CustomizedGrid
       container
       alignItems="center"
-      justifyContent={{ xs: 'center', sm: 'space-between' }}
+      justifyContent={windowWidth > mobileBreakpoint ? 'space-between' : 'center'}
     >
-      <Grid sx={{ display: { xs: 'none', sm: 'block' } }}>
+      <Grid sx={{ display: windowWidth > mobileBreakpoint ? 'block' : 'none' }}>
         <Grid container alignItems="center">
           <TimeZone />
           <Typography
@@ -397,7 +397,10 @@ function Footer(props: FooterProps) {
         </Grid>
       ) : null}
 
-      <Grid sx={{ display: { xs: 'none', sm: 'block' } }} style={{ zIndex: 999999 }}>
+      <Grid
+        sx={{ display: windowWidth > mobileBreakpoint ? 'block' : 'none' }}
+        style={{ zIndex: 999999 }}
+      >
         <Grid container alignItems="center">
           <Grid size="auto">
             <InfoButton
