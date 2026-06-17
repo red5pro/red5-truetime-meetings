@@ -146,6 +146,17 @@ const formatSize = (bytes: number): string => {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 };
 
+// Composite recording stream is 1280x720 @ QUALITY_MEDIUM avc/aac (see useRecording.ts
+// startLocalRecording). Mediabunny only exposes the final byte size once the output is
+// finalized, so while recording is in progress we approximate it from elapsed time using
+// the same bitrate formula mediabunny derives for that resolution/codec/quality combo.
+const ESTIMATED_BYTES_PER_SECOND = (1389000 + 128000) / 8;
+
+interface StorageEstimate {
+  usage: number;
+  quota: number;
+}
+
 const LocalRecordingDrawer = React.memo<LocalRecordingDrawerProps>((props) => {
   const { t } = useTranslation();
   const theme = useTheme();
@@ -169,6 +180,27 @@ const LocalRecordingDrawer = React.memo<LocalRecordingDrawerProps>((props) => {
   // Timer state for recording duration
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [finalDuration, setFinalDuration] = useState(0);
+  const [storageEstimate, setStorageEstimate] = useState<StorageEstimate | null>(null);
+
+  // Poll the browser's Storage API for available disk space while the drawer is open
+  useEffect(() => {
+    if (!open || !navigator.storage?.estimate) {
+      return;
+    }
+
+    const refreshStorageEstimate = () => {
+      navigator.storage
+        .estimate()
+        .then((estimate) => {
+          setStorageEstimate({ usage: estimate.usage ?? 0, quota: estimate.quota ?? 0 });
+        })
+        .catch(() => setStorageEstimate(null));
+    };
+
+    refreshStorageEstimate();
+    const interval = setInterval(refreshStorageEstimate, 5000);
+    return () => clearInterval(interval);
+  }, [open]);
 
   // Update timer every second while recording is active
   useEffect(() => {
@@ -316,12 +348,19 @@ const LocalRecordingDrawer = React.memo<LocalRecordingDrawerProps>((props) => {
           )}
 
           {isActive && (
-            <StatusItem
-              label={t('Duration')}
-              value={formatDuration(elapsedSeconds)}
-              icon="clock"
-              lottieType="clock"
-            />
+            <>
+              <StatusItem
+                label={t('Duration')}
+                value={formatDuration(elapsedSeconds)}
+                icon="clock"
+                lottieType="clock"
+              />
+              <StatusItem
+                label={t('Estimated Size')}
+                value={formatSize(elapsedSeconds * ESTIMATED_BYTES_PER_SECOND)}
+                icon="database"
+              />
+            </>
           )}
 
           {!isActive && ((status?.estimatedSize ?? 0) > 0 || finalDuration > 0) && (
@@ -339,6 +378,17 @@ const LocalRecordingDrawer = React.memo<LocalRecordingDrawerProps>((props) => {
                 />
               )}
             </>
+          )}
+
+          {storageEstimate && storageEstimate.quota > 0 && (
+            <StatusItem
+              label={t('Available Storage')}
+              value={t('{{available}} free of {{total}}', {
+                available: formatSize(Math.max(storageEstimate.quota - storageEstimate.usage, 0)),
+                total: formatSize(storageEstimate.quota),
+              })}
+              icon="database"
+            />
           )}
 
           {!isActive && !status && (
