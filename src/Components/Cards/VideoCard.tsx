@@ -551,8 +551,8 @@ const VideoCard = React.memo<VideoCardProps>((props) => {
   // Memoized styles
   const cardStyle = useMemo(
     () => ({
-      height: isMobileView ? '40%' : '100%',
-      width: isMobileView ? '20%' : '100%',
+      height: '100%',
+      width: '100%',
       position: 'relative' as const,
       borderRadius: 4,
       overflow: 'hidden' as const,
