@@ -411,6 +411,20 @@ function EffectsTab({
     [saveImageToFileSystem],
   );
 
+  // Pre-create effect button callbacks to prevent recreation
+  const handleNoneSelection = React.useCallback(
+    () => handleEffectSelection('none'),
+    [handleEffectSelection],
+  );
+  const handleSlightBlurSelection = React.useCallback(
+    () => handleEffectSelection('slight-blur'),
+    [handleEffectSelection],
+  );
+  const handleBlurSelection = React.useCallback(
+    () => handleEffectSelection('blur'),
+    [handleEffectSelection],
+  );
+
   // Pre-create callbacks for backgrounds to prevent recreation
   const backgroundCallbacks = React.useMemo(() => {
     const callbacks = new Map<string, () => void>();
@@ -456,7 +470,7 @@ function EffectsTab({
                 effectType="none"
                 icon="remove-effect"
                 isSelected={selectedEffect === 'none'}
-                onClick={() => handleEffectSelection('none')}
+                onClick={handleNoneSelection}
                 theme={theme}
               />
             </Grid>
@@ -465,7 +479,7 @@ function EffectsTab({
                 effectType="slight-blur"
                 icon="slight-blur"
                 isSelected={selectedEffect === 'slight-blur'}
-                onClick={() => handleEffectSelection('slight-blur')}
+                onClick={handleSlightBlurSelection}
                 theme={theme}
               />
             </Grid>
@@ -474,7 +488,7 @@ function EffectsTab({
                 effectType="blur"
                 icon="blur"
                 isSelected={selectedEffect === 'blur'}
-                onClick={() => handleEffectSelection('blur')}
+                onClick={handleBlurSelection}
                 theme={theme}
               />
             </Grid>
