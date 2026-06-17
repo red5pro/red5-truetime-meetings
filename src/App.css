@@ -250,7 +250,7 @@ form {
     padding: 12px;
   }
 }
-@media (max-width: 600px) {
+@media (max-width: 800px) {
   #unpinned-gallery {
     display: none;
   }
@@ -569,36 +569,3 @@ form {
 }
 
 /* Mobile responsiveness */
-@media (max-width: 768px) {
-  .layout-pinned {
-    flex-direction: column;
-  }
-
-  .layout-pinned .pinned-main {
-    position: relative;
-    width: 100% !important;
-    height: 70%;
-  }
-
-  .layout-pinned .sidebar-video {
-    position: relative;
-    width: 120px !important;
-    height: 80px;
-    top: auto !important;
-    right: auto;
-    display: inline-block;
-    margin-right: 10px;
-  }
-
-  .layout-pinned::after {
-    content: '';
-    position: relative;
-    width: 100%;
-    height: 30%;
-    right: auto;
-    display: flex;
-    flex-direction: row;
-    overflow-x: auto;
-    padding: 10px;
-  }
-}
