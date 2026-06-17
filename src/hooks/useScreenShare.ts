@@ -126,10 +126,7 @@ export const useScreenShare = (
               metaData: getScreenShareMetaData(),
               token: token,
             });
-
-            setIsScreenShared(true);
-            setIsStartingScreenShare(false);
-            showScreenShareSpinner.current = false;
+            // State is managed by SCREEN_SHARE_STARTED / SCREEN_SHARE_FAILED event handlers
           } else {
             throw new Error('Conference client not available');
           }
