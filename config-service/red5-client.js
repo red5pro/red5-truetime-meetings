@@ -151,7 +151,8 @@ class Red5Client {
 
       return token;
     } catch (error) {
-      throw new Error('Failed to generate PubNub token', { cause: error });
+      console.error('Failed to generate PubNub token, continuing without it:', error.message);
+      return null;
     }
   }
 
