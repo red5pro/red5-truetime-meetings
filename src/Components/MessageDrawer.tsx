@@ -84,6 +84,7 @@ const MessageDrawer = React.memo<MessageDrawerProps>((props) => {
       id="message-drawer"
       open={props?.messageDrawerOpen}
       variant="persistent"
+      PaperProps={{ style: { pointerEvents: props?.messageDrawerOpen ? 'auto' : 'none' } }}
     >
       <MessageGrid
         container
