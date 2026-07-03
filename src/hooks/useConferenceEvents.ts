@@ -446,6 +446,12 @@ export const useConferenceEvents = (
         log.log('Connection closed');
         heartbeatControlRef.current.stopHeartbeat();
 
+        // Suppress spurious CONNECTION_CLOSED events that fire during SDK cleanup
+        // after handleReconnectionFailed has already called handlePublishFailure.
+        // Without this guard, the reconnectionEnabled check below would flip
+        // isReconnecting back to true on an already-left room.
+        if (publishFailureReportedRef.current) return;
+
         const clientInstance = client.conferenceClient.current;
         const isSdkReconnecting = clientInstance?.getIsReconnecting?.() ?? false;
 
@@ -470,7 +476,21 @@ export const useConferenceEvents = (
         depsRef.current.roomState.setIsReconnecting(false);
         publishFailureReportedRef.current = false;
         depsRef.current.showSuccess('Reconnected successfully');
+
+        // Reset all subscribe state so reconnected streams get fresh subscription attempts.
+        // Without this, participants that hit maxRetries before the drop get removed from the
+        // DOM by subscribeToParticipant, and stuck inProgress flags prevent resubscription.
+        const participantsHook = depsRef.current.participantsHook;
+        Object.keys(participantsHook.participants).forEach((uid) => {
+          participantsHook.subscribeAttemptsRef.current[uid] = {
+            retryCount: 0,
+            inProgress: false,
+          };
+        });
+        subscribeStaleSinceRef.current = {};
+
         eventHandlersRef.current.resubscribeMissingParticipants();
+        heartbeatControlRef.current.startHeartbeat();
         depsRef.current.localVideoCreate();
       },
 
