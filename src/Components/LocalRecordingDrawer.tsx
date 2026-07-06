@@ -277,6 +277,7 @@ const LocalRecordingDrawer = React.memo<LocalRecordingDrawerProps>((props) => {
       id="local-recording-drawer"
       open={open}
       variant="persistent"
+      PaperProps={{ style: { pointerEvents: open ? 'auto' : 'none' } }}
     >
       <ContentGrid
         container

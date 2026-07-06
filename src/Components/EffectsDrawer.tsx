@@ -107,6 +107,7 @@ const EffectsDrawer = React.memo<EffectsDrawerProps>((props) => {
       id="effects-drawer"
       open={props?.effectsDrawerOpen}
       variant="persistent"
+      PaperProps={{ style: { pointerEvents: props?.effectsDrawerOpen ? 'auto' : 'none' } }}
     >
       <EffectsGrid
         container

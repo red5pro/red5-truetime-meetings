@@ -801,6 +801,12 @@ export const useRecording = (
       return blob;
     } catch (error) {
       log.error('Failed to stop local recording:', error);
+      setIsLocalRecordingActive(false);
+      setIsLocalRecordingPaused(false);
+      compositeHandleRef.current?.cleanup();
+      compositeHandleRef.current = null;
+      currentRecordingStreamRef.current = null;
+      localStreamRef.current = null;
       if (displayMessageRef.current) {
         displayMessageRef.current('Failed to stop local recording', 'error');
       }
