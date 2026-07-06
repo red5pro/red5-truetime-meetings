@@ -118,6 +118,8 @@ export const useVirtualBackground = (
 
     const handleEnableFailed = (data: VirtualBackgroundEventData): void => {
       log.error('Virtual background enable failed:', data);
+      setIsVirtualBackgroundEnabled(false);
+      setSelectedBackgroundMode('');
     };
 
     conferenceClientRef.current.on('virtual-background-initialized', handleInitialized);
