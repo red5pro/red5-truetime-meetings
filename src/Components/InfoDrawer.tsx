@@ -57,6 +57,7 @@ const InfoDrawer = React.memo<InfoDrawerProps>((props) => {
       id="info-drawer"
       open={props?.infoDrawerOpen}
       variant="persistent"
+      PaperProps={{ style: { pointerEvents: props?.infoDrawerOpen ? 'auto' : 'none' } }}
     >
       <InfoGrid
         container

@@ -119,6 +119,7 @@ const ExternalStreamsDrawer = React.memo<ExternalStreamsDrawerProps>((props) => 
       id="external-streams-drawer"
       open={open}
       variant="persistent"
+      PaperProps={{ style: { pointerEvents: open ? 'auto' : 'none' } }}
     >
       <ContentGrid
         container

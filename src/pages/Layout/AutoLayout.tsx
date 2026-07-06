@@ -82,8 +82,9 @@ const LayoutAuto = React.memo<LayoutAutoProps>((props) => {
   // Video ref handler
   const handleVideoRef = useCallback(
     (videoElement: HTMLVideoElement | null, mediaStream: MediaStream | null) => {
-      if (videoElement && !isNull(mediaStream) && !videoElement.srcObject) {
+      if (videoElement && !isNull(mediaStream) && videoElement.srcObject !== mediaStream) {
         videoElement.srcObject = mediaStream;
+        videoElement.play().catch(() => {});
       }
     },
     [],

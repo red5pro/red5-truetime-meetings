@@ -112,6 +112,7 @@ const TranscriptionDrawer = React.memo<TranscriptionDrawerProps>((props) => {
       id="transcription-drawer"
       open={props?.open}
       variant="persistent"
+      PaperProps={{ style: { pointerEvents: props?.open ? 'auto' : 'none' } }}
     >
       <InfoGrid
         container
