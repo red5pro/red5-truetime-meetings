@@ -92,6 +92,7 @@ const LayoutTiled = React.memo<LayoutTiledProps>((props) => {
     (videoElement: HTMLVideoElement | null, mediaStream: MediaStream | null) => {
       if (videoElement && !isNull(mediaStream) && videoElement.srcObject !== mediaStream) {
         videoElement.srcObject = mediaStream;
+        videoElement.play().catch(() => {});
       }
     },
     [],
