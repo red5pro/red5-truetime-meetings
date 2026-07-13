@@ -112,7 +112,7 @@ export interface UsePictureInPictureReturn {
   closePiP: () => void;
   togglePiP: (options: PiPOpenOptions) => Promise<boolean>;
   /** Auto-open: tries Document PiP first, falls back to Video PiP if user activation is missing */
-  autoOpen: () => Promise<'document' | 'video' | false>;
+  autoOpen: (options?: PiPOpenOptions) => Promise<'document' | 'video' | false>;
   /** Close both Document PiP and standard Video PiP */
   autoClose: () => void;
 }
@@ -241,14 +241,19 @@ class PiPManager {
    *
    * Returns: 'document' | 'video' | false
    */
-  async tryAutoOpen(options?: PiPWindowOptions): Promise<'document' | 'video' | false> {
+  async tryAutoOpen(
+    content?: React.ReactElement,
+    options?: PiPWindowOptions,
+  ): Promise<'document' | 'video' | false> {
     if (this.isOpen()) return 'document';
 
     // 1. Try Document PiP
     if (this.isSupported()) {
       try {
         await this.openWindow(options);
-        this.pipRoot!.render(this.lastContent);
+        const contentToRender = content ?? this.lastContent;
+        this.pipRoot!.render(contentToRender);
+        this.lastContent = contentToRender;
         this.notifyState(true);
         return 'document';
       } catch (e) {
@@ -262,11 +267,18 @@ class PiPManager {
       }
     }
 
-    // 2. Fallback: standard Video PiP (no user gesture needed from visibilitychange)
+    // 2. Fallback: standard Video PiP (no user gesture needed from visibilitychange).
+    // Only consider remote participants' videos — the local self-view (#red5pro-publisher)
+    // is always muted and would otherwise be picked up silently, per the DOM id convention
+    // used in AutoLayout/PinnedLayout/TiledLayout (`red5pro-subscriber-${uid}`).
     if (document.pictureInPictureEnabled) {
-      // Prefer a video that is actively playing
-      const videos = Array.from(document.querySelectorAll<HTMLVideoElement>('video[autoplay]'));
-      const playingVideo = videos.find((v) => v.readyState >= 2 && !v.paused) ?? videos[0];
+      const videos = Array.from(
+        document.querySelectorAll<HTMLVideoElement>('video[id^="red5pro-subscriber-"]'),
+      );
+      const playingVideo =
+        videos.find((v) => v.readyState >= 2 && !v.paused && !v.muted) ??
+        videos.find((v) => v.readyState >= 2 && !v.paused) ??
+        videos[0];
 
       if (playingVideo) {
         try {
@@ -502,6 +514,8 @@ const PIP_STYLES = `
 
   /* Audio-only view */
   .pip-audio-only {
+    position: absolute;
+    inset: 0;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -509,6 +523,8 @@ const PIP_STYLES = `
     height: 100%;
     gap: 6px;
     padding: 8px;
+    background: #2a2a2a;
+    z-index: 1;
   }
 
   .pip-audio-only-name {
@@ -516,6 +532,21 @@ const PIP_STYLES = `
     font-weight: 500;
     text-align: center;
     color: rgba(255,255,255,0.8);
+  }
+
+  /* Tap-to-unmute affordance (shown when autoplay-with-sound is blocked) */
+  .pip-unmute-badge {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    background: rgba(217, 48, 37, 0.85);
+    border-radius: 4px;
+    padding: 2px 6px;
+    font-size: 9px;
+    font-weight: 600;
+    color: #fff;
+    white-space: nowrap;
+    z-index: 4;
   }
 
   /* Empty state */
@@ -713,34 +744,73 @@ const PiPParticipant: React.FC<PiPParticipantProps> = ({
 }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const isLocalUser = participant?.uid === streamName;
+  const showVideo = Boolean(participant?.videoEnabled && mediaStream);
+  const [needsUnmute, setNeedsUnmute] = useState(false);
 
+  // Always attach the stream (audio track must keep playing even when video is off), and
+  // drive playback explicitly rather than relying on the `autoplay` attribute: unmuted
+  // autoplay can be silently blocked (frozen frame, no sound, no error surfaced) unless the
+  // window still has a fresh user-activation grant. When play() is rejected, fall back to a
+  // muted play (always allowed) and surface a tap-to-unmute affordance — clicking inside the
+  // PiP window is itself a genuine user gesture, so the retry there reliably succeeds.
   useEffect(() => {
-    if (videoRef.current && mediaStream && participant?.videoEnabled) {
-      videoRef.current.srcObject = mediaStream;
-    }
-  }, [mediaStream, participant?.videoEnabled]);
+    const videoEl = videoRef.current;
+    if (!videoEl || !mediaStream) return;
+
+    videoEl.srcObject = mediaStream;
+    videoEl.muted = isLocalUser;
+    setNeedsUnmute(false);
+
+    videoEl.play().catch(() => {
+      if (isLocalUser) return;
+      videoEl.muted = true;
+      setNeedsUnmute(true);
+      videoEl.play().catch(() => {});
+    });
+  }, [mediaStream, isLocalUser]);
+
+  const handleUnmute = () => {
+    const videoEl = videoRef.current;
+    if (!videoEl) return;
+    videoEl.muted = false;
+    videoEl.play().then(
+      () => setNeedsUnmute(false),
+      () => {
+        videoEl.muted = true;
+        setNeedsUnmute(true);
+      },
+    );
+  };
 
   const label = `${participant?.name || 'Unknown'}${isLocalUser ? ' (You)' : ''}`;
 
   return (
-    <div className="pip-participant-tile">
+    <div
+      className="pip-participant-tile"
+      onClick={needsUnmute ? handleUnmute : undefined}
+      style={needsUnmute ? { cursor: 'pointer' } : undefined}
+    >
       {isSpeaking && <div className="pip-speaking-ring" />}
 
-      {participant?.videoEnabled && mediaStream ? (
-        <video
-          ref={videoRef}
-          className="pip-participant-video"
-          autoPlay
-          playsInline
-          muted={isLocalUser}
-          style={isLocalUser ? { transform: 'scaleX(-1)' } : undefined}
-        />
-      ) : (
+      {/* Kept mounted (not unmounted on camera-off) so the audio track never stops playing */}
+      <video
+        ref={videoRef}
+        className="pip-participant-video"
+        playsInline
+        style={{
+          visibility: showVideo ? 'visible' : 'hidden',
+          ...(isLocalUser ? { transform: 'scaleX(-1)' } : {}),
+        }}
+      />
+
+      {!showVideo && (
         <div className="pip-audio-only">
           <Avatar src={defaultAvatar} sx={{ width: 56, height: 56, opacity: 0.85 }} />
           <div className="pip-audio-only-name">{label}</div>
         </div>
       )}
+
+      {needsUnmute && <div className="pip-unmute-badge">🔇 Tap to unmute</div>}
 
       <div className="pip-name-pill">{label}</div>
     </div>
@@ -1078,11 +1148,37 @@ export const usePictureInPicture = (): UsePictureInPictureReturn => {
   );
 
   // ---------- autoOpen ----------
-  const autoOpen = useCallback(async (): Promise<'document' | 'video' | false> => {
-    const result = await pipManager.tryAutoOpen();
-    if (result === 'document') setIsOpen(true);
-    return result;
-  }, []);
+  const autoOpen = useCallback(
+    async (options?: PiPOpenOptions): Promise<'document' | 'video' | false> => {
+      const content = options ? (
+        <PiPGridContent
+          participants={options.participants}
+          onClose={() => {
+            setIsOpen(false);
+            pipManager.close();
+          }}
+          onMuteToggle={options.onMuteToggle}
+          onVideoToggle={options.onVideoToggle}
+          onVolumeToggle={options.onVolumeToggle}
+          onToggleMic={options.onToggleMic}
+          onToggleCamera={options.onToggleCamera}
+          onToggleScreenShare={options.onToggleScreenShare}
+          onLeaveRoom={options.onLeaveRoom}
+          isMyMicMuted={options.isMyMicMuted}
+          isMyCamTurnedOff={options.isMyCamTurnedOff}
+          isScreenShared={options.isScreenShared}
+          screenShareStream={options.screenShareStream}
+          talkers={options.talkers}
+          streamName={options.streamName}
+        />
+      ) : undefined;
+
+      const result = await pipManager.tryAutoOpen(content);
+      if (result === 'document') setIsOpen(true);
+      return result;
+    },
+    [],
+  );
 
   // ---------- autoClose ----------
   const autoClose = useCallback((): void => {
