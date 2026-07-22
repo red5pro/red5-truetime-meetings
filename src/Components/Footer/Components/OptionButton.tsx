@@ -423,12 +423,12 @@ function OptionButton(props: OptionButtonProps) {
               label={
                 <Box sx={{ pt: 1 }}>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <Typography fontWeight={600}>{t('Cloud recording')}</Typography>
+                    <Typography fontWeight={600}>{t('Grid recording')}</Typography>
                     <Chip label={t('SERVER-SIDE')} size="small" />
                   </Box>
                   <Typography variant="body2" color="text.secondary">
                     {t(
-                      'Recorded and stored on Red5 Cloud. Best for sharing, long sessions, and high quality regardless of your connection.',
+                      'Records the meeting grid view as a single MP4 file, stored on Red5 Cloud. Best for sharing, long sessions, and high quality regardless of your connection.',
                     )}
                   </Typography>
                 </Box>
@@ -460,7 +460,7 @@ function OptionButton(props: OptionButtonProps) {
                   </Box>
                   <Typography variant="body2" color="text.secondary">
                     {t(
-                      "Save each participant's audio and video as its own file, stored on Red5 Cloud. Works on its own — you don't need to also enable Cloud recording.",
+                      "Records each participant's audio and video as an independent MP4 file, stored on Red5 Cloud.",
                     )}
                   </Typography>
                 </Box>
