@@ -4,7 +4,6 @@ import { useTheme } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import { ReactionBarSelector } from '@charkour/react-reactions';
 import { Close } from '@mui/icons-material';
-import cloneDeep from 'lodash/cloneDeep';
 
 import Footer from '../../Components/Footer/Footer.tsx';
 import VideoCard from '../../Components/Cards/VideoCard.tsx';
@@ -79,7 +78,17 @@ const MeetingPage = React.memo<MeetingPageProps>((props) => {
 
   // Memoized participant list
   const allParticipants = useMemo(() => {
-    const participants = cloneDeep(props.subscribedParticipants || {});
+    // Clone only the plain `participant` metadata (mutated below via isRaiseHand) — never
+    // deep-clone `mediaStream`: it's a native MediaStream, and lodash's cloneDeep reduces it
+    // to a prototype-only shell with no real tracks, silently breaking playback wherever the
+    // clone is used (this fed Picture-in-Picture, which rendered tiles that never played audio/video).
+    const participants: Record<string, SubscribedParticipant> = {};
+    Object.entries(props.subscribedParticipants || {}).forEach(([uid, sp]) => {
+      participants[uid] = {
+        mediaStream: sp.mediaStream,
+        participant: { ...sp.participant },
+      };
+    });
 
     // Add raised hand status to subscribed participants
     props.raisedHands?.forEach((id) => {
