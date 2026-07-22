@@ -20,7 +20,6 @@ import {
   Box,
   Chip,
   Typography,
-  Divider,
 } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 import GeneralSettingsDialog from './GeneralSettingsDialog.tsx';
@@ -295,7 +294,13 @@ function OptionButton(props: OptionButtonProps) {
   };
 
   const handleRecordingConfirm = (): void => {
-    props?.startRecord?.(recordSeparately, serverSideRecordingChecked, localRecordingChecked);
+    // Recording each participant separately is itself a server-side capability,
+    // so it must enable server recording even if "Cloud recording" wasn't checked.
+    props?.startRecord?.(
+      recordSeparately,
+      serverSideRecordingChecked || recordSeparately,
+      localRecordingChecked,
+    );
     if (localRecordingChecked && props.startLocalRecording) {
       props.startLocalRecording();
     }
@@ -429,30 +434,38 @@ function OptionButton(props: OptionButtonProps) {
                 </Box>
               }
             />
-            {serverSideRecordingChecked && (
-              <>
-                <Divider sx={{ my: 1 }} />
-                <FormControlLabel
-                  sx={{ alignItems: 'flex-start', width: '100%', m: 0, pl: 1 }}
-                  control={
-                    <Checkbox
-                      checked={recordSeparately}
-                      onChange={(e) => setRecordSeparately(e.target.checked)}
-                    />
-                  }
-                  label={
-                    <Box sx={{ pt: 1 }}>
-                      <Typography>{t('Record participants separately')}</Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        {t(
-                          "Save each participant's audio and video as its own file. Available with cloud recording only.",
-                        )}
-                      </Typography>
-                    </Box>
-                  }
+          </Box>
+          <Box
+            sx={{
+              border: '1px solid',
+              borderColor: recordSeparately ? 'error.main' : 'divider',
+              borderRadius: 2,
+              p: 1,
+              mb: 1.5,
+            }}
+          >
+            <FormControlLabel
+              sx={{ alignItems: 'flex-start', width: '100%', m: 0 }}
+              control={
+                <Checkbox
+                  checked={recordSeparately}
+                  onChange={(e) => setRecordSeparately(e.target.checked)}
                 />
-              </>
-            )}
+              }
+              label={
+                <Box sx={{ pt: 1 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Typography fontWeight={600}>{t('Record participants separately')}</Typography>
+                    <Chip label={t('SERVER-SIDE')} size="small" />
+                  </Box>
+                  <Typography variant="body2" color="text.secondary">
+                    {t(
+                      "Save each participant's audio and video as its own file, stored on Red5 Cloud. Works on its own — you don't need to also enable Cloud recording.",
+                    )}
+                  </Typography>
+                </Box>
+              }
+            />
           </Box>
           <Box
             sx={{
@@ -491,7 +504,7 @@ function OptionButton(props: OptionButtonProps) {
           <Button
             onClick={handleRecordingConfirm}
             variant="contained"
-            disabled={!serverSideRecordingChecked && !localRecordingChecked}
+            disabled={!serverSideRecordingChecked && !recordSeparately && !localRecordingChecked}
           >
             {t('Start Recording')}
           </Button>
