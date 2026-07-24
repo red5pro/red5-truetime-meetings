@@ -502,6 +502,8 @@ const PIP_STYLES = `
 
   /* Audio-only view */
   .pip-audio-only {
+    position: absolute;
+    inset: 0;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -509,6 +511,8 @@ const PIP_STYLES = `
     height: 100%;
     gap: 6px;
     padding: 8px;
+    background: #2a2a2a;
+    z-index: 1;
   }
 
   .pip-audio-only-name {
@@ -726,16 +730,18 @@ const PiPParticipant: React.FC<PiPParticipantProps> = ({
     <div className="pip-participant-tile">
       {isSpeaking && <div className="pip-speaking-ring" />}
 
-      {participant?.videoEnabled && mediaStream ? (
-        <video
-          ref={videoRef}
-          className="pip-participant-video"
-          autoPlay
-          playsInline
-          muted={isLocalUser}
-          style={isLocalUser ? { transform: 'scaleX(-1)' } : undefined}
-        />
-      ) : (
+      {/* Kept mounted (not unmounted on camera-off) so the audio track never stops playing */}
+      <video
+        ref={videoRef}
+        className="pip-participant-video"
+        playsInline
+        style={{
+          visibility: showVideo ? 'visible' : 'hidden',
+          ...(isLocalUser ? { transform: 'scaleX(-1)' } : {}),
+        }}
+      />
+
+      {!showVideo && (
         <div className="pip-audio-only">
           <Avatar src={defaultAvatar} sx={{ width: 56, height: 56, opacity: 0.85 }} />
           <div className="pip-audio-only-name">{label}</div>
