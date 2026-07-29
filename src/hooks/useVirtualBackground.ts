@@ -4,6 +4,13 @@ import { useState, useCallback, useEffect, useRef, MutableRefObject } from 'reac
 import { getVirtualBackgroundConfigs } from '../utils/conferenceConfig';
 import { VirtualBackgroundTypes } from 'red5pro-conference-sdk';
 import log from 'loglevel';
+import { withTimeout } from '../utils/withTimeout';
+
+// Some browsers (notably Safari, which falls back to an OffscreenCanvas/WASM
+// segmentation pipeline instead of insertable streams) can hang indefinitely
+// when initializing or applying a virtual background. Cap the wait so the UI
+// never gets stuck reporting the effect as enabled when it isn't working.
+const VIRTUAL_BACKGROUND_TIMEOUT_MS = 15000;
 
 // Type definitions
 type VirtualBackgroundType = 'none' | 'blur' | 'slight-blur' | 'color' | 'image';
@@ -152,7 +159,11 @@ export const useVirtualBackground = (
       const status = conferenceClientRef.current.getVirtualBackgroundStatus();
 
       if (!status.isInitialized) {
-        await conferenceClientRef.current.initializeVirtualBackground();
+        await withTimeout(
+          conferenceClientRef.current.initializeVirtualBackground(),
+          VIRTUAL_BACKGROUND_TIMEOUT_MS,
+          'Timed out initializing virtual background',
+        );
         log.log('Virtual background initialized');
         setIsVirtualBackgroundInitialized(true);
       }
@@ -204,7 +215,11 @@ export const useVirtualBackground = (
 
         // Handle disable case
         if (type === VirtualBackgroundTypes.NONE) {
-          await conferenceClientRef.current.disableVirtualBackground();
+          await withTimeout(
+            conferenceClientRef.current.disableVirtualBackground(),
+            VIRTUAL_BACKGROUND_TIMEOUT_MS,
+            'Timed out disabling virtual background',
+          );
           setSelectedBackgroundMode('');
           return true;
         }
@@ -233,7 +248,11 @@ export const useVirtualBackground = (
         }
 
         // Apply the background
-        await conferenceClientRef.current[action](config.type, config.options);
+        await withTimeout(
+          conferenceClientRef.current[action](config.type, config.options),
+          VIRTUAL_BACKGROUND_TIMEOUT_MS,
+          `Timed out applying virtual background (${action})`,
+        );
         setSelectedBackgroundMode(type);
 
         log.log(`Virtual background ${action} successful: ${type}`);
@@ -241,6 +260,10 @@ export const useVirtualBackground = (
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
         log.error('Failed to handle background replacement:', error);
+        // Ensure the UI never reports the effect as enabled when the apply call
+        // hung/failed and the SDK never actually produced the processed frame.
+        setIsVirtualBackgroundEnabled(false);
+        setSelectedBackgroundMode('');
         if (showWarningRef.current) {
           showWarningRef.current('Failed to apply virtual background: ' + errorMessage);
         }
