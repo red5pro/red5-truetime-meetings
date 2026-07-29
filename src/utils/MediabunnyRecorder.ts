@@ -149,9 +149,6 @@ export class MediabunnyRecorder {
         this.recordedBlob = new Blob([this.target.buffer], { type: 'video/mp4' });
       }
 
-      this._isRecording = false;
-      this._isPaused = false;
-
       if (this.onstop && this.recordedBlob) {
         this.onstop(this.recordedBlob);
       }
@@ -163,6 +160,10 @@ export class MediabunnyRecorder {
       }
       throw error;
     } finally {
+      // Reset regardless of outcome so callers never see a stuck "recording" state
+      // if finalize() throws or is abandoned via a timeout.
+      this._isRecording = false;
+      this._isPaused = false;
       this.cleanup();
     }
   }
