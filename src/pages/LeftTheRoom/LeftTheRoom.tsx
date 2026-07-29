@@ -138,13 +138,13 @@ function LeftTheRoom({
                 )}
 
                 {hasRecording && (
-                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, margin: '21px' }}>
+                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mt: 2 }}>
                     <Button
                       size="small"
                       color="primary"
                       variant="outlined"
                       onClick={() => downloadLocalRecording?.()}
-                      sx={{ whiteSpace: 'nowrap', width: '100%' }}
+                      sx={{ width: '100%' }}
                     >
                       {t('Download Recording')}
                     </Button>
@@ -155,7 +155,7 @@ function LeftTheRoom({
                         variant="contained"
                         startIcon={<ReplayIcon />}
                         onClick={() => retryUploadLocalRecording?.()}
-                        sx={{ whiteSpace: 'nowrap', width: '100%' }}
+                        sx={{ width: '100%' }}
                       >
                         {t('Retry Upload')}
                       </Button>
