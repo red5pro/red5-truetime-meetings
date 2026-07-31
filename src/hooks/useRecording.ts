@@ -10,9 +10,14 @@ import { ConferenceClient } from 'red5pro-conference-sdk';
 import { ConferenceEvents } from 'red5pro-conference-sdk';
 import { MediabunnyRecorder } from '../utils/MediabunnyRecorder';
 import { createCompositeStream } from '../utils/compositeStream';
+import { withTimeout, TimeoutError } from '../utils/withTimeout';
 import JSZip from 'jszip';
 import { S3Client } from '@aws-sdk/client-s3';
 import { Upload } from '@aws-sdk/lib-storage';
+
+// Some browsers (notably Safari) can hang indefinitely while flushing WebCodecs
+// encoders on stop(); cap the wait so the UI never gets stuck showing "recording".
+const RECORDER_STOP_TIMEOUT_MS = 15000;
 
 // Type definitions
 type MessageVariant = 'info' | 'success' | 'error' | 'warning';
@@ -741,12 +746,20 @@ export const useRecording = (
     }
 
     try {
-      const blob = await mediabunnyRecorderRef.current.stop();
+      const blob = await withTimeout(
+        mediabunnyRecorderRef.current.stop(),
+        RECORDER_STOP_TIMEOUT_MS,
+        'Timed out stopping local recording',
+      );
 
       // Stop the local-only recorder alongside the composite one
       if (localOnlyRecorderRef.current) {
         try {
-          const localOnlyBlob = await localOnlyRecorderRef.current.stop();
+          const localOnlyBlob = await withTimeout(
+            localOnlyRecorderRef.current.stop(),
+            RECORDER_STOP_TIMEOUT_MS,
+            'Timed out stopping local-only recording',
+          );
           if (localOnlyBlob) {
             localOnlyRecordedSegmentsRef.current.push(localOnlyBlob);
           }
@@ -808,7 +821,12 @@ export const useRecording = (
       currentRecordingStreamRef.current = null;
       localStreamRef.current = null;
       if (displayMessageRef.current) {
-        displayMessageRef.current('Failed to stop local recording', 'error');
+        displayMessageRef.current(
+          error instanceof TimeoutError
+            ? 'Stopping local recording took too long and was aborted'
+            : 'Failed to stop local recording',
+          'error',
+        );
       }
       return null;
     }

@@ -143,6 +143,7 @@ const MeetingPage = React.memo<MeetingPageProps>((props) => {
     props.isMyCamTurnedOff,
     props.isRaiseHand,
     props.currentConferenceClient,
+    props.selectedBackgroundMode,
   ]);
 
   const keyboardShortcuts = useKeyboardShortcuts({

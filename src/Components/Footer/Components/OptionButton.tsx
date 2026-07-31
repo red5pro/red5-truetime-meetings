@@ -20,6 +20,9 @@ import {
   Box,
   Chip,
   Typography,
+  Collapse,
+  RadioGroup,
+  Radio,
 } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 import GeneralSettingsDialog from './GeneralSettingsDialog.tsx';
@@ -138,9 +141,6 @@ function OptionButton(props: OptionButtonProps) {
   const [diagnosticDialogOpen, setDiagnosticDialogOpen] = React.useState<boolean>(false);
   const [generalSettingsDialogOpen, setGeneralSettingsDialogOpen] = React.useState<boolean>(false);
   const [recordingModalOpen, setRecordingModalOpen] = React.useState<boolean>(false);
-  const [recordSeparately, setRecordSeparately] = React.useState<boolean>(() => {
-    return localStorage.getItem('recordSeparately') === 'true';
-  });
   const [localRecordingChecked, setLocalRecordingChecked] = React.useState<boolean>(() => {
     return localStorage.getItem('localRecordingChecked') === 'true';
   });
@@ -149,10 +149,9 @@ function OptionButton(props: OptionButtonProps) {
       return localStorage.getItem('serverSideRecordingChecked') === 'true';
     },
   );
-
-  React.useEffect(() => {
-    localStorage.setItem('recordSeparately', String(recordSeparately));
-  }, [recordSeparately]);
+  const [serverRecordingMode, setServerRecordingMode] = React.useState<'grid' | 'separate'>(() => {
+    return localStorage.getItem('serverRecordingMode') === 'separate' ? 'separate' : 'grid';
+  });
 
   React.useEffect(() => {
     localStorage.setItem('localRecordingChecked', String(localRecordingChecked));
@@ -161,6 +160,10 @@ function OptionButton(props: OptionButtonProps) {
   React.useEffect(() => {
     localStorage.setItem('serverSideRecordingChecked', String(serverSideRecordingChecked));
   }, [serverSideRecordingChecked]);
+
+  React.useEffect(() => {
+    localStorage.setItem('serverRecordingMode', serverRecordingMode);
+  }, [serverRecordingMode]);
   const [_hovered, setHovered] = React.useState<boolean>(false);
   const theme = useTheme();
   const themeContext = React.useContext(ThemeContext);
@@ -294,13 +297,8 @@ function OptionButton(props: OptionButtonProps) {
   };
 
   const handleRecordingConfirm = (): void => {
-    // Recording each participant separately is itself a server-side capability,
-    // so it must enable server recording even if "Cloud recording" wasn't checked.
-    props?.startRecord?.(
-      recordSeparately,
-      serverSideRecordingChecked || recordSeparately,
-      localRecordingChecked,
-    );
+    const recordSeparately = serverSideRecordingChecked && serverRecordingMode === 'separate';
+    props?.startRecord?.(recordSeparately, serverSideRecordingChecked, localRecordingChecked);
     if (localRecordingChecked && props.startLocalRecording) {
       props.startLocalRecording();
     }
@@ -423,49 +421,55 @@ function OptionButton(props: OptionButtonProps) {
               label={
                 <Box sx={{ pt: 1 }}>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <Typography fontWeight={600}>{t('Grid recording')}</Typography>
+                    <Typography fontWeight={600}>{t('Server-side recording')}</Typography>
                     <Chip label={t('SERVER-SIDE')} size="small" />
                   </Box>
                   <Typography variant="body2" color="text.secondary">
                     {t(
-                      'Records the meeting grid view as a single MP4 file, stored on Red5 Cloud. Best for sharing, long sessions, and high quality regardless of your connection.',
+                      'Recorded on Red5 Cloud as an MP4 file, independent of your device and connection. Best for sharing and long sessions.',
                     )}
                   </Typography>
                 </Box>
               }
             />
-          </Box>
-          <Box
-            sx={{
-              border: '1px solid',
-              borderColor: recordSeparately ? 'error.main' : 'divider',
-              borderRadius: 2,
-              p: 1,
-              mb: 1.5,
-            }}
-          >
-            <FormControlLabel
-              sx={{ alignItems: 'flex-start', width: '100%', m: 0 }}
-              control={
-                <Checkbox
-                  checked={recordSeparately}
-                  onChange={(e) => setRecordSeparately(e.target.checked)}
+            <Collapse in={serverSideRecordingChecked}>
+              <RadioGroup
+                value={serverRecordingMode}
+                onChange={(e) => setServerRecordingMode(e.target.value as 'grid' | 'separate')}
+                sx={{ pl: 4, pr: 1, pb: 0.5 }}
+              >
+                <FormControlLabel
+                  value="grid"
+                  control={<Radio size="small" />}
+                  sx={{ alignItems: 'flex-start', width: '100%', m: 0, mt: 1 }}
+                  label={
+                    <Box>
+                      <Typography fontWeight={500}>{t('Grid recording')}</Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        {t('Records the meeting grid view as a single MP4 file.')}
+                      </Typography>
+                    </Box>
+                  }
                 />
-              }
-              label={
-                <Box sx={{ pt: 1 }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <Typography fontWeight={600}>{t('Record participants separately')}</Typography>
-                    <Chip label={t('SERVER-SIDE')} size="small" />
-                  </Box>
-                  <Typography variant="body2" color="text.secondary">
-                    {t(
-                      "Records each participant's audio and video as an independent MP4 file, stored on Red5 Cloud.",
-                    )}
-                  </Typography>
-                </Box>
-              }
-            />
+                <FormControlLabel
+                  value="separate"
+                  control={<Radio size="small" />}
+                  sx={{ alignItems: 'flex-start', width: '100%', m: 0, mt: 1.5 }}
+                  label={
+                    <Box>
+                      <Typography fontWeight={500}>
+                        {t('Record participants separately')}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        {t(
+                          "Records each participant's audio and video as an independent MP4 file.",
+                        )}
+                      </Typography>
+                    </Box>
+                  }
+                />
+              </RadioGroup>
+            </Collapse>
           </Box>
           <Box
             sx={{
@@ -504,7 +508,7 @@ function OptionButton(props: OptionButtonProps) {
           <Button
             onClick={handleRecordingConfirm}
             variant="contained"
-            disabled={!serverSideRecordingChecked && !recordSeparately && !localRecordingChecked}
+            disabled={!serverSideRecordingChecked && !localRecordingChecked}
           >
             {t('Start Recording')}
           </Button>
