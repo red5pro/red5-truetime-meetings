@@ -21,8 +21,6 @@ import {
   Chip,
   Typography,
   Collapse,
-  RadioGroup,
-  Radio,
 } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 import GeneralSettingsDialog from './GeneralSettingsDialog.tsx';
@@ -149,8 +147,11 @@ function OptionButton(props: OptionButtonProps) {
       return localStorage.getItem('serverSideRecordingChecked') === 'true';
     },
   );
-  const [serverRecordingMode, setServerRecordingMode] = React.useState<'grid' | 'separate'>(() => {
-    return localStorage.getItem('serverRecordingMode') === 'separate' ? 'separate' : 'grid';
+  const [gridRecordingChecked, setGridRecordingChecked] = React.useState<boolean>(() => {
+    return localStorage.getItem('gridRecordingChecked') !== 'false';
+  });
+  const [recordSeparatelyChecked, setRecordSeparatelyChecked] = React.useState<boolean>(() => {
+    return localStorage.getItem('recordSeparatelyChecked') === 'true';
   });
 
   React.useEffect(() => {
@@ -162,8 +163,12 @@ function OptionButton(props: OptionButtonProps) {
   }, [serverSideRecordingChecked]);
 
   React.useEffect(() => {
-    localStorage.setItem('serverRecordingMode', serverRecordingMode);
-  }, [serverRecordingMode]);
+    localStorage.setItem('gridRecordingChecked', String(gridRecordingChecked));
+  }, [gridRecordingChecked]);
+
+  React.useEffect(() => {
+    localStorage.setItem('recordSeparatelyChecked', String(recordSeparatelyChecked));
+  }, [recordSeparatelyChecked]);
   const [_hovered, setHovered] = React.useState<boolean>(false);
   const theme = useTheme();
   const themeContext = React.useContext(ThemeContext);
@@ -297,7 +302,7 @@ function OptionButton(props: OptionButtonProps) {
   };
 
   const handleRecordingConfirm = (): void => {
-    const recordSeparately = serverSideRecordingChecked && serverRecordingMode === 'separate';
+    const recordSeparately = serverSideRecordingChecked && recordSeparatelyChecked;
     props?.startRecord?.(recordSeparately, serverSideRecordingChecked, localRecordingChecked);
     if (localRecordingChecked && props.startLocalRecording) {
       props.startLocalRecording();
@@ -433,14 +438,15 @@ function OptionButton(props: OptionButtonProps) {
               }
             />
             <Collapse in={serverSideRecordingChecked}>
-              <RadioGroup
-                value={serverRecordingMode}
-                onChange={(e) => setServerRecordingMode(e.target.value as 'grid' | 'separate')}
-                sx={{ pl: 4, pr: 1, pb: 0.5 }}
-              >
+              <Box sx={{ pl: 4, pr: 1, pb: 0.5 }}>
                 <FormControlLabel
-                  value="grid"
-                  control={<Radio size="small" />}
+                  control={
+                    <Checkbox
+                      size="small"
+                      checked={gridRecordingChecked}
+                      onChange={(e) => setGridRecordingChecked(e.target.checked)}
+                    />
+                  }
                   sx={{ alignItems: 'flex-start', width: '100%', m: 0, mt: 1 }}
                   label={
                     <Box>
@@ -452,8 +458,13 @@ function OptionButton(props: OptionButtonProps) {
                   }
                 />
                 <FormControlLabel
-                  value="separate"
-                  control={<Radio size="small" />}
+                  control={
+                    <Checkbox
+                      size="small"
+                      checked={recordSeparatelyChecked}
+                      onChange={(e) => setRecordSeparatelyChecked(e.target.checked)}
+                    />
+                  }
                   sx={{ alignItems: 'flex-start', width: '100%', m: 0, mt: 1.5 }}
                   label={
                     <Box>
@@ -468,7 +479,7 @@ function OptionButton(props: OptionButtonProps) {
                     </Box>
                   }
                 />
-              </RadioGroup>
+              </Box>
             </Collapse>
           </Box>
           <Box
@@ -508,7 +519,10 @@ function OptionButton(props: OptionButtonProps) {
           <Button
             onClick={handleRecordingConfirm}
             variant="contained"
-            disabled={!serverSideRecordingChecked && !localRecordingChecked}
+            disabled={
+              (!serverSideRecordingChecked && !localRecordingChecked) ||
+              (serverSideRecordingChecked && !gridRecordingChecked && !recordSeparatelyChecked)
+            }
           >
             {t('Start Recording')}
           </Button>
