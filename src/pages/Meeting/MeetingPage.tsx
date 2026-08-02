@@ -234,7 +234,7 @@ const MeetingPage = React.memo<MeetingPageProps>((props) => {
   useEffect(() => {
     const onVisibility = () => {
       if (document.hidden) {
-        autoOpenPiP();
+        autoOpenPiP(pipOptions);
       } else {
         autoClosePiP();
       }
@@ -242,7 +242,7 @@ const MeetingPage = React.memo<MeetingPageProps>((props) => {
 
     document.addEventListener('visibilitychange', onVisibility);
     return () => document.removeEventListener('visibilitychange', onVisibility);
-  }, [autoOpenPiP, autoClosePiP]);
+  }, [autoOpenPiP, autoClosePiP, pipOptions]);
 
   // Gallery resize handler
   const handleGalleryResize = useCallback((calcDrawer = false) => {
