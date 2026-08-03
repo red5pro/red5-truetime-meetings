@@ -66,6 +66,7 @@ interface ParticipantsHook {
   setParticipants: (participants: Participants) => void;
   setSubscribedParticipants: (participants: Participants) => void;
   talkerAudioLevelsRef: MutableRefObject<{ [key: string]: number }>;
+  resetTalkers: () => void;
   pinnedParticipantIdRef: MutableRefObject<string | null>;
   setPinnedParticipantId: (id: string | null) => void;
   setGuestsWaitingApproval: React.Dispatch<React.SetStateAction<Participants>>;
@@ -289,7 +290,7 @@ export const useConferenceActions = (
       await client.leaveRoom();
       participantsHook.setParticipants({});
       participantsHook.setSubscribedParticipants({});
-      participantsHook.talkerAudioLevelsRef.current = {};
+      participantsHook.resetTalkers();
       roomState.setIsJoining(false);
       roomState.setIsWaitingApproval(false);
       roomState.setIsPublished(false);

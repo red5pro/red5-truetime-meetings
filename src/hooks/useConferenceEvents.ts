@@ -66,6 +66,7 @@ type RoomState = {
   setIsReconnecting: (val: boolean) => void;
   publishStreamIdRef: React.MutableRefObject<string | null>;
   streamNameRef: React.MutableRefObject<string | null>;
+  streamName: string | null;
 };
 
 type ScreenShare = {
@@ -541,7 +542,14 @@ export const useConferenceEvents = (
       },
 
       handleAudioLevel: (data: any) => {
-        depsRef.current.participantsHook.updateTalkerLevel(data.userId, data.level.normalized);
+        const { participantsHook, roomState } = depsRef.current;
+
+        // Our own level arrives under the publish stream id, but our tile is keyed by
+        // stream name. Key talkers by tile id so consumers can match exactly.
+        const isMine = data.userId === roomState.publishStreamIdRef.current;
+        const talkerId = isMine ? roomState.streamName || data.userId : data.userId;
+
+        participantsHook.updateTalkerLevel(talkerId, data.level.normalized);
       },
 
       handleSubscribeStop: (data: any) => {
@@ -790,10 +798,8 @@ export const useConferenceEvents = (
           return newSubscribed;
         });
 
-        // Remove audio level for disconnected participant
-        const newTalkers = { ...participantsHook.talkerAudioLevelsRef.current };
-        delete newTalkers[data.participant.uid];
-        participantsHook.talkerAudioLevelsRef.current = newTalkers;
+        // Drops audio level and speaking state for the disconnected participant
+        participantsHook.clearParticipant(data.participant.uid);
       },
 
       handleUserPublished: async (data: any) => {

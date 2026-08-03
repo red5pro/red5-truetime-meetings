@@ -57,13 +57,11 @@ const MeetingPage = React.memo<MeetingPageProps>((props) => {
   const isSmallScreen = useMediaQuery(theme.breakpoints.down('sm'));
   const isMobileLayout = isSmallScreen || props.isMobile;
 
-  // Create refs for props functions to prevent dependency issues
+  // Create refs for props functions to prevent dependency issues.
+  // Assigned during render, not in an effect: renderLayout() reads this ref while rendering,
+  // so an effect would feed the layouts (and the talkers list) one render behind.
   const propsRef = useRef(props);
-
-  // Keep ref up to date
-  useEffect(() => {
-    propsRef.current = props;
-  }, [props]);
+  propsRef.current = props;
 
   // PiP integration
   const {
@@ -211,13 +209,17 @@ const MeetingPage = React.memo<MeetingPageProps>((props) => {
         ? (propsRef.current.currentConferenceClient?.mediaStreamManager?.getScreenShareStream() ??
           undefined)
         : undefined,
-      // talkers and streamName are read at call-time via propsRef; the cast handles the
-      // talkers: Talker[] type expected by PiPOpenOptions (runtime shape is compatible).
-      talkers: (propsRef.current.talkers || []) as unknown as { streamId: string }[],
+      talkers: props.talkers || [],
       streamName: propsRef.current.streamName,
     }),
 
-    [allParticipants, props.isMyMicMuted, props.isMyCamTurnedOff, props.isScreenShared],
+    [
+      allParticipants,
+      props.isMyMicMuted,
+      props.isMyCamTurnedOff,
+      props.isScreenShared,
+      props.talkers,
+    ],
   );
 
   // Open all participants PiP

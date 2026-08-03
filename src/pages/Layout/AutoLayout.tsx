@@ -3,7 +3,12 @@ import { Box } from '@mui/system';
 
 import VideoCard from '../../Components/Cards/VideoCard.tsx';
 import OthersCard from '../../Components/Cards/OthersCard.tsx';
-import { calculateConnectionQualityScore, isNull } from '../../utils/utils.tsx';
+import {
+  calculateConnectionQualityScore,
+  isNull,
+  isScreenShareParticipant,
+} from '../../utils/utils.tsx';
+import { useSpeakerOrder } from '../../hooks/useSpeakerOrder.ts';
 import { LayoutAutoProps, Participant, ParticipantObject } from './types.ts';
 
 // Constants
@@ -32,6 +37,13 @@ const LayoutAuto = React.memo<LayoutAutoProps>((props) => {
     currentConferenceClient,
   } = props;
 
+  // Presenter and active speakers first, so the sidebar shows who is actually talking
+  const { orderedParticipants } = useSpeakerOrder({
+    allParticipants,
+    pinnedParticipantId,
+    talkers,
+  });
+
   // Memoized layout class calculator
   const getLayoutClass = useCallback(
     (participant: Participant): LayoutClass => {
@@ -41,7 +53,7 @@ const LayoutAuto = React.memo<LayoutAutoProps>((props) => {
         return LAYOUT_CLASSES.PINNED_MAIN;
       }
 
-      const sidebarParticipants = allParticipants
+      const sidebarParticipants = orderedParticipants
         .filter((p) => p.participant.uid !== pinnedParticipantId)
         .slice(0, MAX_VIDEO_AT_SIDE);
 
@@ -49,16 +61,17 @@ const LayoutAuto = React.memo<LayoutAutoProps>((props) => {
 
       return sideIndex !== -1 ? LAYOUT_CLASSES.SIDEBAR_VIDEO : LAYOUT_CLASSES.IN_OTHERS;
     },
-    [pinLayout, pinnedParticipantId, allParticipants],
+    [pinLayout, pinnedParticipantId, orderedParticipants],
   );
 
-  // Memoized sidebar videos for performance
+  // Memoized sidebar videos for performance. Speaker order drives --sidebar-index, so tiles
+  // slide into place via CSS instead of being remounted.
   const sidebarVideos = useMemo(() => {
     if (!pinLayout) return [];
-    return allParticipants.filter(
+    return orderedParticipants.filter(
       (p) => getLayoutClass(p.participant) === LAYOUT_CLASSES.SIDEBAR_VIDEO,
     );
-  }, [allParticipants, pinLayout, getLayoutClass]);
+  }, [orderedParticipants, pinLayout, getLayoutClass]);
 
   // Memoized others count calculation
   const othersCount = useMemo(() => {
@@ -145,8 +158,8 @@ const LayoutAuto = React.memo<LayoutAutoProps>((props) => {
             pinVideo={pinVideo}
             unpinVideo={unpinVideo}
             layout={layout}
-            // @ts-ignore
             talkers={talkers}
+            isScreenShare={isScreenShareParticipant(participant)}
             connectionQuality={connectionQualityScore}
             // @ts-ignore
             setParticipantIdMuted={(participantId: string) =>

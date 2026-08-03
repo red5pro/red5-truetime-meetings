@@ -4,7 +4,12 @@ import useMediaQuery from '@mui/material/useMediaQuery';
 
 import VideoCard from '../../Components/Cards/VideoCard.tsx';
 import OthersCard from '../../Components/Cards/OthersCard.tsx';
-import { calculateConnectionQualityScore, isNull } from '../../utils/utils.tsx';
+import {
+  calculateConnectionQualityScore,
+  isNull,
+  isScreenShareParticipant,
+} from '../../utils/utils.tsx';
+import { useSpeakerOrder } from '../../hooks/useSpeakerOrder.ts';
 import {
   LayoutPinnedProps,
   ParticipantCounts,
@@ -67,9 +72,16 @@ const LayoutPinned = React.memo<LayoutPinnedProps>((props) => {
     };
   }, [pinnedParticipantId, allParticipants, streamName, currentConferenceClient]);
 
+  // Presenter and active speakers first, so the sidebar shows who is actually talking
+  const { orderedParticipants } = useSpeakerOrder({
+    allParticipants,
+    pinnedParticipantId,
+    talkers,
+  });
+
   // Split participants into visible and audio-only groups
   const participantGroups = useMemo<ParticipantGroups>(() => {
-    const unpinnedParticipants = allParticipants.filter(
+    const unpinnedParticipants = orderedParticipants.filter(
       (p) => p.participant.uid !== pinnedParticipantId,
     );
 
@@ -85,7 +97,7 @@ const LayoutPinned = React.memo<LayoutPinnedProps>((props) => {
       visibleUnpinned,
       audioOnlyParticipants,
     };
-  }, [allParticipants, pinnedParticipantId, participantCounts.maxPlayingParticipants]);
+  }, [orderedParticipants, pinnedParticipantId, participantCounts.maxPlayingParticipants]);
 
   // Video ref handler
   const handleVideoRef = useCallback(
@@ -135,8 +147,8 @@ const LayoutPinned = React.memo<LayoutPinnedProps>((props) => {
             pinVideo={pinVideo}
             unpinVideo={unpinVideo}
             layout={layout}
-            // @ts-ignore
             talkers={talkers}
+            isScreenShare={isScreenShareParticipant(participant)}
             connectionQuality={connectionQualityScore}
             // @ts-ignore
             setParticipantIdMuted={(participantId: string) =>
@@ -170,7 +182,7 @@ const LayoutPinned = React.memo<LayoutPinnedProps>((props) => {
   const renderVideoCard = useCallback(
     (
       participantObject: ParticipantObject,
-      index: number,
+      _index: number,
       isMobileView: boolean = false,
       isAudioOnly: boolean = false,
     ) => {
@@ -188,7 +200,9 @@ const LayoutPinned = React.memo<LayoutPinnedProps>((props) => {
       return (
         <Box
           className={isAudioOnly ? 'audio-only-participant' : 'unpinned'}
-          key={`${isAudioOnly ? 'audio-only' : 'unpinned'}-${participant.uid}-${index}`}
+          // Keyed by uid only: the sidebar reorders as people speak, and an index in the
+          // key would remount (and briefly drop) the video on every reorder.
+          key={`${isAudioOnly ? 'audio-only' : 'unpinned'}-${participant.uid}`}
         >
           <Box className="single-video-container">
             <Box sx={{ position: 'relative', width: '100%', height: '100%' }}>
@@ -217,8 +231,8 @@ const LayoutPinned = React.memo<LayoutPinnedProps>((props) => {
                 pinVideo={pinVideo}
                 unpinVideo={unpinVideo}
                 layout={layout}
-                // @ts-ignore
                 talkers={talkers}
+                isScreenShare={isScreenShareParticipant(participant)}
                 connectionQuality={connectionQualityScore}
                 // @ts-ignore
                 setParticipantIdMuted={(participantId: string) =>
@@ -260,7 +274,9 @@ const LayoutPinned = React.memo<LayoutPinnedProps>((props) => {
     [participantGroups.visibleUnpinned, renderVideoCard],
   );
 
-  // All unpinned participants (used in mobile strip to show every participant scrollably)
+  // All unpinned participants (used in mobile strip to show every participant scrollably).
+  // Kept in join order: the strip already shows everyone, and reordering it would shuffle
+  // tiles under the user's finger mid-scroll.
   const allUnpinnedParticipants = useMemo(
     () => allParticipants.filter((p) => p.participant.uid !== pinnedParticipantId),
     [allParticipants, pinnedParticipantId],

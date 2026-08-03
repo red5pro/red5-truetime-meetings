@@ -1,5 +1,5 @@
 // hooks/useParticipants.ts
-import { useState, useRef, useCallback, MutableRefObject } from 'react';
+import { useState, useRef, useCallback, useEffect, MutableRefObject } from 'react';
 
 // Type definitions
 interface Participant {
@@ -43,6 +43,7 @@ interface UseParticipantsReturn {
   talkerAudioLevelsRef: MutableRefObject<TalkerAudioLevels>;
   pinnedParticipantIdRef: MutableRefObject<string | null>;
   updateTalkerLevel: (userId: string, level: number) => void;
+  resetTalkers: () => void;
   clearParticipant: (streamId: string) => void;
   guestParticipantRequestList: string[];
   setGuestParticipantRequestList: React.Dispatch<React.SetStateAction<string[]>>;
@@ -51,6 +52,13 @@ interface UseParticipantsReturn {
   addFakeParticipant: () => void;
   removeFakeParticipant: () => void;
 }
+
+// One threshold, and a hold window so short dips between words don't blink the indicator.
+// A lower "still speaking" threshold does not work here: the level decays gradually after
+// speech stops, so it would keep re-arming the hold long after the person went quiet.
+const SPEAKING_LEVEL = 75;
+const SPEAKING_HOLD_MS = 800;
+const SPEAKING_SWEEP_MS = 100;
 
 const FAKE_PARTICIPANT_NAMES = [
   'Alice',
@@ -83,23 +91,75 @@ export const useParticipants = (): UseParticipantsReturn => {
     return participant?.name || participant?.streamName || 'Unknown';
   }, []);
 
-  const updateTalkers = useCallback((): void => {
-    const updatedTalkers = Object.keys(talkerAudioLevelsRef.current).filter(
-      (streamId) => talkerAudioLevelsRef.current[streamId] > 75,
-    );
-    setTalkers(updatedTalkers);
+  // streamId -> timestamp of the last sample loud enough to count as speech
+  const speakingSinceRef = useRef<Record<string, number>>({});
+  const talkersRef = useRef<string[]>([]);
+  const sweepTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Only push a new array when the set of talkers actually changed, so consumers
+  // don't re-render on every audio-level event.
+  const commitTalkers = useCallback((): void => {
+    const next = Object.keys(speakingSinceRef.current);
+    const prev = talkersRef.current;
+
+    if (next.length === prev.length && next.every((id) => prev.includes(id))) return;
+
+    talkersRef.current = next;
+    setTalkers(next);
   }, []);
+
+  const stopSweep = useCallback((): void => {
+    if (sweepTimerRef.current) {
+      clearInterval(sweepTimerRef.current);
+      sweepTimerRef.current = null;
+    }
+  }, []);
+
+  // Drops talkers whose hold window expired (also covers users that stop sending levels).
+  const startSweep = useCallback((): void => {
+    if (sweepTimerRef.current) return;
+
+    sweepTimerRef.current = setInterval(() => {
+      const now = Date.now();
+      let changed = false;
+
+      Object.keys(speakingSinceRef.current).forEach((streamId) => {
+        if (now - speakingSinceRef.current[streamId] > SPEAKING_HOLD_MS) {
+          delete speakingSinceRef.current[streamId];
+          changed = true;
+        }
+      });
+
+      if (changed) commitTalkers();
+      if (Object.keys(speakingSinceRef.current).length === 0) stopSweep();
+    }, SPEAKING_SWEEP_MS);
+  }, [commitTalkers, stopSweep]);
 
   const updateTalkerLevel = useCallback(
     (userId: string, level: number): void => {
-      talkerAudioLevelsRef.current = {
-        ...talkerAudioLevelsRef.current,
-        [userId]: level,
-      };
-      updateTalkers();
+      talkerAudioLevelsRef.current[userId] = level;
+
+      if (level < SPEAKING_LEVEL) return;
+
+      const wasSpeaking = userId in speakingSinceRef.current;
+      speakingSinceRef.current[userId] = Date.now();
+
+      if (!wasSpeaking) {
+        commitTalkers();
+        startSweep();
+      }
     },
-    [updateTalkers],
+    [commitTalkers, startSweep],
   );
+
+  const resetTalkers = useCallback((): void => {
+    talkerAudioLevelsRef.current = {};
+    speakingSinceRef.current = {};
+    stopSweep();
+    commitTalkers();
+  }, [commitTalkers, stopSweep]);
+
+  useEffect(() => stopSweep, [stopSweep]);
 
   const [guestParticipantRequestList, setGuestParticipantRequestList] = useState<string[]>([]);
   const [guestsWaitingApproval, setGuestsWaitingApproval] = useState<Participants>({});
@@ -137,23 +197,29 @@ export const useParticipants = (): UseParticipantsReturn => {
     });
   }, []);
 
-  const clearParticipant = useCallback((streamId: string): void => {
-    setParticipants((prev) => {
-      const newParticipants = { ...prev };
-      delete newParticipants[streamId];
-      return newParticipants;
-    });
+  const clearParticipant = useCallback(
+    (streamId: string): void => {
+      setParticipants((prev) => {
+        const newParticipants = { ...prev };
+        delete newParticipants[streamId];
+        return newParticipants;
+      });
 
-    setSubscribedParticipants((prev) => {
-      const newSubscribed = { ...prev };
-      delete newSubscribed[streamId];
-      return newSubscribed;
-    });
+      setSubscribedParticipants((prev) => {
+        const newSubscribed = { ...prev };
+        delete newSubscribed[streamId];
+        return newSubscribed;
+      });
 
-    const newTalkers = { ...talkerAudioLevelsRef.current };
-    delete newTalkers[streamId];
-    talkerAudioLevelsRef.current = newTalkers;
-  }, []);
+      delete talkerAudioLevelsRef.current[streamId];
+
+      if (streamId in speakingSinceRef.current) {
+        delete speakingSinceRef.current[streamId];
+        commitTalkers();
+      }
+    },
+    [commitTalkers],
+  );
 
   return {
     participants,
@@ -173,6 +239,7 @@ export const useParticipants = (): UseParticipantsReturn => {
     talkerAudioLevelsRef,
     pinnedParticipantIdRef,
     updateTalkerLevel,
+    resetTalkers,
     clearParticipant,
     guestsWaitingApproval,
     setGuestsWaitingApproval,
