@@ -21,9 +21,8 @@ interface ParticipantData {
   mediaStream?: MediaStream;
 }
 
-interface Talker {
-  streamId: string;
-}
+// The conference hook emits plain stream ids; older call sites passed objects.
+type Talker = string | { streamId: string };
 
 interface PiPWindowOptions {
   width?: number;
@@ -925,7 +924,7 @@ const PiPGridContent: React.FC<PiPGridContentProps> = ({
   talkers = [],
   streamName,
 }) => {
-  const speakingIds = talkers.map((t) => t.streamId);
+  const speakingIds = talkers.map((t) => (typeof t === 'string' ? t : t?.streamId));
   const gridClass = `pip-participants-grid${participants.length <= 1 ? ' single-participant' : ''}`;
 
   // Retry functions registered by each blocked PiPParticipant, keyed by uid — lets a single

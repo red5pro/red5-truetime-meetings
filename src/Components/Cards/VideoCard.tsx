@@ -28,11 +28,6 @@ interface Participant {
   streamName: string;
 }
 
-interface Talker {
-  streamId: string;
-  audioLevel?: number;
-}
-
 interface OverlayButtonProps {
   title: string;
   icon: string;
@@ -110,8 +105,9 @@ interface VideoCardProps extends VideoHTMLAttributes<HTMLVideoElement> {
   setParticipantIdMuted: (participant: Participant) => void;
   setMuteParticipantDialogOpen: (open: boolean) => void;
   connectionQuality?: number;
-  talkers?: Talker[];
+  talkers?: string[];
   metaData?: string;
+  isScreenShare?: boolean;
 }
 
 // Styled components
@@ -507,6 +503,7 @@ const VideoCard = React.memo<VideoCardProps>((props) => {
     connectionQuality = 0,
     talkers = [],
     metaData,
+    isScreenShare = false,
     ...videoProps
   } = props;
   const theme = useTheme();
@@ -611,8 +608,8 @@ const VideoCard = React.memo<VideoCardProps>((props) => {
       />
 
       <Box className="single-video-card" id={`card-${streamId || ''}`} style={cardStyle}>
-        {/*@ts-ignore*/}
-        <TalkingIndicator streamId={streamId} talkers={talkers} />
+        {/* A screen share carries no speaker of its own, so it never gets the ring. */}
+        {!isScreenShare && <TalkingIndicator streamId={streamId} talkers={talkers} />}
 
         <VideoPlayer
           isMine={isMine}

@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useMemo } from 'react';
 import { styled } from '@mui/material/styles';
 import { useTheme } from '@mui/material';
 
@@ -15,7 +15,6 @@ interface TalkingIndicatorProps {
 
 const TalkingIndicatorWrapper = styled('div')<TalkingIndicatorWrapperProps>(
   ({ isVisible, borderColor }) => ({
-    display: isVisible ? 'block' : 'none',
     position: 'absolute',
     top: 0,
     left: 0,
@@ -30,23 +29,20 @@ const TalkingIndicatorWrapper = styled('div')<TalkingIndicatorWrapperProps>(
 
     // Use box-shadow instead of border to avoid taking up space
     boxShadow: `inset 0 0 0 2px ${borderColor}`,
+
+    // Fade in fast, fade out slow, so the ring never pops on a brief pause.
+    opacity: isVisible ? 1 : 0,
+    transition: isVisible ? 'opacity 120ms ease-out' : 'opacity 400ms ease-in',
+    willChange: 'opacity',
   }),
 );
 
 const TalkingIndicator: React.FC<TalkingIndicatorProps> = ({ streamId, talkers }) => {
   const theme = useTheme();
-  // const isTalkingRef = useRef<boolean>(false);
-  const [isTalking, setIsTalking] = useState<boolean>(false);
 
-  useEffect(() => {
-    const talking = talkers.some((talkerId) => {
-      const baseStreamId = streamId.split('_')[0];
-      const baseTalkerId = talkerId.split('_')[0];
-      return baseStreamId === baseTalkerId || streamId === talkerId;
-    });
-
-    setIsTalking(talking);
-  }, [streamId, talkers]);
+  // Exact match only: a screen share publishes under a separate id derived from its
+  // owner's, so loose matching used to light up the sharer's tiles too.
+  const isTalking = useMemo(() => !!streamId && talkers.includes(streamId), [streamId, talkers]);
 
   return (
     <TalkingIndicatorWrapper

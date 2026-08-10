@@ -3,7 +3,11 @@ import { Box } from '@mui/system';
 
 import VideoCard from '../../Components/Cards/VideoCard.tsx';
 import OthersCard from '../../Components/Cards/OthersCard.tsx';
-import { calculateConnectionQualityScore, isNull } from '../../utils/utils.tsx';
+import {
+  calculateConnectionQualityScore,
+  isNull,
+  isScreenShareParticipant,
+} from '../../utils/utils.tsx';
 import { CardDimensions, LayoutConfig, LayoutTiledProps, ParticipantObject } from './types.ts';
 import { calculateOptimalLayout } from './utils.ts';
 
@@ -147,8 +151,8 @@ const LayoutTiled = React.memo<LayoutTiledProps>((props) => {
               pinVideo={pinVideo}
               unpinVideo={unpinVideo}
               layout={layout}
-              // @ts-ignore
               talkers={talkers}
+              isScreenShare={isScreenShareParticipant(participant)}
               connectionQuality={connectionQualityScore}
               // @ts-ignore
               setParticipantIdMuted={(participantId: string) =>
