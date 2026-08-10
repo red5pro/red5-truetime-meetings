@@ -71,6 +71,10 @@ interface PiPParticipantProps {
   mediaStream?: MediaStream;
   isSpeaking?: boolean;
   streamName: string;
+  /** Reports whether this tile's audio is currently blocked by the browser's autoplay policy */
+  onAutoplayBlockedChange?: (uid: string, blocked: boolean) => void;
+  /** Registers (or unregisters, when passed null) a retry function the parent can call to unmute this tile */
+  registerUnmuteHandler?: (uid: string, retry: (() => void) | null) => void;
 }
 
 interface PiPGridContentProps {
@@ -111,7 +115,7 @@ export interface UsePictureInPictureReturn {
   closePiP: () => void;
   togglePiP: (options: PiPOpenOptions) => Promise<boolean>;
   /** Auto-open: tries Document PiP first, falls back to Video PiP if user activation is missing */
-  autoOpen: () => Promise<'document' | 'video' | false>;
+  autoOpen: (options?: PiPOpenOptions) => Promise<'document' | 'video' | false>;
   /** Close both Document PiP and standard Video PiP */
   autoClose: () => void;
 }
@@ -240,14 +244,19 @@ class PiPManager {
    *
    * Returns: 'document' | 'video' | false
    */
-  async tryAutoOpen(options?: PiPWindowOptions): Promise<'document' | 'video' | false> {
+  async tryAutoOpen(
+    content?: React.ReactElement,
+    options?: PiPWindowOptions,
+  ): Promise<'document' | 'video' | false> {
     if (this.isOpen()) return 'document';
 
     // 1. Try Document PiP
     if (this.isSupported()) {
       try {
         await this.openWindow(options);
-        this.pipRoot!.render(this.lastContent);
+        const contentToRender = content ?? this.lastContent;
+        this.pipRoot!.render(contentToRender);
+        this.lastContent = contentToRender;
         this.notifyState(true);
         return 'document';
       } catch (e) {
@@ -261,11 +270,18 @@ class PiPManager {
       }
     }
 
-    // 2. Fallback: standard Video PiP (no user gesture needed from visibilitychange)
+    // 2. Fallback: standard Video PiP (no user gesture needed from visibilitychange).
+    // Only consider remote participants' videos — the local self-view (#red5pro-publisher)
+    // is always muted and would otherwise be picked up silently, per the DOM id convention
+    // used in AutoLayout/PinnedLayout/TiledLayout (`red5pro-subscriber-${uid}`).
     if (document.pictureInPictureEnabled) {
-      // Prefer a video that is actively playing
-      const videos = Array.from(document.querySelectorAll<HTMLVideoElement>('video[autoplay]'));
-      const playingVideo = videos.find((v) => v.readyState >= 2 && !v.paused) ?? videos[0];
+      const videos = Array.from(
+        document.querySelectorAll<HTMLVideoElement>('video[id^="red5pro-subscriber-"]'),
+      );
+      const playingVideo =
+        videos.find((v) => v.readyState >= 2 && !v.paused && !v.muted) ??
+        videos.find((v) => v.readyState >= 2 && !v.paused) ??
+        videos[0];
 
       if (playingVideo) {
         try {
@@ -521,6 +537,39 @@ const PIP_STYLES = `
     color: rgba(255,255,255,0.8);
   }
 
+  /* Per-tile indicator: this tile's audio is blocked (not clickable — see pip-unmute-all-banner) */
+  .pip-unmute-badge {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    background: rgba(217, 48, 37, 0.85);
+    border-radius: 50%;
+    width: 18px;
+    height: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    z-index: 4;
+  }
+
+  /* Single click to unmute every blocked tile at once */
+  .pip-unmute-all-banner {
+    flex-shrink: 0;
+    width: 100%;
+    border: none;
+    background: #d93025;
+    color: #fff;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 6px 8px;
+    cursor: pointer;
+    text-align: center;
+  }
+  .pip-unmute-all-banner:hover {
+    background: #c12a1f;
+  }
+
   /* Empty state */
   .pip-empty-state {
     flex: 1;
@@ -713,15 +762,65 @@ const PiPParticipant: React.FC<PiPParticipantProps> = ({
   mediaStream,
   isSpeaking = false,
   streamName,
+  onAutoplayBlockedChange,
+  registerUnmuteHandler,
 }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const isLocalUser = participant?.uid === streamName;
+  const showVideo = Boolean(participant?.videoEnabled && mediaStream);
+  const [needsUnmute, setNeedsUnmute] = useState(false);
+  const uid = participant?.uid;
+
+  // Retries playback unmuted — exposed to the parent so a single click on the shared
+  // "enable sound" banner can unlock every blocked tile at once (see PiPGridContent).
+  const retryUnmute = useCallback(() => {
+    const videoEl = videoRef.current;
+    if (!videoEl) return;
+    videoEl.muted = false;
+    videoEl.play().then(
+      () => {
+        setNeedsUnmute(false);
+        if (uid) onAutoplayBlockedChange?.(uid, false);
+      },
+      () => {
+        videoEl.muted = true;
+        setNeedsUnmute(true);
+        if (uid) onAutoplayBlockedChange?.(uid, true);
+      },
+    );
+  }, [uid, onAutoplayBlockedChange]);
 
   useEffect(() => {
-    if (videoRef.current && mediaStream && participant?.videoEnabled) {
-      videoRef.current.srcObject = mediaStream;
-    }
-  }, [mediaStream, participant?.videoEnabled]);
+    if (!uid) return;
+    registerUnmuteHandler?.(uid, retryUnmute);
+    return () => {
+      registerUnmuteHandler?.(uid, null);
+      onAutoplayBlockedChange?.(uid, false);
+    };
+  }, [uid, retryUnmute, registerUnmuteHandler, onAutoplayBlockedChange]);
+
+  // Always attach the stream (audio track must keep playing even when video is off), and
+  // drive playback explicitly rather than relying on the `autoplay` attribute: unmuted
+  // autoplay can be silently blocked (frozen frame, no sound, no error surfaced) unless the
+  // window still has a fresh user-activation grant. When play() is rejected, fall back to a
+  // muted play (always allowed) and report the block up so the shared banner can offer a retry.
+  useEffect(() => {
+    const videoEl = videoRef.current;
+    if (!videoEl || !mediaStream) return;
+
+    videoEl.srcObject = mediaStream;
+    videoEl.muted = isLocalUser;
+    setNeedsUnmute(false);
+    if (uid) onAutoplayBlockedChange?.(uid, false);
+
+    videoEl.play().catch(() => {
+      if (isLocalUser) return;
+      videoEl.muted = true;
+      setNeedsUnmute(true);
+      if (uid) onAutoplayBlockedChange?.(uid, true);
+      videoEl.play().catch(() => {});
+    });
+  }, [mediaStream, isLocalUser, uid, onAutoplayBlockedChange]);
 
   const label = `${participant?.name || 'Unknown'}${isLocalUser ? ' (You)' : ''}`;
 
@@ -744,6 +843,15 @@ const PiPParticipant: React.FC<PiPParticipantProps> = ({
         <div className="pip-audio-only">
           <Avatar src={defaultAvatar} sx={{ width: 56, height: 56, opacity: 0.85 }} />
           <div className="pip-audio-only-name">{label}</div>
+        </div>
+      )}
+
+      {needsUnmute && (
+        <div
+          className="pip-unmute-badge"
+          title="Audio blocked — use the banner above to enable sound"
+        >
+          🔇
         </div>
       )}
 
@@ -819,6 +927,36 @@ const PiPGridContent: React.FC<PiPGridContentProps> = ({
   const speakingIds = talkers.map((t) => (typeof t === 'string' ? t : t?.streamId));
   const gridClass = `pip-participants-grid${participants.length <= 1 ? ' single-participant' : ''}`;
 
+  // Retry functions registered by each blocked PiPParticipant, keyed by uid — lets a single
+  // click on the "enable sound" banner unlock every tile at once.
+  const unmuteHandlersRef = useRef<Map<string, () => void>>(new Map());
+  const [blockedUids, setBlockedUids] = useState<Set<string>>(new Set());
+
+  const registerUnmuteHandler = useCallback((uid: string, retry: (() => void) | null) => {
+    if (retry) {
+      unmuteHandlersRef.current.set(uid, retry);
+    } else {
+      unmuteHandlersRef.current.delete(uid);
+    }
+  }, []);
+
+  const handleAutoplayBlockedChange = useCallback((uid: string, blocked: boolean) => {
+    setBlockedUids((prev) => {
+      if (blocked === prev.has(uid)) return prev;
+      const next = new Set(prev);
+      if (blocked) {
+        next.add(uid);
+      } else {
+        next.delete(uid);
+      }
+      return next;
+    });
+  }, []);
+
+  const handleUnmuteAll = useCallback(() => {
+    unmuteHandlersRef.current.forEach((retry) => retry());
+  }, []);
+
   // Screen share video component
   const PiPScreenShareVideo: React.FC<{ stream?: MediaStream }> = ({ stream }) => {
     const videoRef = useRef<HTMLVideoElement>(null);
@@ -862,6 +1000,8 @@ const PiPGridContent: React.FC<PiPGridContentProps> = ({
                 mediaStream={participants[0].mediaStream}
                 isSpeaking={speakingIds.includes(participants[0].participant?.uid)}
                 streamName={streamName}
+                onAutoplayBlockedChange={handleAutoplayBlockedChange}
+                registerUnmuteHandler={registerUnmuteHandler}
               />
             )
           )}
@@ -875,6 +1015,8 @@ const PiPGridContent: React.FC<PiPGridContentProps> = ({
                 mediaStream={pd.mediaStream}
                 isSpeaking={speakingIds.includes(pd.participant?.uid)}
                 streamName={streamName}
+                onAutoplayBlockedChange={handleAutoplayBlockedChange}
+                registerUnmuteHandler={registerUnmuteHandler}
               />
             ))}
           </div>
@@ -893,6 +1035,8 @@ const PiPGridContent: React.FC<PiPGridContentProps> = ({
             mediaStream={pd.mediaStream}
             isSpeaking={speakingIds.includes(pd.participant?.uid)}
             streamName={streamName}
+            onAutoplayBlockedChange={handleAutoplayBlockedChange}
+            registerUnmuteHandler={registerUnmuteHandler}
           />
         ))
       ) : (
@@ -915,6 +1059,13 @@ const PiPGridContent: React.FC<PiPGridContentProps> = ({
           ×
         </button>
       </div>
+
+      {blockedUids.size > 0 && (
+        <button className="pip-unmute-all-banner" onClick={handleUnmuteAll}>
+          🔇 Tap to enable sound for {blockedUids.size} participant
+          {blockedUids.size !== 1 ? 's' : ''}
+        </button>
+      )}
 
       {isScreenShared ? renderScreenShareLayout() : renderNormalGrid()}
 
@@ -1083,11 +1234,37 @@ export const usePictureInPicture = (): UsePictureInPictureReturn => {
   );
 
   // ---------- autoOpen ----------
-  const autoOpen = useCallback(async (): Promise<'document' | 'video' | false> => {
-    const result = await pipManager.tryAutoOpen();
-    if (result === 'document') setIsOpen(true);
-    return result;
-  }, []);
+  const autoOpen = useCallback(
+    async (options?: PiPOpenOptions): Promise<'document' | 'video' | false> => {
+      const content = options ? (
+        <PiPGridContent
+          participants={options.participants}
+          onClose={() => {
+            setIsOpen(false);
+            pipManager.close();
+          }}
+          onMuteToggle={options.onMuteToggle}
+          onVideoToggle={options.onVideoToggle}
+          onVolumeToggle={options.onVolumeToggle}
+          onToggleMic={options.onToggleMic}
+          onToggleCamera={options.onToggleCamera}
+          onToggleScreenShare={options.onToggleScreenShare}
+          onLeaveRoom={options.onLeaveRoom}
+          isMyMicMuted={options.isMyMicMuted}
+          isMyCamTurnedOff={options.isMyCamTurnedOff}
+          isScreenShared={options.isScreenShared}
+          screenShareStream={options.screenShareStream}
+          talkers={options.talkers}
+          streamName={options.streamName}
+        />
+      ) : undefined;
+
+      const result = await pipManager.tryAutoOpen(content);
+      if (result === 'document') setIsOpen(true);
+      return result;
+    },
+    [],
+  );
 
   // ---------- autoClose ----------
   const autoClose = useCallback((): void => {
