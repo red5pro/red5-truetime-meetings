@@ -3,11 +3,8 @@ import { Box } from '@mui/system';
 
 import VideoCard from '../../Components/Cards/VideoCard.tsx';
 import OthersCard from '../../Components/Cards/OthersCard.tsx';
-import {
-  calculateConnectionQualityScore,
-  isNull,
-  isScreenShareParticipant,
-} from '../../utils/utils.tsx';
+import { calculateConnectionQualityScore, isScreenShareParticipant } from '../../utils/utils.tsx';
+import { attachStreamAndPlay } from '../../utils/videoPlayback.ts';
 import { CardDimensions, LayoutConfig, LayoutTiledProps, ParticipantObject } from './types.ts';
 import { calculateOptimalLayout } from './utils.ts';
 
@@ -94,10 +91,7 @@ const LayoutTiled = React.memo<LayoutTiledProps>((props) => {
   // Video ref handler
   const handleVideoRef = useCallback(
     (videoElement: HTMLVideoElement | null, mediaStream: MediaStream | null) => {
-      if (videoElement && !isNull(mediaStream) && videoElement.srcObject !== mediaStream) {
-        videoElement.srcObject = mediaStream;
-        videoElement.play().catch(() => {});
-      }
+      attachStreamAndPlay(videoElement, mediaStream);
     },
     [],
   );
