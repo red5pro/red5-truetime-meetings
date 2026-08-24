@@ -10,6 +10,7 @@ import VideoCard from '../../Components/Cards/VideoCard.tsx';
 import LayoutPinned from '../Layout/PinnedLayout.tsx';
 import LayoutTiled from '../Layout/TiledLayout.tsx';
 import LayoutAuto from '../Layout/AutoLayout.tsx';
+import LayoutMobile from '../Layout/MobileLayout.tsx';
 import { isNull } from '../../utils/utils.tsx';
 import { LayoutOptions } from '../../utils/layoutOptions.ts';
 import RecordingIndicator from '../../Components/RecordingIndicator.tsx';
@@ -306,6 +307,10 @@ const MeetingPage = React.memo<MeetingPageProps>((props) => {
       networkScore: currentProps?.networkScore,
       pipSupported: pipSupported,
     };
+
+    if (isMobileLayout) {
+      return <LayoutMobile {...commonProps} layout={currentProps.layout} />;
+    }
 
     if (isAutoLayout && !currentProps?.closedCaptions.captionsVisible) {
       return (
