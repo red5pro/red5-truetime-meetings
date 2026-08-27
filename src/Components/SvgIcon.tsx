@@ -15,7 +15,7 @@ export const SvgIcon = ({ name, color, size, viewBox }: SvgIconProps) => {
       viewBox={viewBox ? viewBox : '0 0 1000 500'}
       fill={color}
       stroke={color}
-      style={{ display: 'block' }}
+      style={{ display: 'block', ['--ci-primary-color' as string]: color }}
     >
       <use href={Icons + `#${name}`} />
     </svg>

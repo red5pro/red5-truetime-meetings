@@ -408,14 +408,12 @@ function Footer(props: FooterProps) {
               handleInfoDrawerOpen={props?.handleInfoDrawerOpen}
             />
           </Grid>
-          {isExternalStreamsEnabled && (
-            <Grid size="auto">
-              <ExternalStreamsButton
-                open={props?.externalStreamsDrawerOpen}
-                onClick={props?.handleExternalStreamsDrawerOpen}
-              />
-            </Grid>
-          )}
+          <Grid size="auto">
+            <ExternalStreamsButton
+              open={props?.externalStreamsDrawerOpen}
+              onClick={props?.handleExternalStreamsDrawerOpen}
+            />
+          </Grid>
           {(props?.isLocalRecordingActive || !isNull(props?.localRecordingStatus)) && (
             <Grid size="auto">
               <LocalRecordingButton
