@@ -4,11 +4,8 @@ import useMediaQuery from '@mui/material/useMediaQuery';
 
 import VideoCard from '../../Components/Cards/VideoCard.tsx';
 import OthersCard from '../../Components/Cards/OthersCard.tsx';
-import {
-  calculateConnectionQualityScore,
-  isNull,
-  isScreenShareParticipant,
-} from '../../utils/utils.tsx';
+import { calculateConnectionQualityScore, isScreenShareParticipant } from '../../utils/utils.tsx';
+import { attachStreamAndPlay } from '../../utils/videoPlayback.ts';
 import { useSpeakerOrder } from '../../hooks/useSpeakerOrder.ts';
 import {
   LayoutPinnedProps,
@@ -102,10 +99,7 @@ const LayoutPinned = React.memo<LayoutPinnedProps>((props) => {
   // Video ref handler
   const handleVideoRef = useCallback(
     (videoElement: HTMLVideoElement | null, mediaStream: MediaStream | null) => {
-      if (videoElement && !isNull(mediaStream) && videoElement.srcObject !== mediaStream) {
-        videoElement.srcObject = mediaStream;
-        videoElement.play().catch(() => {});
-      }
+      attachStreamAndPlay(videoElement, mediaStream);
     },
     [],
   );
