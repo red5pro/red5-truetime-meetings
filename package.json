@@ -13,6 +13,7 @@
     "format:check": "prettier --check .",
     "test": "vitest",
     "test:coverage": "vitest run --coverage",
+    "test:e2e": "vitest run --config vitest.e2e.config.ts",
     "preview": "npx tsx scripts/generate-build-info.ts && vite preview",
     "prepare": "husky"
   },
@@ -56,8 +57,10 @@
     "@eslint/js": "^9.39.2",
     "@testing-library/jest-dom": "^6.9.1",
     "@types/lodash": "^4.17.23",
+    "@types/node": "^26.2.0",
     "@types/react": "^19.2.8",
     "@types/react-dom": "^19.2.3",
+    "@types/selenium-webdriver": "^4.35.6",
     "@typescript-eslint/eslint-plugin": "^8.53.0",
     "@typescript-eslint/parser": "^8.53.0",
     "@vitejs/plugin-react": "^5.1.2",
@@ -72,6 +75,7 @@
     "jsdom": "^28.1.0",
     "lint-staged": "^16.3.2",
     "prettier": "^3.8.1",
+    "selenium-webdriver": "^4.46.0",
     "typescript-eslint": "^8.56.1",
     "vite": "^7.3.1",
     "vitest": "^4.0.18"
