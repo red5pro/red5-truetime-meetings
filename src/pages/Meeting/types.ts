@@ -70,6 +70,7 @@ export interface MeetingPageProps {
   isMobile: boolean;
   updateAudioOutput?: () => void;
   isRecordingActive?: boolean;
+  didIStartServerRecording?: boolean;
   isMuteParticipantDialogOpen?: boolean;
   participantIdMuted?: string;
   turnOffYourMicNotification?: (streamId: string) => void;
@@ -114,12 +115,13 @@ export interface MeetingPageProps {
   stopLocalRecording?: () => void;
   downloadLocalRecording?: (filename?: string) => Promise<boolean>;
   localRecordingStatus?: string;
-  isLocalRecordingUploading?: boolean;
   currentIssues?: string[];
   printStatLogs?: boolean;
   setPrintStatLogs?: (print: boolean) => void;
   updateDevicesList?: () => void;
   transcription: any;
+  onAddFakeParticipant?: () => void;
+  onRemoveFakeParticipant?: () => void;
 }
 
 export interface GallerySize {

@@ -3,7 +3,11 @@ import { Box } from '@mui/system';
 
 import VideoCard from '../../Components/Cards/VideoCard.tsx';
 import OthersCard from '../../Components/Cards/OthersCard.tsx';
-import { calculateConnectionQualityScore, isNull } from '../../utils/utils.tsx';
+import {
+  calculateConnectionQualityScore,
+  isNull,
+  isScreenShareParticipant,
+} from '../../utils/utils.tsx';
 import { CardDimensions, LayoutConfig, LayoutTiledProps, ParticipantObject } from './types.ts';
 import { calculateOptimalLayout } from './utils.ts';
 
@@ -11,6 +15,26 @@ import { calculateOptimalLayout } from './utils.ts';
 const DEFAULT_ASPECT_RATIO = 16 / 9;
 const CARD_MARGIN = 8;
 const LAYOUT_BUFFER = 2; // Extra count to prevent single video filling entire page
+const FOOTER_HEIGHT = 80;
+
+const getInitialCardDimensions = (): CardDimensions => {
+  if (typeof window === 'undefined') {
+    return { width: 0, height: 0 };
+  }
+
+  const availableWidth = Math.max(window.innerWidth - 32, 0);
+  const availableHeight = Math.max(window.innerHeight - FOOTER_HEIGHT - 32, 0);
+  const width = Math.min(availableWidth, 480);
+  const height = Math.min(
+    width / DEFAULT_ASPECT_RATIO,
+    availableHeight || width / DEFAULT_ASPECT_RATIO,
+  );
+
+  return {
+    width: Math.max(width, 0),
+    height: Math.max(height, 0),
+  };
+};
 
 const LayoutTiled = React.memo<LayoutTiledProps>((props) => {
   const {
@@ -29,10 +53,7 @@ const LayoutTiled = React.memo<LayoutTiledProps>((props) => {
   } = props;
 
   // State for card dimensions
-  const [cardDimensions, setCardDimensions] = useState<CardDimensions>({
-    width: 500 * DEFAULT_ASPECT_RATIO,
-    height: 500,
-  });
+  const [cardDimensions, setCardDimensions] = useState<CardDimensions>(getInitialCardDimensions);
 
   // Memoized calculations
   const layoutConfig = useMemo<LayoutConfig>(() => {
@@ -73,8 +94,9 @@ const LayoutTiled = React.memo<LayoutTiledProps>((props) => {
   // Video ref handler
   const handleVideoRef = useCallback(
     (videoElement: HTMLVideoElement | null, mediaStream: MediaStream | null) => {
-      if (videoElement && !isNull(mediaStream) && !videoElement.srcObject) {
+      if (videoElement && !isNull(mediaStream) && videoElement.srcObject !== mediaStream) {
         videoElement.srcObject = mediaStream;
+        videoElement.play().catch(() => {});
       }
     },
     [],
@@ -97,6 +119,7 @@ const LayoutTiled = React.memo<LayoutTiledProps>((props) => {
       const containerStyle = {
         width: `${cardDimensions.width}px`,
         height: `${cardDimensions.height}px`,
+        maxWidth: '100%',
       };
 
       return (
@@ -128,8 +151,8 @@ const LayoutTiled = React.memo<LayoutTiledProps>((props) => {
               pinVideo={pinVideo}
               unpinVideo={unpinVideo}
               layout={layout}
-              // @ts-ignore
               talkers={talkers}
+              isScreenShare={isScreenShareParticipant(participant)}
               connectionQuality={connectionQualityScore}
               // @ts-ignore
               setParticipantIdMuted={(participantId: string) =>

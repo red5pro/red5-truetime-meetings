@@ -66,6 +66,7 @@ interface VirtualBackgroundImage {
 interface EffectsTabProps {
   setVirtualBackgroundImage: (image: VirtualBackgroundImage) => void;
   handleBackgroundReplacement: (replacement: BackgroundReplacement) => void;
+  handleEffectsOpen?: (open: boolean) => void;
 }
 
 // Global image cache to persist across renders
@@ -336,6 +337,7 @@ const VirtualBackgroundButton = React.memo<VirtualBackgroundButtonProps>(
 function EffectsTab({
   setVirtualBackgroundImage,
   handleBackgroundReplacement,
+  handleEffectsOpen,
 }: EffectsTabProps): JSX.Element {
   const { t } = useTranslation();
   const theme = useTheme();
@@ -367,8 +369,9 @@ function EffectsTab({
       setSelectedEffect(effectType);
       setSelectedBackground(null);
       handleBackgroundReplacement({ type: effectType });
+      handleEffectsOpen?.(false);
     },
-    [handleBackgroundReplacement],
+    [handleBackgroundReplacement, handleEffectsOpen],
   );
 
   const handleBackgroundSelection = React.useCallback(
@@ -380,8 +383,9 @@ function EffectsTab({
       } else {
         setVirtualBackgroundImage({ type: 'image', value: imageSrc });
       }
+      handleEffectsOpen?.(false);
     },
-    [handleBackgroundReplacement, setVirtualBackgroundImage],
+    [handleBackgroundReplacement, setVirtualBackgroundImage, handleEffectsOpen],
   );
 
   const handleFileChange = React.useCallback(
@@ -405,6 +409,20 @@ function EffectsTab({
       }
     },
     [saveImageToFileSystem],
+  );
+
+  // Pre-create effect button callbacks to prevent recreation
+  const handleNoneSelection = React.useCallback(
+    () => handleEffectSelection('none'),
+    [handleEffectSelection],
+  );
+  const handleSlightBlurSelection = React.useCallback(
+    () => handleEffectSelection('slight-blur'),
+    [handleEffectSelection],
+  );
+  const handleBlurSelection = React.useCallback(
+    () => handleEffectSelection('blur'),
+    [handleEffectSelection],
   );
 
   // Pre-create callbacks for backgrounds to prevent recreation
@@ -452,7 +470,7 @@ function EffectsTab({
                 effectType="none"
                 icon="remove-effect"
                 isSelected={selectedEffect === 'none'}
-                onClick={() => handleEffectSelection('none')}
+                onClick={handleNoneSelection}
                 theme={theme}
               />
             </Grid>
@@ -461,7 +479,7 @@ function EffectsTab({
                 effectType="slight-blur"
                 icon="slight-blur"
                 isSelected={selectedEffect === 'slight-blur'}
-                onClick={() => handleEffectSelection('slight-blur')}
+                onClick={handleSlightBlurSelection}
                 theme={theme}
               />
             </Grid>
@@ -470,7 +488,7 @@ function EffectsTab({
                 effectType="blur"
                 icon="blur"
                 isSelected={selectedEffect === 'blur'}
-                onClick={() => handleEffectSelection('blur')}
+                onClick={handleBlurSelection}
                 theme={theme}
               />
             </Grid>

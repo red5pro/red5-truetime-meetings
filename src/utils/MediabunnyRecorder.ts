@@ -104,6 +104,12 @@ export class MediabunnyRecorder {
         this.output.addAudioTrack(this.audioSource);
       }
 
+      // mediabunny encodes track sources asynchronously and surfaces failures via
+      // `errorPromise`. Without consuming it, an audio/video encoding error (e.g. an
+      // unsupported codec) silently drops that track's data instead of reaching onerror.
+      this.videoSource?.errorPromise.catch((error) => this.handleSourceError(error));
+      this.audioSource?.errorPromise.catch((error) => this.handleSourceError(error));
+
       // Start the output
       await this.output.start();
 
@@ -143,9 +149,6 @@ export class MediabunnyRecorder {
         this.recordedBlob = new Blob([this.target.buffer], { type: 'video/mp4' });
       }
 
-      this._isRecording = false;
-      this._isPaused = false;
-
       if (this.onstop && this.recordedBlob) {
         this.onstop(this.recordedBlob);
       }
@@ -157,6 +160,10 @@ export class MediabunnyRecorder {
       }
       throw error;
     } finally {
+      // Reset regardless of outcome so callers never see a stuck "recording" state
+      // if finalize() throws or is abandoned via a timeout.
+      this._isRecording = false;
+      this._isPaused = false;
       this.cleanup();
     }
   }
@@ -275,6 +282,16 @@ export class MediabunnyRecorder {
       state: this.state,
       startTime: this.startTime,
     };
+  }
+
+  /**
+   * Handle an async error reported by a track source's errorPromise
+   */
+  private handleSourceError(error: unknown): void {
+    const err = error instanceof Error ? error : new Error(String(error));
+    if (this.onerror) {
+      this.onerror(err);
+    }
   }
 
   /**

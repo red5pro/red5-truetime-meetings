@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Container, Box, IconButton } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
+import useMediaQuery from '@mui/material/useMediaQuery';
 import { ReactionBarSelector } from '@charkour/react-reactions';
 import { Close } from '@mui/icons-material';
-import cloneDeep from 'lodash/cloneDeep';
 
 import Footer from '../../Components/Footer/Footer.tsx';
 import VideoCard from '../../Components/Cards/VideoCard.tsx';
@@ -35,21 +35,33 @@ const REACTION_LIST: Reaction[] = [
 ];
 
 const AUTO_LAYOUT_PARTICIPANT_LIMIT = 8;
+const FOOTER_HEIGHT = 80;
+const CAPTIONS_PANEL_HEIGHT_DESKTOP = 240;
+const CAPTIONS_PANEL_HEIGHT_MOBILE = 180;
 
 const MeetingPage = React.memo<MeetingPageProps>((props) => {
   const [pushToTalkEnabled, setPushToTalkEnabled] = useState<boolean>(
     localStorage.getItem('isPushToTalkEnabled') === 'true',
   );
-  const [gallerySize, setGallerySize] = useState<GallerySize>({ w: 100, h: 100 });
+  const [gallerySize, setGallerySize] = useState<GallerySize>(() => {
+    if (typeof window === 'undefined') {
+      return { w: 100, h: 100 };
+    }
+
+    return {
+      w: window.innerWidth,
+      h: Math.max(window.innerHeight - FOOTER_HEIGHT, 0),
+    };
+  });
   const theme = useTheme();
+  const isSmallScreen = useMediaQuery(theme.breakpoints.down('sm'));
+  const isMobileLayout = isSmallScreen || props.isMobile;
 
-  // Create refs for props functions to prevent dependency issues
+  // Create refs for props functions to prevent dependency issues.
+  // Assigned during render, not in an effect: renderLayout() reads this ref while rendering,
+  // so an effect would feed the layouts (and the talkers list) one render behind.
   const propsRef = useRef(props);
-
-  // Keep ref up to date
-  useEffect(() => {
-    propsRef.current = props;
-  }, [props]);
+  propsRef.current = props;
 
   // PiP integration
   const {
@@ -64,7 +76,17 @@ const MeetingPage = React.memo<MeetingPageProps>((props) => {
 
   // Memoized participant list
   const allParticipants = useMemo(() => {
-    const participants = cloneDeep(props.subscribedParticipants || {});
+    // Clone only the plain `participant` metadata (mutated below via isRaiseHand) — never
+    // deep-clone `mediaStream`: it's a native MediaStream, and lodash's cloneDeep reduces it
+    // to a prototype-only shell with no real tracks, silently breaking playback wherever the
+    // clone is used (this fed Picture-in-Picture, which rendered tiles that never played audio/video).
+    const participants: Record<string, SubscribedParticipant> = {};
+    Object.entries(props.subscribedParticipants || {}).forEach(([uid, sp]) => {
+      participants[uid] = {
+        mediaStream: sp.mediaStream,
+        participant: { ...sp.participant },
+      };
+    });
 
     // Add raised hand status to subscribed participants
     props.raisedHands?.forEach((id) => {
@@ -77,12 +99,13 @@ const MeetingPage = React.memo<MeetingPageProps>((props) => {
     Object.entries(props.participants || {}).forEach(([uid, participant]) => {
       if (!participants[uid]) {
         // This participant is not subscribed yet, add them
+        const isFake = (participant as any).isFake === true;
         participants[uid] = {
           mediaStream: undefined,
           participant: {
             ...participant,
-            isPending: true,
-            audioEnabled: true,
+            isPending: !isFake,
+            audioEnabled: isFake ? false : true,
             videoEnabled: false,
             isRaiseHand: props.raisedHands?.includes(uid) || false,
           },
@@ -118,6 +141,7 @@ const MeetingPage = React.memo<MeetingPageProps>((props) => {
     props.isMyCamTurnedOff,
     props.isRaiseHand,
     props.currentConferenceClient,
+    props.selectedBackgroundMode,
   ]);
 
   const keyboardShortcuts = useKeyboardShortcuts({
@@ -173,6 +197,9 @@ const MeetingPage = React.memo<MeetingPageProps>((props) => {
       },
       onLeaveRoom: () => {
         closePiPRef.current?.();
+        if (propsRef.current.isLocalRecordingActive) {
+          propsRef.current.stopLocalRecording?.();
+        }
         propsRef.current.setLeftTheRoom?.(true);
       },
       isMyMicMuted: props.isMyMicMuted,
@@ -182,13 +209,17 @@ const MeetingPage = React.memo<MeetingPageProps>((props) => {
         ? (propsRef.current.currentConferenceClient?.mediaStreamManager?.getScreenShareStream() ??
           undefined)
         : undefined,
-      // talkers and streamName are read at call-time via propsRef; the cast handles the
-      // talkers: Talker[] type expected by PiPOpenOptions (runtime shape is compatible).
-      talkers: (propsRef.current.talkers || []) as unknown as { streamId: string }[],
+      talkers: props.talkers || [],
       streamName: propsRef.current.streamName,
     }),
 
-    [allParticipants, props.isMyMicMuted, props.isMyCamTurnedOff, props.isScreenShared],
+    [
+      allParticipants,
+      props.isMyMicMuted,
+      props.isMyCamTurnedOff,
+      props.isScreenShared,
+      props.talkers,
+    ],
   );
 
   // Open all participants PiP
@@ -205,7 +236,7 @@ const MeetingPage = React.memo<MeetingPageProps>((props) => {
   useEffect(() => {
     const onVisibility = () => {
       if (document.hidden) {
-        autoOpenPiP();
+        autoOpenPiP(pipOptions);
       } else {
         autoClosePiP();
       }
@@ -213,7 +244,7 @@ const MeetingPage = React.memo<MeetingPageProps>((props) => {
 
     document.addEventListener('visibilitychange', onVisibility);
     return () => document.removeEventListener('visibilitychange', onVisibility);
-  }, [autoOpenPiP, autoClosePiP]);
+  }, [autoOpenPiP, autoClosePiP, pipOptions]);
 
   // Gallery resize handler
   const handleGalleryResize = useCallback((calcDrawer = false) => {
@@ -285,7 +316,7 @@ const MeetingPage = React.memo<MeetingPageProps>((props) => {
           pinnedParticipantId={currentProps.pinnedParticipantId}
           isScreenShared={currentProps.isScreenShared}
           isStartingScreenShare={currentProps.isStartingScreenShare}
-          isMobile={currentProps.isMobile}
+          isMobile={isMobileLayout}
         />
       );
     }
@@ -297,6 +328,7 @@ const MeetingPage = React.memo<MeetingPageProps>((props) => {
           // @ts-ignore
           pinnedParticipantId={currentProps.pinnedParticipantId}
           layout={currentProps.layout}
+          isMobile={isMobileLayout}
         />
       );
     }
@@ -310,7 +342,7 @@ const MeetingPage = React.memo<MeetingPageProps>((props) => {
         layout={currentProps.layout}
       />
     );
-  }, [allParticipants, gallerySize, pipSupported]);
+  }, [allParticipants, gallerySize, pipSupported, isMobileLayout]);
 
   // Effects
   useEffect(() => {
@@ -400,20 +432,26 @@ const MeetingPage = React.memo<MeetingPageProps>((props) => {
   };
 
   return (
-    <Container id="meeting-page">
+    <Container id="meeting-page" maxWidth={false} sx={{ width: '100%', maxWidth: '100%', px: 0 }}>
       <Box
         id="stream-gallery"
         sx={{
+          // Keep gallery space in sync with captions panel + footer heights.
           height: props?.closedCaptions.captionsVisible
-            ? 'calc(100vh - 320px) !important'
-            : 'calc(100vh - 80px) !important',
+            ? `calc(100vh - ${
+                FOOTER_HEIGHT +
+                (isSmallScreen ? CAPTIONS_PANEL_HEIGHT_MOBILE : CAPTIONS_PANEL_HEIGHT_DESKTOP)
+              }px) !important`
+            : `calc(100vh - ${FOOTER_HEIGHT}px) !important`,
         }}
       >
         {pipIsOpen ? pipOverlay() : renderLayout()}
       </Box>
 
       {/* Recording Indicator */}
-      {props?.isRecordingActive && <RecordingIndicator />}
+      {props?.isRecordingActive && (
+        <RecordingIndicator didIStart={props?.didIStartServerRecording} />
+      )}
 
       {/* Mute Participant Dialog */}
       <MuteParticipantDialog
@@ -562,11 +600,12 @@ const MeetingPage = React.memo<MeetingPageProps>((props) => {
         stopLocalRecording={props?.stopLocalRecording}
         downloadLocalRecording={props?.downloadLocalRecording}
         localRecordingStatus={props?.localRecordingStatus}
-        isLocalRecordingUploading={props?.isLocalRecordingUploading}
         transcriptionDrawerOpen={props?.transcriptionDrawerOpen}
         handleTranscriptionDrawerOpen={props?.handleTranscriptionDrawerOpen}
         externalStreamsDrawerOpen={props?.externalStreamsDrawerOpen}
         handleExternalStreamsDrawerOpen={props?.handleExternalStreamsDrawerOpen}
+        onAddFakeParticipant={props?.onAddFakeParticipant}
+        onRemoveFakeParticipant={props?.onRemoveFakeParticipant}
       />
     </Container>
   );

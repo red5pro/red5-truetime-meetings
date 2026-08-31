@@ -9,9 +9,15 @@ import { useTranslation } from 'react-i18next';
 import { ConferenceClient } from 'red5pro-conference-sdk';
 import { ConferenceEvents } from 'red5pro-conference-sdk';
 import { MediabunnyRecorder } from '../utils/MediabunnyRecorder';
+import { createCompositeStream } from '../utils/compositeStream';
+import { withTimeout, TimeoutError } from '../utils/withTimeout';
 import JSZip from 'jszip';
 import { S3Client } from '@aws-sdk/client-s3';
 import { Upload } from '@aws-sdk/lib-storage';
+
+// Some browsers (notably Safari) can hang indefinitely while flushing WebCodecs
+// encoders on stop(); cap the wait so the UI never gets stuck showing "recording".
+const RECORDER_STOP_TIMEOUT_MS = 15000;
 
 // Type definitions
 type MessageVariant = 'info' | 'success' | 'error' | 'warning';
@@ -61,6 +67,7 @@ interface UseRecordingReturn {
   uploadError: string | null;
   hasS3Config: boolean;
   recordingStartTime: number | null;
+  didIStartServerRecording: boolean;
 
   // Setters
   setIsRecordingActive: React.Dispatch<React.SetStateAction<boolean>>;
@@ -88,6 +95,9 @@ export const useRecording = (
   conferenceClientRef?: React.MutableRefObject<ConferenceClient | null>,
   onRecordingStop?: () => void,
   onRecordingClear?: () => void,
+  subscribedParticipants?: Record<string, { participant: any; mediaStream: MediaStream }>,
+  isLocalCamOff?: boolean,
+  isLocalMicMuted?: boolean,
 ): UseRecordingReturn => {
   const { t } = useTranslation();
   const config = getRuntimeConfig();
@@ -101,6 +111,7 @@ export const useRecording = (
   const [isRecordingActive, setIsRecordingActive] = useState<boolean>(false);
   const [isRecordingStarting, setIsRecordingStarting] = useState<boolean>(false);
   const [isRecordingStopping, setIsRecordingStopping] = useState<boolean>(false);
+  const [didIStartServerRecording, setDidIStartServerRecording] = useState<boolean>(false);
 
   // Local Recording State
   const [isLocalRecordingActive, setIsLocalRecordingActive] = useState<boolean>(false);
@@ -145,6 +156,40 @@ export const useRecording = (
   useEffect(() => {
     isRecordingStoppingRef.current = isRecordingStopping;
   }, [isRecordingStopping]);
+
+  // Dynamically add/remove streams in the composite when participants join or leave mid-recording
+  useEffect(() => {
+    if (!isLocalRecordingActive || !compositeHandleRef.current) return; // not recording or not compositing
+
+    const current = subscribedParticipants ?? {};
+    const prev = prevSubscribedParticipantsRef.current;
+
+    Object.entries(current).forEach(([uid, { participant, mediaStream }]) => {
+      if (!prev[uid] && mediaStream) {
+        compositeHandleRef.current!.addStream(mediaStream, {
+          isScreenShare: participant?.isScreenSharing ?? false,
+        });
+      }
+    });
+
+    Object.entries(prev).forEach(([uid, { mediaStream }]) => {
+      if (!current[uid] && mediaStream) {
+        compositeHandleRef.current!.removeStream(mediaStream);
+      }
+    });
+
+    prevSubscribedParticipantsRef.current = current;
+  }, [subscribedParticipants, isLocalRecordingActive]);
+
+  // Sync local cam/mic mute state into the composite stream while recording
+  useEffect(() => {
+    if (!compositeHandleRef.current || !localStreamRef.current) return;
+    compositeHandleRef.current.setStreamEnabled(
+      localStreamRef.current,
+      !isLocalCamOff,
+      !isLocalMicMuted,
+    );
+  }, [isLocalCamOff, isLocalMicMuted]);
 
   // Setup event listeners for local recording events
   useEffect(() => {
@@ -352,12 +397,17 @@ export const useRecording = (
           displayMessageRef.current('Recording is starting...', 'info');
         }
 
-        const response = await postDataRef.current(url, null, {
-          headers: token ? { Authorization: `Bearer ${token}` } : {},
-        });
+        const response = await postDataRef.current(
+          url,
+          {},
+          {
+            headers: token ? { Authorization: `Bearer ${token}` } : {},
+          },
+        );
 
         if (response) {
           setIsRecordingActive(true);
+          setDidIStartServerRecording(true);
           log.log('Recording started successfully');
           if (displayMessageRef.current) {
             displayMessageRef.current('Recording started', 'success');
@@ -408,12 +458,17 @@ export const useRecording = (
           displayMessageRef.current('Recording is stopping...', 'info');
         }
 
-        const response = await postDataRef.current(url, null, {
-          headers: token ? { Authorization: `Bearer ${token}` } : {},
-        });
+        const response = await postDataRef.current(
+          url,
+          {},
+          {
+            headers: token ? { Authorization: `Bearer ${token}` } : {},
+          },
+        );
 
         if (response) {
           setIsRecordingActive(false);
+          setDidIStartServerRecording(false);
           log.log('Recording stopped successfully');
           if (displayMessageRef.current) {
             displayMessageRef.current('Recording stopped', 'success');
@@ -439,8 +494,25 @@ export const useRecording = (
   // Mediabunny recorder ref for local recording
   const mediabunnyRecorderRef = useRef<MediabunnyRecorder | null>(null);
   const recordedSegmentsRef = useRef<Blob[]>([]);
+  // Second recorder that captures only the local user's own camera/mic, independent of
+  // the composite (all-participants) stream, so it ends up as its own file in the ZIP.
+  const localOnlyRecorderRef = useRef<MediabunnyRecorder | null>(null);
+  const localOnlyRecordedSegmentsRef = useRef<Blob[]>([]);
+  const localOnlyStreamRef = useRef<MediaStream | null>(null);
   const recordingStartTimeRef = useRef<number | null>(null);
   const currentRecordingStreamRef = useRef<MediaStream | null>(null);
+  // Stable ref to the latest subscribedParticipants for use inside callbacks
+  const subscribedParticipantsRef = useRef(subscribedParticipants ?? {});
+  subscribedParticipantsRef.current = subscribedParticipants ?? {};
+
+  // Tracks which participants were present when the composite was last synced
+  const prevSubscribedParticipantsRef = useRef<
+    Record<string, { participant: any; mediaStream: MediaStream }>
+  >({});
+
+  const compositeHandleRef = useRef<ReturnType<typeof createCompositeStream> | null>(null);
+  // Tracks the local user's stream so mute changes can be applied to the composite
+  const localStreamRef = useRef<MediaStream | null>(null);
 
   /**
    * Start local recording using Mediabunny
@@ -464,12 +536,41 @@ export const useRecording = (
       try {
         setLocalRecordingStatus(null); // Reset status for new recording
         recordedSegmentsRef.current = []; // Clear previous segments
+        localOnlyRecordedSegmentsRef.current = [];
 
-        // Get the stream to record - use provided stream or get from client
-        const recordingStream = stream || client.mediaStreamManager?.getCurrentStream();
-        if (!recordingStream) {
+        // Get the local stream
+        const localStream = stream || client.mediaStreamManager?.getCurrentStream();
+        if (!localStream) {
           throw new Error('No media stream available for recording');
         }
+
+        // Always create a composite stream so participants who join later can be added dynamically
+        const currentParticipants = subscribedParticipantsRef.current;
+        const remoteStreams: MediaStream[] = Object.values(currentParticipants)
+          .map((p) => p.mediaStream)
+          .filter(Boolean);
+
+        const screenShareStreams = new Set<MediaStream>(
+          Object.values(currentParticipants)
+            .filter((p) => p.participant?.isScreenSharing && p.mediaStream)
+            .map((p) => p.mediaStream),
+        );
+
+        const handle = createCompositeStream(
+          [localStream, ...remoteStreams],
+          1280,
+          720,
+          30,
+          screenShareStreams,
+        );
+        compositeHandleRef.current = handle;
+        localStreamRef.current = localStream;
+        const recordingStream = handle.stream;
+        // Seed prev-state so the useEffect doesn't re-add the initial streams
+        prevSubscribedParticipantsRef.current = { ...currentParticipants };
+
+        // Apply the current local mute state immediately
+        handle.setStreamEnabled(localStream, !isLocalCamOff, !isLocalMicMuted);
 
         // Create and start Mediabunny recorder
         const recorder = new MediabunnyRecorder({
@@ -493,6 +594,30 @@ export const useRecording = (
         recordingStartTimeRef.current = Date.now();
 
         await recorder.start(recordingStream);
+
+        // Also record the local user's own camera/mic as a standalone second video.
+        // Clone the tracks so this recorder reads independently of the composite's
+        // <video> element draw loop and isn't affected by composite mute toggles.
+        const localOnlyRecorder = new MediabunnyRecorder({
+          videoCodec: 'avc',
+          audioCodec: 'aac',
+        });
+
+        localOnlyRecorder.onerror = (error) => {
+          log.error('Mediabunny local-only recording error:', error);
+        };
+
+        localOnlyRecorderRef.current = localOnlyRecorder;
+
+        try {
+          const localOnlyStream = new MediaStream(localStream.getTracks().map((t) => t.clone()));
+          localOnlyStreamRef.current = localOnlyStream;
+          await localOnlyRecorder.start(localOnlyStream);
+        } catch (error) {
+          log.error('Failed to start local-only recording:', error);
+          localOnlyRecorderRef.current = null;
+          localOnlyStreamRef.current = null;
+        }
 
         setIsLocalRecordingActive(true);
         setIsLocalRecordingPaused(false);
@@ -542,6 +667,13 @@ export const useRecording = (
       const zip = new JSZip();
       blobs.forEach((blob, index) => {
         const segmentFilename = blobs.length === 1 ? `recording.mp4` : `part${index + 1}.mp4`;
+        zip.file(segmentFilename, blob);
+      });
+      localOnlyRecordedSegmentsRef.current.forEach((blob, index) => {
+        const segmentFilename =
+          localOnlyRecordedSegmentsRef.current.length === 1
+            ? `local-video.mp4`
+            : `local-video-part${index + 1}.mp4`;
         zip.file(segmentFilename, blob);
       });
 
@@ -614,7 +746,30 @@ export const useRecording = (
     }
 
     try {
-      const blob = await mediabunnyRecorderRef.current.stop();
+      const blob = await withTimeout(
+        mediabunnyRecorderRef.current.stop(),
+        RECORDER_STOP_TIMEOUT_MS,
+        'Timed out stopping local recording',
+      );
+
+      // Stop the local-only recorder alongside the composite one
+      if (localOnlyRecorderRef.current) {
+        try {
+          const localOnlyBlob = await withTimeout(
+            localOnlyRecorderRef.current.stop(),
+            RECORDER_STOP_TIMEOUT_MS,
+            'Timed out stopping local-only recording',
+          );
+          if (localOnlyBlob) {
+            localOnlyRecordedSegmentsRef.current.push(localOnlyBlob);
+          }
+        } catch (error) {
+          log.error('Failed to stop local-only recording:', error);
+        }
+        localOnlyStreamRef.current?.getTracks().forEach((track) => track.stop());
+        localOnlyStreamRef.current = null;
+        localOnlyRecorderRef.current = null;
+      }
 
       if (blob) {
         // Add to segments
@@ -640,6 +795,12 @@ export const useRecording = (
       setIsLocalRecordingActive(false);
       setIsLocalRecordingPaused(false);
       currentRecordingStreamRef.current = null;
+      localStreamRef.current = null;
+
+      // Release composite stream resources if one was created
+      compositeHandleRef.current?.cleanup();
+      compositeHandleRef.current = null;
+      prevSubscribedParticipantsRef.current = {};
 
       // Auto-upload if S3 config is present
       if (hasS3Config) {
@@ -653,8 +814,19 @@ export const useRecording = (
       return blob;
     } catch (error) {
       log.error('Failed to stop local recording:', error);
+      setIsLocalRecordingActive(false);
+      setIsLocalRecordingPaused(false);
+      compositeHandleRef.current?.cleanup();
+      compositeHandleRef.current = null;
+      currentRecordingStreamRef.current = null;
+      localStreamRef.current = null;
       if (displayMessageRef.current) {
-        displayMessageRef.current('Failed to stop local recording', 'error');
+        displayMessageRef.current(
+          error instanceof TimeoutError
+            ? 'Stopping local recording took too long and was aborted'
+            : 'Failed to stop local recording',
+          'error',
+        );
       }
       return null;
     }
@@ -668,6 +840,7 @@ export const useRecording = (
 
     try {
       mediabunnyRecorderRef.current.pause();
+      localOnlyRecorderRef.current?.pause();
       setIsLocalRecordingPaused(true);
       log.log('Local recording paused');
       if (displayMessageRef.current) {
@@ -686,6 +859,7 @@ export const useRecording = (
 
     try {
       mediabunnyRecorderRef.current.resume();
+      localOnlyRecorderRef.current?.resume();
       setIsLocalRecordingPaused(false);
       log.log('Local recording resumed');
       if (displayMessageRef.current) {
@@ -716,6 +890,13 @@ export const useRecording = (
       // Add all segments to the ZIP
       blobs.forEach((blob, index) => {
         const segmentFilename = blobs.length === 1 ? `recording.mp4` : `part${index + 1}.mp4`;
+        zip.file(segmentFilename, blob);
+      });
+      localOnlyRecordedSegmentsRef.current.forEach((blob, index) => {
+        const segmentFilename =
+          localOnlyRecordedSegmentsRef.current.length === 1
+            ? `local-video.mp4`
+            : `local-video-part${index + 1}.mp4`;
         zip.file(segmentFilename, blob);
       });
 
@@ -781,10 +962,17 @@ export const useRecording = (
       if (mediabunnyRecorderRef.current?.isRecording) {
         mediabunnyRecorderRef.current.cancel();
       }
+      if (localOnlyRecorderRef.current?.isRecording) {
+        localOnlyRecorderRef.current.cancel();
+      }
+      localOnlyStreamRef.current?.getTracks().forEach((track) => track.stop());
 
       // Clear segments
       recordedSegmentsRef.current = [];
+      localOnlyRecordedSegmentsRef.current = [];
       mediabunnyRecorderRef.current = null;
+      localOnlyRecorderRef.current = null;
+      localOnlyStreamRef.current = null;
       recordingStartTimeRef.current = null;
       currentRecordingStreamRef.current = null;
 
@@ -810,6 +998,7 @@ export const useRecording = (
     isRecordingActive,
     isRecordingStarting,
     isRecordingStopping,
+    didIStartServerRecording,
 
     // Local Recording State
     isLocalRecordingActive,

@@ -92,7 +92,13 @@ function Home() {
               {t('TrueTime Meeting')}
             </Typography>
 
-            <Stack direction="row" spacing={2} alignItems="center" justifyContent="center">
+            <Stack
+              direction={{ xs: 'column', sm: 'row' }}
+              spacing={2}
+              alignItems="center"
+              justifyContent="center"
+              sx={{ width: '100%', maxWidth: '100%' }}
+            >
               <Button
                 color="secondary"
                 variant="contained"
@@ -100,7 +106,7 @@ function Home() {
                 onClick={handleCreateMeeting}
                 style={{ borderRadius: 26 }}
                 id="create_meeting_button"
-                sx={{ minWidth: 120 }}
+                sx={{ minWidth: { xs: '100%', sm: 120 }, width: { xs: '100%', sm: 'auto' } }}
               >
                 {t('New meeting')}
               </Button>
@@ -115,7 +121,10 @@ function Home() {
                 placeholder={t('Room name')}
                 id="room_name"
                 value={roomName}
-                sx={{ minWidth: 200 }}
+                sx={{
+                  minWidth: { xs: '100%', sm: 200 },
+                  width: { xs: '100%', sm: 'auto' },
+                }}
               />
 
               <Typography

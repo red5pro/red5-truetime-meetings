@@ -151,7 +151,8 @@ class Red5Client {
 
       return token;
     } catch (error) {
-      throw new Error('Failed to generate PubNub token', { cause: error });
+      console.error('Failed to generate PubNub token, continuing without it:', error.message);
+      return null;
     }
   }
 
@@ -470,11 +471,17 @@ class Red5Client {
    * @param {string} roomId - Room ID
    * @returns {Promise<Object>} Recording start confirmation with recording stream name
    */
-  async startRecording(roomId) {
+  async startRecording(roomId, data = null, params = null) {
     if (!roomId) {
       throw new Error('roomId is required');
     }
-    return await this._makeConferenceRequest('POST', `/room/${roomId}/startRecording`, roomId);
+    return await this._makeConferenceRequest(
+      'POST',
+      `/room/${roomId}/startRecording`,
+      roomId,
+      data,
+      params,
+    );
   }
 
   /**
@@ -482,11 +489,17 @@ class Red5Client {
    * @param {string} roomId - Room ID
    * @returns {Promise<Object>} Recording stop confirmation
    */
-  async stopRecording(roomId) {
+  async stopRecording(roomId, data = null, params = null) {
     if (!roomId) {
       throw new Error('roomId is required');
     }
-    return await this._makeConferenceRequest('POST', `/room/${roomId}/stopRecording`, roomId);
+    return await this._makeConferenceRequest(
+      'POST',
+      `/room/${roomId}/stopRecording`,
+      roomId,
+      data,
+      params,
+    );
   }
 
   /**

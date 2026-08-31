@@ -255,7 +255,7 @@ function MoreOptionsButton(props: MoreOptionsButtonProps) {
           horizontal: 'left',
         }}
       >
-        <MenuItem disabled={!props?.captionsVisible} onClick={handleCaptionsClick}>
+        <MenuItem disabled={!isCaptionEnabled} onClick={handleCaptionsClick}>
           <ListItemIcon>
             {props?.captionsVisible ? (
               <ClosedCaption sx={{ color: '#fff' }} />
@@ -267,7 +267,7 @@ function MoreOptionsButton(props: MoreOptionsButtonProps) {
             id="more-options-captions-button"
             sx={{
               '& .MuiListItemText-primary': {
-                color: !props?.captionsVisible ? 'text.disabled' : 'text.primary',
+                color: !isCaptionEnabled ? 'text.disabled' : 'text.primary',
               },
             }}
           >
@@ -349,35 +349,63 @@ function MoreOptionsButton(props: MoreOptionsButtonProps) {
           </ListItemText>
         </MenuItem>
 
-        <MenuItem onClick={handleTranscriptionToggle}>
+        <MenuItem
+          onClick={isCaptionEnabled ? handleTranscriptionToggle : undefined}
+          disabled={!isCaptionEnabled}
+        >
           <ListItemIcon>
             <SvgIcon
               size={24}
               viewBox="0 0 500 500"
               name={'call-settings'}
               color={getMenuIconColor()}
+              // @ts-ignore
+              style={{ opacity: !isCaptionEnabled ? 0.5 : 1 }}
             />
           </ListItemIcon>
-          <ListItemText id={'more-options-transcription-button'}>
-            {t('Transcriptions')}
-          </ListItemText>
+          <ListItemText
+            id={'more-options-transcription-button'}
+            primary={
+              !isCaptionEnabled
+                ? t('Upgrade your plan to support closed captioning')
+                : t('Transcriptions')
+            }
+            sx={{
+              '& .MuiListItemText-primary': {
+                color: !isCaptionEnabled ? 'text.disabled' : 'text.primary',
+              },
+            }}
+          />
         </MenuItem>
 
-        {!props?.hideExternalStreams && (
-          <MenuItem onClick={handleExternalStreamsToggle}>
-            <ListItemIcon>
-              <SvgIcon
-                size={24}
-                viewBox="0 0 512 512"
-                name={'database'}
-                color={getMenuIconColor()}
-              />
-            </ListItemIcon>
-            <ListItemText id={'more-options-external-streams-button'}>
-              {t('External Streams')}
-            </ListItemText>
-          </MenuItem>
-        )}
+        <MenuItem
+          onClick={!props?.hideExternalStreams ? handleExternalStreamsToggle : undefined}
+          disabled={props?.hideExternalStreams}
+        >
+          <ListItemIcon>
+            <SvgIcon
+              size={24}
+              viewBox="0 0 512 512"
+              name={'database'}
+              color={getMenuIconColor()}
+              // @ts-ignore
+              style={{ opacity: props?.hideExternalStreams ? 0.5 : 1 }}
+            />
+          </ListItemIcon>
+          <ListItemText
+            id={'more-options-external-streams-button'}
+            primary={
+              props?.hideExternalStreams
+                ? t('Upgrade your plan to support external streams')
+                : t('External Streams')
+            }
+            sx={{
+              '& .MuiListItemText-primary': {
+                color: props?.hideExternalStreams ? 'text.disabled' : 'text.primary',
+              },
+            }}
+          />
+        </MenuItem>
       </Menu>
     </>
   );

@@ -284,7 +284,11 @@ const LobbyPage = React.memo<LobbyPageProps>((props) => {
   };
 
   return (
-    <Container id="lobby-page">
+    <Container
+      id="lobby-page"
+      maxWidth={false}
+      sx={{ width: '100%', maxWidth: '100%', px: { xs: 2, sm: 3 } }}
+    >
       <SettingsDialog
         open={dialogOpen}
         onClose={handleSettingsClose}

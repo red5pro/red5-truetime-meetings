@@ -156,11 +156,11 @@ export const useDeviceManagement = (
     }
   }, []);
 
-  const cameraSelected = useCallback(
-    (value: string): void => {
-      setSelectedDevices({ videoDeviceId: value });
+  const switchVideoDeviceById = useCallback(
+    (deviceId: string): void => {
+      setSelectedDevices({ videoDeviceId: deviceId });
       try {
-        clientRef.current.switchVideoDevice(value).then((mediaStream) => {
+        clientRef.current.switchVideoDevice(deviceId).then((mediaStream) => {
           if (mediaStream) {
             const tempLocalVideo = document.getElementById('red5pro-publisher') as HTMLVideoElement;
             if (tempLocalVideo) tempLocalVideo.srcObject = mediaStream;
@@ -171,6 +171,27 @@ export const useDeviceManagement = (
       }
     },
     [setSelectedDevices],
+  );
+
+  const cameraSelected = useCallback(
+    (value: string): void => {
+      if (value.startsWith('facingMode:')) {
+        const facingMode = value.split(':')[1] as 'user' | 'environment';
+        navigator.mediaDevices
+          .getUserMedia({ video: { facingMode } })
+          .then((tempStream) => {
+            const deviceId = tempStream.getVideoTracks()[0]?.getSettings()?.deviceId;
+            tempStream.getTracks().forEach((t) => t.stop());
+            if (deviceId) {
+              switchVideoDeviceById(deviceId);
+            }
+          })
+          .catch((e) => log.error('Failed to switch camera by facing mode:', e));
+        return;
+      }
+      switchVideoDeviceById(value);
+    },
+    [switchVideoDeviceById],
   );
 
   const microphoneSelected = useCallback(

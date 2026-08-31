@@ -3,7 +3,12 @@ import { Box } from '@mui/system';
 
 import VideoCard from '../../Components/Cards/VideoCard.tsx';
 import OthersCard from '../../Components/Cards/OthersCard.tsx';
-import { calculateConnectionQualityScore, isNull } from '../../utils/utils.tsx';
+import {
+  calculateConnectionQualityScore,
+  isNull,
+  isScreenShareParticipant,
+} from '../../utils/utils.tsx';
+import { useSpeakerOrder } from '../../hooks/useSpeakerOrder.ts';
 import { LayoutAutoProps, Participant, ParticipantObject } from './types.ts';
 
 // Constants
@@ -32,6 +37,13 @@ const LayoutAuto = React.memo<LayoutAutoProps>((props) => {
     currentConferenceClient,
   } = props;
 
+  // Presenter and active speakers first, so the sidebar shows who is actually talking
+  const { orderedParticipants } = useSpeakerOrder({
+    allParticipants,
+    pinnedParticipantId,
+    talkers,
+  });
+
   // Memoized layout class calculator
   const getLayoutClass = useCallback(
     (participant: Participant): LayoutClass => {
@@ -41,7 +53,7 @@ const LayoutAuto = React.memo<LayoutAutoProps>((props) => {
         return LAYOUT_CLASSES.PINNED_MAIN;
       }
 
-      const sidebarParticipants = allParticipants
+      const sidebarParticipants = orderedParticipants
         .filter((p) => p.participant.uid !== pinnedParticipantId)
         .slice(0, MAX_VIDEO_AT_SIDE);
 
@@ -49,16 +61,17 @@ const LayoutAuto = React.memo<LayoutAutoProps>((props) => {
 
       return sideIndex !== -1 ? LAYOUT_CLASSES.SIDEBAR_VIDEO : LAYOUT_CLASSES.IN_OTHERS;
     },
-    [pinLayout, pinnedParticipantId, allParticipants],
+    [pinLayout, pinnedParticipantId, orderedParticipants],
   );
 
-  // Memoized sidebar videos for performance
+  // Memoized sidebar videos for performance. Speaker order drives --sidebar-index, so tiles
+  // slide into place via CSS instead of being remounted.
   const sidebarVideos = useMemo(() => {
     if (!pinLayout) return [];
-    return allParticipants.filter(
+    return orderedParticipants.filter(
       (p) => getLayoutClass(p.participant) === LAYOUT_CLASSES.SIDEBAR_VIDEO,
     );
-  }, [allParticipants, pinLayout, getLayoutClass]);
+  }, [orderedParticipants, pinLayout, getLayoutClass]);
 
   // Memoized others count calculation
   const othersCount = useMemo(() => {
@@ -82,8 +95,9 @@ const LayoutAuto = React.memo<LayoutAutoProps>((props) => {
   // Video ref handler
   const handleVideoRef = useCallback(
     (videoElement: HTMLVideoElement | null, mediaStream: MediaStream | null) => {
-      if (videoElement && !isNull(mediaStream) && !videoElement.srcObject) {
+      if (videoElement && !isNull(mediaStream) && videoElement.srcObject !== mediaStream) {
         videoElement.srcObject = mediaStream;
+        videoElement.play().catch(() => {});
       }
     },
     [],
@@ -91,13 +105,13 @@ const LayoutAuto = React.memo<LayoutAutoProps>((props) => {
 
   // Render individual video
   const renderVideo = useCallback(
-    (participantObject: ParticipantObject, _index: number) => {
+    (participantObject: ParticipantObject, _index: number, forceAudioOnly: boolean = false) => {
       const { participant } = participantObject;
       const layoutClass = getLayoutClass(participant);
       const isOwnScreenShare =
         participant.isScreenSharing === true && participant.ownerStreamId === publishStreamId;
       const isMine = participant.uid === streamName;
-      const isHidden = layoutClass === LAYOUT_CLASSES.IN_OTHERS;
+      const isHidden = forceAudioOnly || layoutClass === LAYOUT_CLASSES.IN_OTHERS;
 
       // Calculate sidebar index for CSS positioning
       const sidebarIndex =
@@ -119,7 +133,7 @@ const LayoutAuto = React.memo<LayoutAutoProps>((props) => {
       return (
         <Box
           key={`video-${participant.uid}`}
-          className={`single-video-container ${layoutClass}`}
+          className={`single-video-container ${isHidden ? 'audio-only-participant' : layoutClass}`}
           style={containerStyle}
         >
           <VideoCard
@@ -144,8 +158,8 @@ const LayoutAuto = React.memo<LayoutAutoProps>((props) => {
             pinVideo={pinVideo}
             unpinVideo={unpinVideo}
             layout={layout}
-            // @ts-ignore
             talkers={talkers}
+            isScreenShare={isScreenShareParticipant(participant)}
             connectionQuality={connectionQualityScore}
             // @ts-ignore
             setParticipantIdMuted={(participantId: string) =>
@@ -193,17 +207,44 @@ const LayoutAuto = React.memo<LayoutAutoProps>((props) => {
     );
   }, [pinLayout, othersCount, sidebarVideos.length]);
 
-  // Get visible participants based on desired tile count
-  const visibleParticipants = useMemo(() => {
+  // Split visible and audio-only participants for pinned mode
+  const { visibleParticipants, audioOnlyParticipants } = useMemo(() => {
     const tileCount = globals?.desiredTileCount || allParticipants.length;
-    return allParticipants.slice(0, tileCount);
-  }, [allParticipants, globals?.desiredTileCount]);
+
+    if (!pinLayout) {
+      return {
+        visibleParticipants: allParticipants.slice(0, tileCount),
+        audioOnlyParticipants: [] as ParticipantObject[],
+      };
+    }
+
+    const visible: ParticipantObject[] = [];
+    const audioOnly: ParticipantObject[] = [];
+
+    allParticipants.forEach((participantObject) => {
+      const layoutClass = getLayoutClass(participantObject.participant);
+      if (layoutClass === LAYOUT_CLASSES.IN_OTHERS) {
+        audioOnly.push(participantObject);
+      } else {
+        visible.push(participantObject);
+      }
+    });
+
+    return { visibleParticipants: visible, audioOnlyParticipants: audioOnly };
+  }, [allParticipants, globals?.desiredTileCount, pinLayout, getLayoutClass]);
 
   return (
-    <Box className={containerClass}>
-      {visibleParticipants.map(renderVideo)}
-      {renderOthersCard()}
-    </Box>
+    <>
+      <Box className={containerClass}>
+        {visibleParticipants.map((participantObject, index) =>
+          renderVideo(participantObject, index),
+        )}
+        {renderOthersCard()}
+      </Box>
+      {audioOnlyParticipants.map((participantObject, index) =>
+        renderVideo(participantObject, index, true),
+      )}
+    </>
   );
 });
 

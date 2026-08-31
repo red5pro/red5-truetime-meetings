@@ -1,5 +1,6 @@
 import React from 'react';
 import { USER_ROLES } from '../constants/userRoles';
+import { MetaDataKeys } from '../constants/metaDataKeys';
 import { peerConfig } from '../constants/config';
 import { getRuntimeConfig } from './configStore';
 
@@ -171,6 +172,26 @@ export function parseMetaData(metaData: string | null | undefined): Record<strin
   } catch {
     return {};
   }
+}
+
+// Falls back to the metadata: the flag is only set on participants we got a join event for.
+export function isScreenShareParticipant(participant?: {
+  isScreenSharing?: boolean;
+  metaData?: string;
+}): boolean {
+  if (!participant) return false;
+  if (participant.isScreenSharing === true) return true;
+  return parseMetaData(participant.metaData)[MetaDataKeys.IS_SCREEN_SHARING] === true;
+}
+
+export function screenShareOwnerId(participant?: {
+  ownerStreamId?: string;
+  metaData?: string;
+}): string | undefined {
+  if (!participant) return undefined;
+  return (
+    participant.ownerStreamId || parseMetaData(participant.metaData)[MetaDataKeys.OWNER_STREAM_ID]
+  );
 }
 
 export function getFirstLetter(str: string): string {
