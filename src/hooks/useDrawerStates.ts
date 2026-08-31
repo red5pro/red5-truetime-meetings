@@ -1,5 +1,5 @@
 // hooks/useDrawerStates.ts
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 
 // Type definitions
 interface UseDrawerStatesReturn {
@@ -29,7 +29,7 @@ export const useDrawerStates = (): UseDrawerStatesReturn => {
   const [transcriptionDrawerOpen, setTranscriptionDrawerOpen] = useState<boolean>(false);
   const [externalStreamsDrawerOpen, setExternalStreamsDrawerOpen] = useState<boolean>(false);
 
-  const closeAllDrawers = (): void => {
+  const closeAllDrawers = useCallback((): void => {
     setInfoDrawerOpen(false);
     setMessageDrawerOpen(false);
     setParticipantListDrawerOpen(false);
@@ -37,42 +37,63 @@ export const useDrawerStates = (): UseDrawerStatesReturn => {
     setLocalRecordingDrawerOpen(false);
     setTranscriptionDrawerOpen(false);
     setExternalStreamsDrawerOpen(false);
-  };
+  }, []);
 
-  const handleInfoDrawerOpen = (open: boolean): void => {
-    if (open) closeAllDrawers();
-    setInfoDrawerOpen(open);
-  };
+  const handleInfoDrawerOpen = useCallback(
+    (open: boolean): void => {
+      if (open) closeAllDrawers();
+      setInfoDrawerOpen(open);
+    },
+    [closeAllDrawers],
+  );
 
-  const handleMessageDrawerOpen = (open: boolean): void => {
-    if (open) closeAllDrawers();
-    setMessageDrawerOpen(open);
-  };
+  const handleMessageDrawerOpen = useCallback(
+    (open: boolean): void => {
+      if (open) closeAllDrawers();
+      setMessageDrawerOpen(open);
+    },
+    [closeAllDrawers],
+  );
 
-  const handleParticipantListOpen = (open: boolean): void => {
-    if (open) closeAllDrawers();
-    setParticipantListDrawerOpen(open);
-  };
+  const handleParticipantListOpen = useCallback(
+    (open: boolean): void => {
+      if (open) closeAllDrawers();
+      setParticipantListDrawerOpen(open);
+    },
+    [closeAllDrawers],
+  );
 
-  const handleEffectsOpen = (open: boolean): void => {
-    if (open) closeAllDrawers();
-    setEffectsDrawerOpen(open);
-  };
+  const handleEffectsOpen = useCallback(
+    (open: boolean): void => {
+      if (open) closeAllDrawers();
+      setEffectsDrawerOpen(open);
+    },
+    [closeAllDrawers],
+  );
 
-  const handleLocalRecordingDrawerOpen = (open: boolean): void => {
-    if (open) closeAllDrawers();
-    setLocalRecordingDrawerOpen(open);
-  };
+  const handleLocalRecordingDrawerOpen = useCallback(
+    (open: boolean): void => {
+      if (open) closeAllDrawers();
+      setLocalRecordingDrawerOpen(open);
+    },
+    [closeAllDrawers],
+  );
 
-  const handleTranscriptionDrawerOpen = (open: boolean): void => {
-    if (open) closeAllDrawers();
-    setTranscriptionDrawerOpen(open);
-  };
+  const handleTranscriptionDrawerOpen = useCallback(
+    (open: boolean): void => {
+      if (open) closeAllDrawers();
+      setTranscriptionDrawerOpen(open);
+    },
+    [closeAllDrawers],
+  );
 
-  const handleExternalStreamsDrawerOpen = (open: boolean): void => {
-    if (open) closeAllDrawers();
-    setExternalStreamsDrawerOpen(open);
-  };
+  const handleExternalStreamsDrawerOpen = useCallback(
+    (open: boolean): void => {
+      if (open) closeAllDrawers();
+      setExternalStreamsDrawerOpen(open);
+    },
+    [closeAllDrawers],
+  );
 
   return {
     infoDrawerOpen,

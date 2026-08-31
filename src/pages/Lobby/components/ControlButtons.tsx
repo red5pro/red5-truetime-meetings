@@ -7,6 +7,7 @@ import MicButton from '../../../Components/Footer/Components/MicButton.tsx';
 import { Tooltip } from '@mui/material';
 import { CustomizedBtn, rectangularStyle } from '../../../Components/CustomizedBtn.tsx';
 import { SvgIcon } from '../../../Components/SvgIcon.tsx';
+import { isMobile } from 'react-device-detect';
 
 export const ControlButtons = React.memo<ControlButtonsProps>(
   ({
@@ -55,20 +56,22 @@ export const ControlButtons = React.memo<ControlButtonsProps>(
           toggleMic={toggleMic}
           microphoneButtonDisabled={microphoneButtonDisabled}
         />
-        <Box sx={{ position: 'absolute', bottom: 16, right: 16 }}>
-          <Tooltip title={t('Virtual Effects')} placement="top">
-            <CustomizedBtn
-              glass={glass}
-              variant="contained"
-              color="secondary"
-              sx={rectangularStyle}
-              onClick={onVirtualEffectsClick}
-              id="lobby-page-virtual-effects"
-            >
-              <SvgIcon size={24} viewBox="0 0 500 500" name="virtual-effects" color="#FFF" />
-            </CustomizedBtn>
-          </Tooltip>
-        </Box>
+        {!isMobile && (
+          <Box sx={{ position: 'absolute', bottom: 16, right: 16 }}>
+            <Tooltip title={t('Virtual Effects')} placement="top">
+              <CustomizedBtn
+                glass={glass}
+                variant="contained"
+                color="secondary"
+                sx={rectangularStyle}
+                onClick={onVirtualEffectsClick}
+                id="lobby-page-virtual-effects"
+              >
+                <SvgIcon size={24} viewBox="0 0 500 500" name="virtual-effects" color="#FFF" />
+              </CustomizedBtn>
+            </Tooltip>
+          </Box>
+        )}
       </Box>
     );
   },

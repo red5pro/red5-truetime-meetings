@@ -17,6 +17,7 @@ import { Check } from '@mui/icons-material';
 import { CustomizedBtn, rectangularStyle } from '../../CustomizedBtn.tsx';
 import { Box } from '@mui/system';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
+import { isMobile } from 'react-device-detect';
 
 interface Device {
   deviceId: string;
@@ -45,7 +46,13 @@ function CameraButton(props: CameraButtonProps) {
   const theme = useTheme();
   const [_, setHovered] = React.useState<boolean>(false);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const [selectedFacingMode, setSelectedFacingMode] = useState<'user' | 'environment' | null>(null);
   const open = Boolean(anchorEl);
+
+  const mobileCameraOptions = [
+    { id: 'facingMode:user', label: t('Front Camera'), facingMode: 'user' as const },
+    { id: 'facingMode:environment', label: t('Back Camera'), facingMode: 'environment' as const },
+  ];
 
   // Default showCameraOptions to true if not specified
   const showCameraOptions = props.showCameraOptions !== false;
@@ -94,6 +101,10 @@ function CameraButton(props: CameraButtonProps) {
   };
 
   const handleCameraSelect = (deviceId: string) => {
+    if (deviceId.startsWith('facingMode:')) {
+      const facingMode = deviceId.split(':')[1] as 'user' | 'environment';
+      setSelectedFacingMode(facingMode);
+    }
     props.onCameraChange?.(deviceId);
     handleMenuClose();
   };
@@ -219,7 +230,32 @@ function CameraButton(props: CameraButtonProps) {
             </Typography>
             <Divider />
 
-            {props.videoInputs && props.videoInputs.length > 0 ? (
+            {isMobile ? (
+              mobileCameraOptions.map((option) => (
+                <MenuItem
+                  key={option.id}
+                  onClick={() => handleCameraSelect(option.id)}
+                  selected={selectedFacingMode === option.facingMode}
+                >
+                  <ListItemIcon>
+                    {selectedFacingMode === option.facingMode ? (
+                      <Check sx={{ color: '#4CAF50' }} />
+                    ) : (
+                      <SvgIcon
+                        size={20}
+                        viewBox="0 0 500 500"
+                        name="camera"
+                        color={theme.palette.text.secondary}
+                      />
+                    )}
+                  </ListItemIcon>
+                  <ListItemText
+                    primary={option.label}
+                    primaryTypographyProps={{ variant: 'body2' }}
+                  />
+                </MenuItem>
+              ))
+            ) : props.videoInputs && props.videoInputs.length > 0 ? (
               props.videoInputs.map((device) => (
                 <MenuItem
                   key={device.deviceId}

@@ -13,6 +13,7 @@ import {
   ListItemText,
   ListItemSecondaryAction,
   CircularProgress,
+  Tooltip,
 } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 import CloseDrawerButton from './DrawerButton';
@@ -20,7 +21,7 @@ import { getRed5DrawerStyle } from '../styles/themeUtil';
 import { SvgIcon } from './SvgIcon';
 import { ExternalStream } from '../hooks/useExternalStreams';
 
-import { parseMetaData } from '../utils/utils';
+import { parseMetaData, truncateText } from '../utils/utils';
 import { MetaDataKeys } from '../constants/metaDataKeys';
 
 interface ExternalStreamsDrawerProps {
@@ -119,6 +120,7 @@ const ExternalStreamsDrawer = React.memo<ExternalStreamsDrawerProps>((props) => 
       id="external-streams-drawer"
       open={open}
       variant="persistent"
+      PaperProps={{ style: { pointerEvents: open ? 'auto' : 'none' } }}
     >
       <ContentGrid
         container
@@ -178,10 +180,12 @@ const ExternalStreamsDrawer = React.memo<ExternalStreamsDrawerProps>((props) => 
                       },
                     }}
                   >
-                    <ListItemText
-                      primary={stream.streamName}
-                      secondary={isJoined ? t('Joined') : null}
-                    />
+                    <Tooltip title={stream.streamName} placement="top">
+                      <ListItemText
+                        primary={truncateText(stream.streamName, 8)}
+                        secondary={isJoined ? t('Joined') : null}
+                      />
+                    </Tooltip>
                     <ListItemSecondaryAction>
                       <Button
                         variant={isJoined ? 'outlined' : 'contained'}

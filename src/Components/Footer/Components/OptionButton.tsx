@@ -18,6 +18,9 @@ import {
   FormControlLabel,
   Checkbox,
   Box,
+  Chip,
+  Typography,
+  Collapse,
 } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 import GeneralSettingsDialog from './GeneralSettingsDialog.tsx';
@@ -29,6 +32,7 @@ import { getGlassMenuStyle } from '../../../styles/themeUtil.js';
 import { PictureInPicture, PictureInPictureAlt } from '@mui/icons-material';
 import log from 'loglevel';
 import { getRuntimeConfig } from '../../../utils/configStore';
+import { isMobile } from 'react-device-detect';
 
 interface Device {
   deviceId: string;
@@ -135,9 +139,6 @@ function OptionButton(props: OptionButtonProps) {
   const [diagnosticDialogOpen, setDiagnosticDialogOpen] = React.useState<boolean>(false);
   const [generalSettingsDialogOpen, setGeneralSettingsDialogOpen] = React.useState<boolean>(false);
   const [recordingModalOpen, setRecordingModalOpen] = React.useState<boolean>(false);
-  const [recordSeparately, setRecordSeparately] = React.useState<boolean>(() => {
-    return localStorage.getItem('recordSeparately') === 'true';
-  });
   const [localRecordingChecked, setLocalRecordingChecked] = React.useState<boolean>(() => {
     return localStorage.getItem('localRecordingChecked') === 'true';
   });
@@ -146,10 +147,12 @@ function OptionButton(props: OptionButtonProps) {
       return localStorage.getItem('serverSideRecordingChecked') === 'true';
     },
   );
-
-  React.useEffect(() => {
-    localStorage.setItem('recordSeparately', String(recordSeparately));
-  }, [recordSeparately]);
+  const [gridRecordingChecked, setGridRecordingChecked] = React.useState<boolean>(() => {
+    return localStorage.getItem('gridRecordingChecked') !== 'false';
+  });
+  const [recordSeparatelyChecked, setRecordSeparatelyChecked] = React.useState<boolean>(() => {
+    return localStorage.getItem('recordSeparatelyChecked') === 'true';
+  });
 
   React.useEffect(() => {
     localStorage.setItem('localRecordingChecked', String(localRecordingChecked));
@@ -158,11 +161,20 @@ function OptionButton(props: OptionButtonProps) {
   React.useEffect(() => {
     localStorage.setItem('serverSideRecordingChecked', String(serverSideRecordingChecked));
   }, [serverSideRecordingChecked]);
+
+  React.useEffect(() => {
+    localStorage.setItem('gridRecordingChecked', String(gridRecordingChecked));
+  }, [gridRecordingChecked]);
+
+  React.useEffect(() => {
+    localStorage.setItem('recordSeparatelyChecked', String(recordSeparatelyChecked));
+  }, [recordSeparatelyChecked]);
   const [_hovered, setHovered] = React.useState<boolean>(false);
   const theme = useTheme();
   const themeContext = React.useContext(ThemeContext);
 
   const isRecordingEnabled = getRuntimeConfig().VITE_ENABLE_RECORDING === 'true';
+  const isCaptionEnabled = getRuntimeConfig().VITE_ENABLE_CLOSED_CAPTION === 'true';
 
   // Language and theme states
   const [currentLanguage, setCurrentLanguage] = React.useState<string>(
@@ -290,6 +302,7 @@ function OptionButton(props: OptionButtonProps) {
   };
 
   const handleRecordingConfirm = (): void => {
+    const recordSeparately = serverSideRecordingChecked && recordSeparatelyChecked;
     props?.startRecord?.(recordSeparately, serverSideRecordingChecked, localRecordingChecked);
     if (localRecordingChecked && props.startLocalRecording) {
       props.startLocalRecording();
@@ -298,8 +311,7 @@ function OptionButton(props: OptionButtonProps) {
   };
 
   const handleStopRecording = (): void => {
-    // We can expose these options to the UI if needed later. For now, default to true or respect configured behavior if any.
-    props?.stopRecord?.(serverSideRecordingChecked, props.isLocalRecordingActive);
+    props?.stopRecord?.(props.isRecordingActive, props.isLocalRecordingActive);
     if (props.isLocalRecordingActive && props.stopLocalRecording) {
       props.stopLocalRecording();
     }
@@ -383,45 +395,135 @@ function OptionButton(props: OptionButtonProps) {
         PaperProps={{
           sx: {
             borderRadius: 2,
-            minWidth: 300,
+            minWidth: 420,
           },
         }}
       >
         <DialogTitle>{t('Recording Options')}</DialogTitle>
         <DialogContent>
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            {t(
+              'Pick where this meeting is captured. Cloud and on-device are separate recordings — select either or both.',
+            )}
+          </Typography>
+          <Box
+            sx={{
+              border: '1px solid',
+              borderColor: serverSideRecordingChecked ? 'error.main' : 'divider',
+              borderRadius: 2,
+              p: 1,
+              mb: 1.5,
+            }}
+          >
             <FormControlLabel
-              control={
-                <Checkbox
-                  checked={recordSeparately}
-                  onChange={(e) => setRecordSeparately(e.target.checked)}
-                />
-              }
-              label={t('Record participants separately')}
-            />
-            <FormControlLabel
+              sx={{ alignItems: 'flex-start', width: '100%', m: 0 }}
               control={
                 <Checkbox
                   checked={serverSideRecordingChecked}
                   onChange={(e) => setServerSideRecordingChecked(e.target.checked)}
                 />
               }
-              label={t('Server Side Recording')}
+              label={
+                <Box sx={{ pt: 1 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Typography fontWeight={600}>{t('Server-side recording')}</Typography>
+                    <Chip label={t('SERVER-SIDE')} size="small" />
+                  </Box>
+                  <Typography variant="body2" color="text.secondary">
+                    {t(
+                      'Recorded on Red5 Cloud as an MP4 file, independent of your device and connection. Best for sharing and long sessions.',
+                    )}
+                  </Typography>
+                </Box>
+              }
             />
+            <Collapse in={serverSideRecordingChecked}>
+              <Box sx={{ pl: 4, pr: 1, pb: 0.5 }}>
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      size="small"
+                      checked={gridRecordingChecked}
+                      onChange={(e) => setGridRecordingChecked(e.target.checked)}
+                    />
+                  }
+                  sx={{ alignItems: 'flex-start', width: '100%', m: 0, mt: 1 }}
+                  label={
+                    <Box>
+                      <Typography fontWeight={500}>{t('Grid recording')}</Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        {t('Records the meeting grid view as a single MP4 file.')}
+                      </Typography>
+                    </Box>
+                  }
+                />
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      size="small"
+                      checked={recordSeparatelyChecked}
+                      onChange={(e) => setRecordSeparatelyChecked(e.target.checked)}
+                    />
+                  }
+                  sx={{ alignItems: 'flex-start', width: '100%', m: 0, mt: 1.5 }}
+                  label={
+                    <Box>
+                      <Typography fontWeight={500}>
+                        {t('Record participants separately')}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        {t(
+                          "Records each participant's audio and video as an independent MP4 file.",
+                        )}
+                      </Typography>
+                    </Box>
+                  }
+                />
+              </Box>
+            </Collapse>
+          </Box>
+          <Box
+            sx={{
+              border: '1px solid',
+              borderColor: localRecordingChecked ? 'error.main' : 'divider',
+              borderRadius: 2,
+              p: 1,
+            }}
+          >
             <FormControlLabel
+              sx={{ alignItems: 'flex-start', width: '100%', m: 0 }}
               control={
                 <Checkbox
                   checked={localRecordingChecked}
                   onChange={(e) => setLocalRecordingChecked(e.target.checked)}
                 />
               }
-              label={t('Local Recording')}
+              label={
+                <Box sx={{ pt: 1 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Typography fontWeight={600}>{t('Local recording')}</Typography>
+                    <Chip label={t('ON DEVICE')} size="small" />
+                  </Box>
+                  <Typography variant="body2" color="text.secondary">
+                    {t(
+                      'Saved straight to this device as a single file. Captures the meeting exactly as you see it.',
+                    )}
+                  </Typography>
+                </Box>
+              }
             />
           </Box>
         </DialogContent>
         <DialogActions>
           <Button onClick={handleRecordingModalClose}>{t('Cancel')}</Button>
-          <Button onClick={handleRecordingConfirm} variant="contained">
+          <Button
+            onClick={handleRecordingConfirm}
+            variant="contained"
+            disabled={
+              (!serverSideRecordingChecked && !localRecordingChecked) ||
+              (serverSideRecordingChecked && !gridRecordingChecked && !recordSeparatelyChecked)
+            }
+          >
             {t('Start Recording')}
           </Button>
         </DialogActions>
@@ -510,45 +612,47 @@ function OptionButton(props: OptionButtonProps) {
         )}
 
         {/* Picture-in-Picture Menu Item */}
-        <MenuItem
-          key="picture-in-picture"
-          onClick={handlePiPClick}
-          disabled={pipInfo.disabled}
-          id="picture-in-picture-button"
-          sx={{
-            backgroundColor: pipInfo.active ? 'rgba(25, 118, 210, 0.12)' : 'transparent',
-            '&:hover': {
-              backgroundColor: pipInfo.active ? 'rgba(25, 118, 210, 0.2)' : undefined,
-            },
-          }}
-        >
-          <ListItemIcon>
-            {props?.pipSupported ? (
-              <PictureInPicture
-                sx={{
-                  color: getMenuIconColor(),
-                  opacity: pipInfo.disabled ? 0.5 : 1,
-                }}
-              />
-            ) : (
-              <PictureInPictureAlt
-                sx={{
-                  color: getMenuIconColor(),
-                  opacity: 0.5,
-                }}
-              />
-            )}
-          </ListItemIcon>
-          <ListItemText
-            primary={pipInfo.text}
+        {!isMobile && (
+          <MenuItem
+            key="picture-in-picture"
+            onClick={handlePiPClick}
+            disabled={pipInfo.disabled}
+            id="picture-in-picture-button"
             sx={{
-              '& .MuiListItemText-primary': {
-                color: pipInfo.disabled ? 'text.disabled' : 'text.primary',
-                fontWeight: pipInfo.active ? 500 : 400,
+              backgroundColor: pipInfo.active ? 'rgba(25, 118, 210, 0.12)' : 'transparent',
+              '&:hover': {
+                backgroundColor: pipInfo.active ? 'rgba(25, 118, 210, 0.2)' : undefined,
               },
             }}
-          />
-        </MenuItem>
+          >
+            <ListItemIcon>
+              {props?.pipSupported ? (
+                <PictureInPicture
+                  sx={{
+                    color: getMenuIconColor(),
+                    opacity: pipInfo.disabled ? 0.5 : 1,
+                  }}
+                />
+              ) : (
+                <PictureInPictureAlt
+                  sx={{
+                    color: getMenuIconColor(),
+                    opacity: 0.5,
+                  }}
+                />
+              )}
+            </ListItemIcon>
+            <ListItemText
+              primary={pipInfo.text}
+              sx={{
+                '& .MuiListItemText-primary': {
+                  color: pipInfo.disabled ? 'text.disabled' : 'text.primary',
+                  fontWeight: pipInfo.active ? 500 : 400,
+                },
+              }}
+            />
+          </MenuItem>
+        )}
 
         {props?.isRecordingActive === false && props?.isLocalRecordingActive === false && (
           <MenuItem
@@ -626,7 +730,7 @@ function OptionButton(props: OptionButtonProps) {
           </ListItemText>
         </MenuItem>
 
-        {props?.isPlayOnly === false && (
+        {props?.isPlayOnly === false && !isMobile && (
           <MenuItem key="virtual-effects" onClick={handleVirtualEffects} id="virtual-effects">
             <ListItemIcon>
               <SvgIcon
@@ -652,16 +756,34 @@ function OptionButton(props: OptionButtonProps) {
           <ListItemText>{t('Diagnostic')}</ListItemText>
         </MenuItem>
 
-        <MenuItem key="transcription" onClick={handleTranscriptionToggle} id="transcription">
+        <MenuItem
+          key="transcription"
+          onClick={isCaptionEnabled ? handleTranscriptionToggle : undefined}
+          disabled={!isCaptionEnabled}
+          id="transcription"
+        >
           <ListItemIcon>
             <SvgIcon
               size={24}
               viewBox="0 0 500 500"
-              name={'call-settings'} // Reusing call-settings icon if no specific transcription icon exists
+              name={'call-settings'}
               color={getMenuIconColor()}
+              // @ts-ignore
+              style={{ opacity: !isCaptionEnabled ? 0.5 : 1 }}
             />
           </ListItemIcon>
-          <ListItemText>{t('Transcriptions')}</ListItemText>
+          <ListItemText
+            primary={
+              !isCaptionEnabled
+                ? t('Upgrade your plan to support closed captioning')
+                : t('Transcriptions')
+            }
+            sx={{
+              '& .MuiListItemText-primary': {
+                color: !isCaptionEnabled ? 'text.disabled' : 'text.primary',
+              },
+            }}
+          />
         </MenuItem>
 
         <MenuItem

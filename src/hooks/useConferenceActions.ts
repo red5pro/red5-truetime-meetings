@@ -49,6 +49,8 @@ interface RoomState {
   isPlayOnly: boolean;
   setIsJoining: (joining: boolean) => void;
   setIsWaitingApproval: (waitingApproval: boolean) => void;
+  setIsPublished: (published: boolean) => void;
+  setIsPlayed: (played: boolean) => void;
 }
 
 interface MediaControls {
@@ -64,6 +66,7 @@ interface ParticipantsHook {
   setParticipants: (participants: Participants) => void;
   setSubscribedParticipants: (participants: Participants) => void;
   talkerAudioLevelsRef: MutableRefObject<{ [key: string]: number }>;
+  resetTalkers: () => void;
   pinnedParticipantIdRef: MutableRefObject<string | null>;
   setPinnedParticipantId: (id: string | null) => void;
   setGuestsWaitingApproval: React.Dispatch<React.SetStateAction<Participants>>;
@@ -208,6 +211,9 @@ export const useConferenceActions = (
 
       roomState.publishStreamIdRef.current = generatedStreamId;
       roomState.setIsJoining(true);
+      roomState.setLeaveRoomError(null);
+      roomState.setLeftTheRoom(false);
+      roomState.setIsReconnecting(false);
       if (role === USER_ROLES.GUEST) {
         roomState.setIsWaitingApproval(true);
       }
@@ -284,9 +290,12 @@ export const useConferenceActions = (
       await client.leaveRoom();
       participantsHook.setParticipants({});
       participantsHook.setSubscribedParticipants({});
-      participantsHook.talkerAudioLevelsRef.current = {};
+      participantsHook.resetTalkers();
       roomState.setIsJoining(false);
       roomState.setIsWaitingApproval(false);
+      roomState.setIsPublished(false);
+      roomState.setIsPlayed(false);
+      roomState.setIsReconnecting(false);
     } catch (error) {
       log.error('Leave failed:', error);
     }

@@ -22,6 +22,11 @@ interface StatsThresholds {
   lowBitrate: number;
 }
 
+interface DataChannelHeartbeatConfig {
+  enabled: boolean;
+  intervalMs: number;
+}
+
 interface ConferenceClientConfig {
   host: string;
   nodeGroup: string;
@@ -35,6 +40,8 @@ interface ConferenceClientConfig {
   analyticsEndpoint?: string | null | undefined;
   configServiceUrl?: string;
   enableNoiseCancellation?: boolean;
+  dataChannelHeartbeatEnabled?: boolean;
+  dataChannelHeartbeatIntervalMs?: number;
 }
 
 interface ApiEndpoints {
@@ -153,6 +160,22 @@ export const getConferenceClientConfig = (): ConferenceClientConfig => {
       ? getRuntimeConfig().VITE_CONFIG_SERVICE_URL
       : undefined,
     enableNoiseCancellation: false,
+
+    // Keep the publisher data channel active during idle sessions
+    dataChannelHeartbeatEnabled: true,
+    dataChannelHeartbeatIntervalMs: 30000,
+  };
+};
+
+/**
+ * Get data channel heartbeat configuration
+ */
+export const getDataChannelHeartbeatConfig = (): DataChannelHeartbeatConfig => {
+  const config = getConferenceClientConfig();
+
+  return {
+    enabled: config.dataChannelHeartbeatEnabled !== false,
+    intervalMs: config.dataChannelHeartbeatIntervalMs ?? 30000,
   };
 };
 

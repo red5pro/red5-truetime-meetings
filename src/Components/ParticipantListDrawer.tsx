@@ -65,6 +65,7 @@ const ParticipantListDrawer = memo<ParticipantListDrawerProps>((props) => {
       id="participant-list-drawer"
       open={props?.participantListDrawerOpen}
       variant="persistent"
+      PaperProps={{ style: { pointerEvents: props?.participantListDrawerOpen ? 'auto' : 'none' } }}
     >
       <ParticipantListGrid
         container

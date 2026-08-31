@@ -71,6 +71,10 @@ const CaptionsContainer = styled(Box)(({ theme }: { theme: Theme }) => ({
   zIndex: 100,
   display: 'flex',
   flexDirection: 'column',
+  [theme.breakpoints.down('sm')]: {
+    bottom: 72,
+    height: 180,
+  },
 }));
 
 const CaptionsHeader = styled(Box)(({ theme }: { theme: Theme }) => ({
@@ -81,6 +85,12 @@ const CaptionsHeader = styled(Box)(({ theme }: { theme: Theme }) => ({
   backgroundColor: theme.palette.themeColor?.[70] || 'rgba(0, 0, 0, 0.9)',
   borderBottom: `1px solid ${theme.palette.divider}`,
   minHeight: 48,
+  [theme.breakpoints.down('sm')]: {
+    flexDirection: 'column',
+    alignItems: 'stretch',
+    gap: 8,
+    padding: '8px 12px',
+  },
 }));
 
 const CaptionsContent = styled(Box)({
@@ -223,7 +233,16 @@ const ClosedCaptions: React.FC<ClosedCaptionsProps> = ({
           </Typography>
         </Box>
 
-        <Box display="flex" alignItems="center" gap={1}>
+        <Box
+          display="flex"
+          alignItems="center"
+          gap={1}
+          sx={{
+            width: { xs: '100%', sm: 'auto' },
+            flexWrap: { xs: 'wrap', sm: 'nowrap' },
+            justifyContent: { xs: 'space-between', sm: 'flex-end' },
+          }}
+        >
           {/* Language Selector */}
           <FormControl size="small" variant="outlined">
             <Select
@@ -237,7 +256,7 @@ const ClosedCaptions: React.FC<ClosedCaptionsProps> = ({
                 '& .MuiSvgIcon-root': {
                   color: theme.palette.text.primary,
                 },
-                minWidth: 120,
+                minWidth: { xs: 96, sm: 120 },
               }}
               startAdornment={<Language sx={{ mr: 1, fontSize: 20 }} />}
             >

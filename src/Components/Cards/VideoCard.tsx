@@ -1,4 +1,12 @@
-import React, { useState, useCallback, useMemo, VideoHTMLAttributes } from 'react';
+import React, {
+  useState,
+  useCallback,
+  useMemo,
+  useRef,
+  useLayoutEffect,
+  useEffect,
+  VideoHTMLAttributes,
+} from 'react';
 import { alpha, styled } from '@mui/material/styles';
 import { Typography, useTheme, Box, Tooltip, Theme, Slider } from '@mui/material';
 import Grid from '@mui/material/Grid2';
@@ -10,7 +18,6 @@ import DummyCard from './DummyCard';
 import CustomCard from '../CustomCard.tsx';
 import { CustomizedBtn, roundStyle } from '../CustomizedBtn.tsx';
 import { SvgIcon } from '../SvgIcon';
-import { LayoutOptions } from '../../utils/layoutOptions.ts';
 import CustomSpinner from '../CustomSpinner.tsx';
 import { ConnectionQualityBar } from '../ConnectionQualityBar.tsx';
 import TalkingIndicator from '../TalkingIndicator.tsx';
@@ -19,11 +26,6 @@ import TalkingIndicator from '../TalkingIndicator.tsx';
 interface Participant {
   streamId: string;
   streamName: string;
-}
-
-interface Talker {
-  streamId: string;
-  audioLevel?: number;
 }
 
 interface OverlayButtonProps {
@@ -103,8 +105,9 @@ interface VideoCardProps extends VideoHTMLAttributes<HTMLVideoElement> {
   setParticipantIdMuted: (participant: Participant) => void;
   setMuteParticipantDialogOpen: (open: boolean) => void;
   connectionQuality?: number;
-  talkers?: Talker[];
+  talkers?: string[];
   metaData?: string;
+  isScreenShare?: boolean;
 }
 
 // Styled components
@@ -248,7 +251,7 @@ const PinButton = React.memo<PinButtonProps>(({ pinned, name, pinVideo, unpinVid
   );
 
   const handleClick = useCallback(() => {
-    pinned ? unpinVideo(true) : pinVideo(streamId);
+    pinned ? unpinVideo() : pinVideo(streamId);
   }, [pinned, unpinVideo, pinVideo, streamId]);
 
   return (
@@ -389,8 +392,7 @@ const OverlayButtons = React.memo<OverlayButtonsProps>(
   }) => {
     if (hidePin) return null;
 
-    const shouldShowPinButton =
-      !isMobile && !isTablet && !(pinned && layout === LayoutOptions.Sidebar);
+    const shouldShowPinButton = !isMobile && !isTablet;
 
     const isExternalStream = metaData === 'external-stream';
     const [volume, setVolume] = useState<number>(1);
@@ -409,12 +411,15 @@ const OverlayButtons = React.memo<OverlayButtonsProps>(
       [isMine, streamId],
     );
 
+    const showOverlay = displayHover || pinned;
+
     return (
       <Box
         className="pin-overlay"
         sx={{
           ...OVERLAY_STYLE,
-          opacity: displayHover ? 1 : 0,
+          opacity: showOverlay ? 1 : 0,
+          pointerEvents: showOverlay ? 'auto' : 'none',
           display: 'flex',
           justifyContent: 'center',
           alignItems: 'center',
@@ -498,26 +503,53 @@ const VideoCard = React.memo<VideoCardProps>((props) => {
     connectionQuality = 0,
     talkers = [],
     metaData,
+    isScreenShare = false,
     ...videoProps
   } = props;
   const theme = useTheme();
 
   const [displayHover, setDisplayHover] = useState(false);
+  const leaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const containerRef = useRef<HTMLDivElement | null>(null);
+
+  // Pinned cards remount after pin/unpin; mouse does not move so :hover state is lost.
+  useLayoutEffect(() => {
+    if (pinned) {
+      setDisplayHover(true);
+      return;
+    }
+    if (containerRef.current?.matches(':hover')) {
+      setDisplayHover(true);
+    }
+  }, [pinned, streamId, layout]);
+
+  useEffect(() => {
+    return () => {
+      if (leaveTimerRef.current) {
+        clearTimeout(leaveTimerRef.current);
+      }
+    };
+  }, []);
 
   // Event handlers
   const handleMouseEnter = useCallback(() => {
+    if (leaveTimerRef.current) {
+      clearTimeout(leaveTimerRef.current);
+      leaveTimerRef.current = null;
+    }
     setDisplayHover(true);
   }, []);
 
   const handleMouseLeave = useCallback(() => {
-    setDisplayHover(false);
-  }, []);
+    if (pinned) return;
+    leaveTimerRef.current = setTimeout(() => setDisplayHover(false), 200);
+  }, [pinned]);
 
   // Memoized styles
   const cardStyle = useMemo(
     () => ({
-      height: isMobileView ? '40%' : '100%',
-      width: isMobileView ? '20%' : '100%',
+      height: '100%',
+      width: '100%',
       position: 'relative' as const,
       borderRadius: 4,
       overflow: 'hidden' as const,
@@ -554,6 +586,7 @@ const VideoCard = React.memo<VideoCardProps>((props) => {
   return (
     <Grid
       container
+      ref={containerRef}
       style={containerStyle}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
@@ -575,8 +608,8 @@ const VideoCard = React.memo<VideoCardProps>((props) => {
       />
 
       <Box className="single-video-card" id={`card-${streamId || ''}`} style={cardStyle}>
-        {/*@ts-ignore*/}
-        <TalkingIndicator streamId={streamId} talkers={talkers} />
+        {/* A screen share carries no speaker of its own, so it never gets the ring. */}
+        {!isScreenShare && <TalkingIndicator streamId={streamId} talkers={talkers} />}
 
         <VideoPlayer
           isMine={isMine}

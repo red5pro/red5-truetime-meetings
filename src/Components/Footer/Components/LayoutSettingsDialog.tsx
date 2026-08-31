@@ -188,13 +188,6 @@ export function LayoutSettingsDialog(props: LayoutSettingsDialogProps) {
                   control={<Radio />}
                   label={radioLabel(t('Tiled'), LayoutOptions.Tiled)}
                 />
-                <FormControlLabel
-                  classes={{ label: 'layout-radio-label' }}
-                  sx={{ width: '100%' }}
-                  value={LayoutOptions.Sidebar}
-                  control={<Radio />}
-                  label={radioLabel(t('Sidebar'), LayoutOptions.Sidebar)}
-                />
               </RadioGroup>
             </FormControl>
           </Grid>

@@ -118,7 +118,12 @@ const Red5DialogTitle: React.FC<Red5DialogTitleProps> = (props) => {
   const { children, onClose, ...other } = props;
 
   return (
-    <DialogTitle {...other}>
+    <DialogTitle
+      {...other}
+      sx={{
+        pr: 7,
+      }}
+    >
       {children}
       {onClose ? (
         <Button
@@ -127,8 +132,10 @@ const Red5DialogTitle: React.FC<Red5DialogTitleProps> = (props) => {
           id="diagnostic-dialog-close-button"
           sx={{
             position: 'absolute',
-            right: 26,
-            top: 27,
+            right: { xs: 10, sm: 18, md: 26 },
+            top: { xs: 12, sm: 18, md: 27 },
+            minWidth: 'auto',
+            p: 0.5,
           }}
         >
           <SvgIcon size={20} viewBox="0 0 500 500" name={'close'} color={'#fff'} />
@@ -164,14 +171,22 @@ const QualityIndicator: React.FC<QualityIndicatorProps> = ({ label, score, icon 
   return (
     <Card sx={{ mb: 2, backgroundColor: alpha(color, 0.1) }}>
       <CardContent sx={{ py: 2 }}>
-        <Box display="flex" alignItems="center" justifyContent="space-between">
-          <Box display="flex" alignItems="center">
+        <Box
+          display="flex"
+          alignItems="center"
+          justifyContent="space-between"
+          gap={1}
+          flexWrap="wrap"
+        >
+          <Box display="flex" alignItems="center" sx={{ minWidth: 0 }}>
             <Typography variant="body2" sx={{ mr: 1 }}>
               {icon}
             </Typography>
-            <Typography variant="subtitle2">{label}</Typography>
+            <Typography variant="subtitle2" sx={{ wordBreak: 'break-word' }}>
+              {label}
+            </Typography>
           </Box>
-          <Box display="flex" alignItems="center">
+          <Box display="flex" alignItems="center" sx={{ width: { xs: '100%', sm: 'auto' } }}>
             <Chip
               label={`${score.toFixed(1)} - ${text}`}
               size="small"
@@ -179,8 +194,10 @@ const QualityIndicator: React.FC<QualityIndicatorProps> = ({ label, score, icon 
                 backgroundColor: color,
                 color: 'white',
                 fontWeight: 'bold',
+                width: { xs: '100%', sm: 'auto' },
                 '& .MuiChip-label': {
                   overflow: 'unset',
+                  whiteSpace: 'normal',
                 },
               }}
             />
@@ -234,7 +251,10 @@ const ConnectionStats: React.FC<ConnectionStatsProps> = ({
   return (
     <Card sx={{ mb: 2 }}>
       <CardContent sx={{ py: 2 }}>
-        <Typography variant="subtitle2" sx={{ mb: 1, display: 'flex', alignItems: 'center' }}>
+        <Typography
+          variant="subtitle2"
+          sx={{ mb: 1, display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 0.5 }}
+        >
           {getConnectionIcon(connectionType)} {connectionId}
           <Chip
             label={connectionType}
@@ -244,6 +264,7 @@ const ConnectionStats: React.FC<ConnectionStatsProps> = ({
               fontSize: '0.7rem',
               '& .MuiChip-label': {
                 overflow: 'unset',
+                whiteSpace: 'normal',
               },
             }}
           />
@@ -252,7 +273,7 @@ const ConnectionStats: React.FC<ConnectionStatsProps> = ({
         <Grid container spacing={2}>
           {/* Video Stats */}
           {(stats.outboundVideo || stats.inboundVideo) && (
-            <Grid item xs={6}>
+            <Grid item xs={12} sm={6}>
               <Typography variant="caption" color="textSecondary">
                 📹 Video
               </Typography>
@@ -291,7 +312,7 @@ const ConnectionStats: React.FC<ConnectionStatsProps> = ({
 
           {/* Audio Stats */}
           {(stats.outboundAudio || stats.inboundAudio) && (
-            <Grid item xs={6}>
+            <Grid item xs={12} sm={6}>
               <Typography variant="caption" color="textSecondary">
                 🔊 Audio
               </Typography>
@@ -387,8 +408,8 @@ const IssuesDisplay: React.FC<IssuesDisplayProps> = ({ issues }) => {
               </ListItemIcon>
               <ListItemText
                 primary={
-                  <Box display="flex" alignItems="center">
-                    <Typography variant="body2" sx={{ mr: 1 }}>
+                  <Box display="flex" alignItems="center" flexWrap="wrap" gap={0.5}>
+                    <Typography variant="body2" sx={{ mr: 1, wordBreak: 'break-word' }}>
                       {issue.statsSample.description}
                     </Typography>
                     <Chip
@@ -400,6 +421,7 @@ const IssuesDisplay: React.FC<IssuesDisplayProps> = ({ issues }) => {
                         fontSize: '0.7rem',
                         '& .MuiChip-label': {
                           overflow: 'unset',
+                          whiteSpace: 'normal',
                         },
                       }}
                     />
@@ -426,7 +448,7 @@ export function DiagnosticDialog({
 }: DiagnosticDialogProps) {
   const { t } = useTranslation();
   const theme = useTheme();
-  const fullScreen = useMediaQuery(theme.breakpoints.down('xs'));
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   const handleClose = () => {
     onClose(!open);
@@ -452,9 +474,16 @@ export function DiagnosticDialog({
     <Dialog
       onClose={handleClose}
       open={open}
-      fullScreen={fullScreen}
+      fullScreen={isMobile}
       maxWidth={'md'} // Changed to md for more space
-      PaperProps={{ sx: getDialogStyle(theme) }}
+      PaperProps={{
+        sx: {
+          ...getDialogStyle(theme),
+          width: { xs: '100%', sm: 'auto' },
+          m: { xs: 0, sm: 2 },
+          borderRadius: { xs: 0, sm: 2 },
+        },
+      }}
       BackdropProps={{
         sx: {
           backgroundColor: 'rgba(255, 255, 255, 0.1)',
@@ -463,7 +492,9 @@ export function DiagnosticDialog({
       }}
     >
       <Red5DialogTitle onClose={handleClose}>{t('Network Diagnostic')} 📊</Red5DialogTitle>
-      <DialogContent sx={{ px: 3, maxHeight: '70vh', overflowY: 'auto' }}>
+      <DialogContent
+        sx={{ px: { xs: 1.5, sm: 3 }, maxHeight: { xs: '100vh', sm: '70vh' }, overflowY: 'auto' }}
+      >
         <Box component="div" sx={{ display: 'flex', flexDirection: 'column' }}>
           {/* Overall Network Quality */}
           <Typography variant="h6" sx={{ mb: 2 }}>
@@ -471,10 +502,10 @@ export function DiagnosticDialog({
           </Typography>
 
           <Grid container spacing={2} sx={{ mb: 3 }}>
-            <Grid item xs={6}>
+            <Grid item xs={12} sm={6}>
               <QualityIndicator label="Inbound Quality" score={scores.inbound} icon="📥" />
             </Grid>
-            <Grid item xs={6}>
+            <Grid item xs={12} sm={6}>
               <QualityIndicator label="Outbound Quality" score={scores.outbound} icon="📤" />
             </Grid>
           </Grid>
@@ -521,13 +552,13 @@ export function DiagnosticDialog({
                 📈 Session Summary
               </Typography>
               <Grid container spacing={2}>
-                <Grid item xs={4}>
+                <Grid item xs={12} sm={4}>
                   <Typography variant="caption" color="textSecondary">
                     Active Connections
                   </Typography>
                   <Typography variant="h6">{Object.keys(scores.statsSamples).length}</Typography>
                 </Grid>
-                <Grid item xs={4}>
+                <Grid item xs={12} sm={4}>
                   <Typography variant="caption" color="textSecondary">
                     Current Issues
                   </Typography>
@@ -535,7 +566,7 @@ export function DiagnosticDialog({
                     {issues.length}
                   </Typography>
                 </Grid>
-                <Grid item xs={4}>
+                <Grid item xs={12} sm={4}>
                   <Typography variant="caption" color="textSecondary" sx={{ mr: 0.5 }}>
                     Overall Status
                   </Typography>
@@ -544,8 +575,10 @@ export function DiagnosticDialog({
                     size="small"
                     color={issues.length === 0 ? 'success' : 'error'}
                     sx={{
+                      width: { xs: '100%', sm: 'auto' },
                       '& .MuiChip-label': {
                         overflow: 'unset',
+                        whiteSpace: 'normal',
                       },
                     }}
                   />

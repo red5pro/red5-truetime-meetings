@@ -246,10 +246,31 @@ function Red5(props: Red5Props) {
 
         {/* Main Content */}
 
+        {conference.room.isReconnecting && conference.room.lobbyOrMeetingPage === 'meeting' && (
+          <Backdrop
+            sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 2 }}
+            open={conference.room.isReconnecting}
+          >
+            <Stack alignItems="center" justifyContent="center" alignContent="center">
+              <CircularProgress size={52} color="inherit" />
+              <span style={{ margin: '27px', fontSize: 18, fontWeight: 'normal' }}>
+                {t('Reconnecting...')}
+              </span>
+            </Stack>
+          </Backdrop>
+        )}
+
         {conference.room.leftTheRoom ? (
           <LeftTheRoom
-            withError={null} // This would come from conference.room in future
+            withError={conference.room.leaveRoomError}
             handleLeaveFromRoom={conference.room.leaveRoom}
+            isUploading={conference.features.localRecording.isUploading}
+            uploadProgress={conference.features.localRecording.uploadProgress}
+            uploadStatus={conference.features.localRecording.uploadStatus}
+            uploadError={conference.features.localRecording.uploadError}
+            hasRecording={!!conference.features.localRecording.localRecordingStatus?.segments}
+            downloadLocalRecording={conference.features.localRecording.downloadLocalRecording}
+            retryUploadLocalRecording={conference.features.localRecording.uploadLocalRecording}
           />
         ) : conference.room.lobbyOrMeetingPage === 'lobby' ? (
           <LobbyPage
@@ -347,6 +368,7 @@ function Red5(props: Red5Props) {
               handleStopScreenShare={conference.features.screenShare.handleStopScreenShare}
               // Recording
               isRecordingActive={conference.features.recording.isRecordingActive}
+              didIStartServerRecording={conference.features.recording.didIStartServerRecording}
               startRecord={(
                 recordSeparately?: boolean,
                 serverRecording?: boolean,
@@ -367,7 +389,6 @@ function Red5(props: Red5Props) {
               stopLocalRecording={conference.features.localRecording.stopLocalRecording}
               downloadLocalRecording={conference.features.localRecording.downloadLocalRecording}
               localRecordingStatus={conference.features.localRecording.localRecordingStatus}
-              isLocalRecordingUploading={conference.features.localRecording.isUploading}
               // Chat
               numberOfUnReadMessages={conference.features.chat.numberOfUnReadMessages}
               toggleSetNumberOfUnreadMessages={toggleSetNumberOfUnreadMessages}
@@ -436,6 +457,9 @@ function Red5(props: Red5Props) {
               // External Streams
               externalStreamsDrawerOpen={conference.ui.externalStreamsDrawerOpen}
               handleExternalStreamsDrawerOpen={conference.ui.handleExternalStreamsDrawerOpen}
+              // Fake participants (dev/testing)
+              onAddFakeParticipant={conference.participants.addFakeParticipant}
+              onRemoveFakeParticipant={conference.participants.removeFakeParticipant}
             />
 
             {/* Drawers */}

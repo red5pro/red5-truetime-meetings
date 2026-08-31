@@ -2,6 +2,10 @@ import React from 'react';
 import Grid from '@mui/material/Grid2';
 import Typography from '@mui/material/Typography';
 import { styled, Theme } from '@mui/material';
+import { Tooltip } from '@mui/material';
+import Button from '@mui/material/Button';
+import PersonAddAlt1Icon from '@mui/icons-material/PersonAddAlt1';
+import PersonRemoveAlt1Icon from '@mui/icons-material/PersonRemoveAlt1';
 import InfoButton from './Components/InfoButton.tsx';
 import MicButton from './Components/MicButton.tsx';
 import CameraButton from './Components/CameraButton.tsx';
@@ -10,7 +14,6 @@ import ShareScreenButton from './Components/ShareScreenButton.tsx';
 import MessageButton from './Components/MessageButton.tsx';
 import ParticipantListButton from './Components/ParticipantListButton.tsx';
 import EndCallButton from './Components/EndCallButton.tsx';
-import EndCallConfirmationDialog from './Components/EndCallConfirmationDialog.tsx';
 import ExternalStreamsButton from './Components/ExternalStreamsButton.tsx';
 
 import TimeZone from './Components/TimeZone.tsx';
@@ -101,12 +104,13 @@ interface FooterProps {
   localRecordingStatus?: string;
   participantCount?: number;
   numberOfUnReadMessages?: number;
-  isLocalRecordingUploading?: boolean;
   transcriptionDrawerOpen?: boolean;
   handleTranscriptionDrawerOpen?: (open: boolean) => void;
   externalStreamsDrawerOpen?: boolean;
   handleExternalStreamsDrawerOpen?: (open: boolean) => void;
   hideExternalStreams?: boolean;
+  onAddFakeParticipant?: () => void;
+  onRemoveFakeParticipant?: () => void;
 }
 
 const getCustomizedGridStyle = (theme: Theme) => {
@@ -116,7 +120,7 @@ const getCustomizedGridStyle = (theme: Theme) => {
     bottom: 0,
     left: 0,
     padding: 16,
-    width: '100vw',
+    width: '100%',
     zIndex: 101,
   };
 
@@ -128,7 +132,7 @@ const CustomizedGrid = styled(Grid)(({ theme }: { theme: Theme }) => getCustomiz
 function Footer(props: FooterProps) {
   const { id } = useParams<{ id: string }>();
   const theme = useTheme();
-  const mobileBreakpoint = 900;
+  const mobileBreakpoint = 1000;
   const [windowWidth, setWindowWidth] = React.useState(window.innerWidth);
   const isExternalStreamsEnabled = getRuntimeConfig().VITE_ENABLE_EXTERNAL_STREAMS === 'true';
 
@@ -144,28 +148,20 @@ function Footer(props: FooterProps) {
     };
   }, []);
 
-  const [endCallConfirmationOpen, setEndCallConfirmationOpen] = React.useState(false);
-
   const handleLeaveRoom = () => {
-    if (props.isLocalRecordingActive || props.isLocalRecordingUploading) {
-      setEndCallConfirmationOpen(true);
-    } else {
-      props.setLeftTheRoom?.(true);
+    if (props.isLocalRecordingActive) {
+      props.stopLocalRecording?.();
     }
-  };
-
-  const handleConfirmEndCall = () => {
-    props.stopLocalRecording?.();
-    setEndCallConfirmationOpen(false);
+    props.setLeftTheRoom?.(true);
   };
 
   return (
     <CustomizedGrid
       container
       alignItems="center"
-      justifyContent={{ xs: 'center', sm: 'space-between' }}
+      justifyContent={windowWidth > mobileBreakpoint ? 'space-between' : 'center'}
     >
-      <Grid sx={{ display: { xs: 'none', sm: 'block' } }}>
+      <Grid sx={{ display: windowWidth > mobileBreakpoint ? 'block' : 'none' }}>
         <Grid container alignItems="center">
           <TimeZone />
           <Typography
@@ -335,10 +331,6 @@ function Footer(props: FooterProps) {
             <Grid size="auto">
               <EndCallButton footer={true} glass={props?.glass} onLeaveRoom={handleLeaveRoom} />
             </Grid>
-            <EndCallConfirmationDialog
-              open={endCallConfirmationOpen}
-              onClose={handleConfirmEndCall}
-            />
 
             {windowWidth <= mobileBreakpoint ? (
               <Grid size="auto">
@@ -405,19 +397,23 @@ function Footer(props: FooterProps) {
         </Grid>
       ) : null}
 
-      <Grid sx={{ display: { xs: 'none', sm: 'block' } }} style={{ zIndex: 999999 }}>
+      <Grid
+        sx={{ display: windowWidth > mobileBreakpoint ? 'block' : 'none' }}
+        style={{ zIndex: 999999 }}
+      >
         <Grid container alignItems="center">
           <Grid size="auto">
-            <InfoButton handleInfoDrawerOpen={props?.handleInfoDrawerOpen} />
+            <InfoButton
+              infoDrawerOpen={props?.infoDrawerOpen}
+              handleInfoDrawerOpen={props?.handleInfoDrawerOpen}
+            />
           </Grid>
-          {isExternalStreamsEnabled && (
-            <Grid size="auto">
-              <ExternalStreamsButton
-                open={props?.externalStreamsDrawerOpen}
-                onClick={props?.handleExternalStreamsDrawerOpen}
-              />
-            </Grid>
-          )}
+          <Grid size="auto">
+            <ExternalStreamsButton
+              open={props?.externalStreamsDrawerOpen}
+              onClick={props?.handleExternalStreamsDrawerOpen}
+            />
+          </Grid>
           {(props?.isLocalRecordingActive || !isNull(props?.localRecordingStatus)) && (
             <Grid size="auto">
               <LocalRecordingButton
@@ -425,6 +421,32 @@ function Footer(props: FooterProps) {
                 isActive={props?.isLocalRecordingActive}
                 onClick={props?.handleLocalRecordingDrawerOpen}
               />
+            </Grid>
+          )}
+          {import.meta.env.DEV && (
+            <Grid size="auto">
+              <Tooltip title="Add Fake Participant" placement="top">
+                <Button
+                  variant="text"
+                  onClick={() => props?.onAddFakeParticipant?.()}
+                  sx={{ ml: 0.5, px: 1, py: 1.5, minWidth: 'unset' }}
+                >
+                  <PersonAddAlt1Icon sx={{ color: '#FFF', fontSize: 24 }} />
+                </Button>
+              </Tooltip>
+            </Grid>
+          )}
+          {import.meta.env.DEV && (
+            <Grid size="auto">
+              <Tooltip title="Remove Fake Participant" placement="top">
+                <Button
+                  variant="text"
+                  onClick={() => props?.onRemoveFakeParticipant?.()}
+                  sx={{ ml: 0.5, px: 1, py: 1.5, minWidth: 'unset' }}
+                >
+                  <PersonRemoveAlt1Icon sx={{ color: '#FFF', fontSize: 24 }} />
+                </Button>
+              </Tooltip>
             </Grid>
           )}
           <Grid size="auto">

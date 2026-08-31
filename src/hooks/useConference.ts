@@ -353,6 +353,12 @@ export const useConference = (roomId: string): UseConferenceReturn => {
     client.conferenceClient,
     () => drawerStates.handleLocalRecordingDrawerOpen(true),
     () => drawerStates.handleLocalRecordingDrawerOpen(false),
+    // @ts-ignore
+    (participants as any).subscribedParticipants,
+    // @ts-ignore
+    (mediaControls as any).isMyCamTurnedOff as boolean,
+    // @ts-ignore
+    (mediaControls as any).isMyMicMuted as boolean,
   );
 
   const localRecording = recording;
@@ -416,6 +422,7 @@ export const useConference = (roomId: string): UseConferenceReturn => {
     conferenceActions.unpinVideo,
     conferenceState.layoutRef,
     conferenceState.role,
+    localVideoCreate,
   );
 
   // Enhanced action handlers - memoized to prevent recreation
@@ -469,6 +476,7 @@ export const useConference = (roomId: string): UseConferenceReturn => {
       roomState.setLobbyOrMeetingPage('meeting');
       roomState.setIsJoining(false);
       roomState.setIsWaitingApproval(false);
+      drawerStates.handleEffectsOpen(false);
     }
   }, [roomState.isPublished, roomState.isPlayed, roomState.isPlayOnly]);
 

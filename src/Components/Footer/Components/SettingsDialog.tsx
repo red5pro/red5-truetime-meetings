@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { isMobile } from 'react-device-detect';
 import DialogTitle from '@mui/material/DialogTitle';
 import Dialog from '@mui/material/Dialog';
 import Box from '@mui/material/Box';
@@ -94,6 +95,14 @@ export default function SettingsDialog(props: SettingsDialogProps) {
   const [localPushToTalkEnabled, setLocalPushToTalkEnabled] = React.useState<boolean>(
     props?.pushToTalkEnabled || false,
   );
+  const [selectedFacingMode, setSelectedFacingMode] = React.useState<'user' | 'environment' | null>(
+    null,
+  );
+
+  const mobileCameraOptions = [
+    { id: 'facingMode:user', label: t('Front Camera') },
+    { id: 'facingMode:environment', label: t('Back Camera') },
+  ];
 
   // Sync with props
   React.useEffect(() => {
@@ -124,7 +133,12 @@ export default function SettingsDialog(props: SettingsDialogProps) {
   };
 
   const handleCameraChange = (event: SelectChangeEvent<string>): void => {
-    switchVideoMode(event.target.value);
+    const value = event.target.value;
+    if (value.startsWith('facingMode:')) {
+      const facingMode = value.split(':')[1] as 'user' | 'environment';
+      setSelectedFacingMode(facingMode);
+    }
+    switchVideoMode(value);
   };
 
   const handleMicrophoneChange = (event: SelectChangeEvent<string>): void => {
@@ -201,7 +215,13 @@ export default function SettingsDialog(props: SettingsDialogProps) {
                 fullWidth
                 id="setting-dialog-camera-select"
                 variant="outlined"
-                value={props?.selectedCamera || ''}
+                value={
+                  isMobile
+                    ? selectedFacingMode
+                      ? `facingMode:${selectedFacingMode}`
+                      : 'facingMode:user'
+                    : props?.selectedCamera || ''
+                }
                 onChange={handleCameraChange}
                 sx={{ color: '#fff', width: '100%' }}
                 endAdornment={
@@ -210,13 +230,19 @@ export default function SettingsDialog(props: SettingsDialogProps) {
                   </InputAdornment>
                 }
               >
-                {props?.devices?.videoInputs &&
-                  props?.devices?.videoInputs?.length > 0 &&
-                  props?.devices?.videoInputs.map((device) => (
-                    <MenuItem key={device.deviceId} value={device.deviceId}>
-                      {device.label}
-                    </MenuItem>
-                  ))}
+                {isMobile
+                  ? mobileCameraOptions.map((option) => (
+                      <MenuItem key={option.id} value={option.id}>
+                        {option.label}
+                      </MenuItem>
+                    ))
+                  : props?.devices?.videoInputs &&
+                    props?.devices?.videoInputs?.length > 0 &&
+                    props?.devices?.videoInputs.map((device) => (
+                      <MenuItem key={device.deviceId} value={device.deviceId}>
+                        {device.label}
+                      </MenuItem>
+                    ))}
               </Select>
             </Grid>
           </Grid>

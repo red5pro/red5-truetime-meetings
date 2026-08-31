@@ -125,11 +125,30 @@ function App(): JSX.Element {
       }
     };
 
+    // On Windows, F11 enters the browser's native fullscreen which bypasses the
+    // Fullscreen API and leaves document.fullscreenElement as null. This causes the
+    // in-meeting fullscreen toggle to show the wrong state and break. Intercept F11
+    // and route it through the Fullscreen API so there is a single source of truth.
+    const handleF11Key = (e: KeyboardEvent): void => {
+      if (e.key === 'F11') {
+        e.preventDefault();
+        if (!document.fullscreenElement) {
+          document.documentElement
+            .requestFullscreen()
+            .then((r) => log.log('Fullscreen is requested via F11', r));
+        } else {
+          document.exitFullscreen().then((r) => log.log('Fullscreen is exited via F11', r));
+        }
+      }
+    };
+
     window.addEventListener('dblclick', handleFullScreen);
+    window.addEventListener('keydown', handleF11Key);
 
     // cleanup this component
     return () => {
       window.removeEventListener('dblclick', handleFullScreen);
+      window.removeEventListener('keydown', handleF11Key);
     };
   }, []);
 
