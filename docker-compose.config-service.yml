@@ -1,0 +1,41 @@
+# docker-compose.config-service.yml
+#
+# Run this ONCE per customer/XDN deployment, on a single host.
+# Do NOT include this in a compose stack that gets replicated across
+# load-balanced meetings instances/node groups - config-service owns the
+# one config.json for this customer, and every meetings instance (across
+# all of that customer's node groups) must point VITE_CONFIG_SERVICE_URL
+# at this same instance so they all read/write the same file.
+version: '3.8'
+
+services:
+  config-service:
+    build:
+      context: ./config-service
+      dockerfile: Dockerfile
+    container_name: config-service
+    ports:
+      - '3001:3001'
+    environment:
+      - PORT=3001
+      - CONFIG_FILE=/data/config.json
+      # IMPORTANT: Set a strong admin token in production!
+      - MEETINGS_CONFIG_ADMIN_TOKEN=${MEETINGS_CONFIG_ADMIN_TOKEN:-default-admin-token-change-me}
+      # Initialize with these values (can be overridden via .env file)
+      - VITE_HOST=${VITE_HOST:-}
+      - VITE_BASENAME=${VITE_BASENAME:-}
+      - VITE_BACKEND_HOST=${VITE_BACKEND_HOST:-}
+      - VITE_ENABLE_RECORDING=${VITE_ENABLE_RECORDING:-false}
+      - VITE_ENABLE_CLOSED_CAPTION=${VITE_ENABLE_CLOSED_CAPTION:-false}
+      - VITE_DEFAULT_THEME=${VITE_DEFAULT_THEME:-default}
+      - VITE_TURN_SERVER_URL=${VITE_TURN_SERVER_URL:-}
+      - VITE_TURN_SERVER_USERNAME=${VITE_TURN_SERVER_USERNAME:-}
+      - VITE_TURN_SERVER_CREDENTIAL=${VITE_TURN_SERVER_CREDENTIAL:-}
+      - VITE_NODE_GROUP=${VITE_NODE_GROUP:-}
+      - VITE_LOGO_URL=${VITE_LOGO_URL:-}
+    volumes:
+      - config-data:/data
+    restart: unless-stopped
+
+volumes:
+  config-data:
