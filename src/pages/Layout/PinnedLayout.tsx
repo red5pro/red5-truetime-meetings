@@ -77,6 +77,7 @@ const LayoutPinned = React.memo<LayoutPinnedProps>((props) => {
     allParticipants,
     pinnedParticipantId,
     talkers,
+    slotCount: MAX_VIDEO_AT_SIDE,
   });
 
   // Split participants into visible and audio-only groups
