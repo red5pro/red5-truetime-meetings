@@ -39,6 +39,7 @@ const LayoutAuto = React.memo<LayoutAutoProps>((props) => {
     allParticipants,
     pinnedParticipantId,
     talkers,
+    slotCount: MAX_VIDEO_AT_SIDE,
   });
 
   // Memoized layout class calculator
