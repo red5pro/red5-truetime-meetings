@@ -23,7 +23,7 @@ jobs:
       - name: Build project
         run: npm run build
 
-      #- name: Run Lint
+      - name: Run Lint
       #run: npm run lint
 
       - name: Check Formatting
