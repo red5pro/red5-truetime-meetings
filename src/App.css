@@ -276,6 +276,72 @@ form {
   }
 }
 
+/* Mobile-exclusive meeting layout (LayoutMobile) */
+.mobile-layout-gallery {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.mobile-solo-layout .single-video-container,
+.mobile-single-remote-layout .mobile-fullscreen-tile {
+  width: 100%;
+  height: 100%;
+}
+
+/* Floating self-view bubble, used both over a fullscreen remote and nested inside a tile */
+.mobile-pip-local {
+  position: absolute;
+  bottom: 12px;
+  right: 12px;
+  width: 27%;
+  max-width: 130px;
+  aspect-ratio: 3 / 4;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
+  border: 2px solid rgba(255, 255, 255, 0.6);
+  z-index: 20;
+}
+
+.mobile-pip-local .name-indicator {
+  display: none;
+}
+
+.mobile-two-remote-layout {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  gap: 4px;
+}
+
+.mobile-two-remote-layout .mobile-stack-tile {
+  position: relative;
+  flex: 1 1 50%;
+  min-height: 0;
+  width: 100%;
+}
+
+.mobile-grid-layout {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  grid-auto-rows: min-content;
+  gap: 8px;
+  width: 100%;
+  height: 100%;
+  padding: 8px;
+  align-content: center;
+  overflow-y: auto;
+  box-sizing: border-box;
+}
+
+.mobile-grid-layout .single-video-container {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1 / 1;
+}
+
 /* Mobile pinned layout - horizontal scrollable strip for unpinned participants */
 .mobile-unpinned-strip {
   overflow-x: auto;
