@@ -106,7 +106,7 @@ export default function SettingsDialog(props: SettingsDialogProps) {
 
   // Sync with props
   React.useEffect(() => {
-    setLocalPushToTalkEnabled(props?.pushToTalkEnabled || false);
+    queueMicrotask(() => setLocalPushToTalkEnabled(props?.pushToTalkEnabled || false));
   }, [props?.pushToTalkEnabled]);
 
   const handleClose = (_event?: any, _reason?: string): void => {

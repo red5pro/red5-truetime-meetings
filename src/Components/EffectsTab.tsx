@@ -180,7 +180,7 @@ const VirtualBackgroundButton = React.memo<VirtualBackgroundButtonProps>(
     React.useEffect(() => {
       // If already cached, we're done
       if (globalImageCache.has(imageSrc)) {
-        setImageLoaded(true);
+        queueMicrotask(() => setImageLoaded(true));
         return;
       }
 

@@ -341,7 +341,10 @@ export const useRecording = (
         handleRecordingCleared as EventListener,
       );
     };
-  }, [conferenceClientRef?.current]); // Depend on the current value of the ref
+    // conferenceClientRef is a stable ref object (identity never changes); the client it
+    // points to is already assigned by the time this effect first runs, since useConferenceClient
+    // initializes it in an effect that runs earlier in the same commit.
+  }, [conferenceClientRef]);
 
   // Update status periodically when local recording is active
   useEffect(() => {
