@@ -492,7 +492,6 @@ const VideoCard = React.memo<VideoCardProps>((props) => {
     hidePlayer = false,
     hidePin = false,
     isPending = false,
-    isMobileView = false,
     isMicMuted,
     name,
     isRaiseHand = false,
