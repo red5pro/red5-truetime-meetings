@@ -1,3 +1,4 @@
+import { fileURLToPath } from 'node:url';
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 
@@ -5,6 +6,16 @@ export default defineConfig(({ mode }) => {
   const isProduction = mode === 'production';
 
   return {
+    resolve: {
+      alias: [
+        {
+          find: /^@mediapipe\/selfie_segmentation$/,
+          replacement: fileURLToPath(
+            new URL('./src/shims/mediapipe-selfie-segmentation.js', import.meta.url),
+          ),
+        },
+      ],
+    },
     plugins: [
       react({
         babel: {
@@ -29,15 +40,23 @@ export default defineConfig(({ mode }) => {
     build: {
       rollupOptions: {
         output: {
-          manualChunks: {
-            'react-vendor': ['react', 'react-dom'],
-            'mui-vendor': ['@mui/material', '@mui/system'],
-            'mui-icons': ['@mui/icons-material'],
-            'router-vendor': ['react-router-dom'],
-            'i18n-vendor': ['react-i18next', 'i18next'],
-            pubnub: ['pubnub'],
-            'red5pro-webrtc-sdk': ['red5pro-webrtc-sdk'],
-            utils: ['loglevel'],
+          manualChunks(id) {
+            const vendorChunks = {
+              'react-vendor': ['react', 'react-dom'],
+              'mui-vendor': ['@mui/material', '@mui/system'],
+              'mui-icons': ['@mui/icons-material'],
+              'router-vendor': ['react-router-dom'],
+              'i18n-vendor': ['react-i18next', 'i18next'],
+              pubnub: ['pubnub'],
+              'red5pro-webrtc-sdk': ['red5pro-webrtc-sdk'],
+              utils: ['loglevel'],
+            };
+
+            for (const [chunkName, packages] of Object.entries(vendorChunks)) {
+              if (packages.some((pkg) => id.includes(`/node_modules/${pkg}/`))) {
+                return chunkName;
+              }
+            }
           },
         },
       },
