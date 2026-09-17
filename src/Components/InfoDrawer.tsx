@@ -7,7 +7,6 @@ import { useTranslation } from 'react-i18next';
 import CloseDrawerButton from './DrawerButton';
 import { getRed5DrawerStyle } from '../styles/themeUtil';
 import InfoTab from './InfoTab';
-import packageJson from '../../package.json';
 import { getRuntimeConfig } from '../utils/configStore';
 
 interface InfoDrawerProps {
@@ -44,9 +43,7 @@ const InfoDrawer = React.memo<InfoDrawerProps>((props) => {
   const { t } = useTranslation();
   const theme = useTheme();
 
-  const appVersion: string =
-    getRuntimeConfig().VITE_VERSION ||
-    `${packageJson.version}-${getRuntimeConfig().VITE_BUILD_NUMBER || 'unknown'}-${getRuntimeConfig().VITE_BUILD_HASH || 'unknown'}-${getRuntimeConfig().VITE_BUILD_TIME || 'unknown'}`;
+  const appVersion: string = getRuntimeConfig().VITE_VERSION || 'unknown';
 
   const meetingLink: string = window.location.href;
 
