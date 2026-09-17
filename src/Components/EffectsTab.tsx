@@ -351,13 +351,13 @@ function EffectsTab({
       getRuntimeConfig().VITE_VIRTUAL_BACKGROUND_IMAGES !== undefined &&
       getRuntimeConfig().VITE_VIRTUAL_BACKGROUND_IMAGES !== null
     ) {
-      return getRuntimeConfig().VITE_VIRTUAL_BACKGROUND_IMAGES.split(',');
+      return getRuntimeConfig().VITE_VIRTUAL_BACKGROUND_IMAGES?.split(',');
     }
     return [];
   }, []);
 
   const saveImageToFileSystem = React.useCallback(
-    async (selectedFile: File, directoryHandle: any): Promise<void> => {
+    async (selectedFile: File, directoryHandle: FileSystemDirectoryHandle): Promise<void> => {
       log.log('Saving image to file system', selectedFile, directoryHandle);
     },
     [],
@@ -394,15 +394,15 @@ function EffectsTab({
 
       if (typeof selectedFile !== 'undefined' && selectedFile !== null) {
         const processFile = () => {
-          (navigator.storage as any).getDirectory().then((directoryHandle: any) => {
+          navigator.storage.getDirectory().then((directoryHandle) => {
             saveImageToFileSystem(selectedFile, directoryHandle).then(() => {
               log.log('Image saved to file system');
             });
           });
         };
 
-        if ((window as any).requestIdleCallback) {
-          (window as any).requestIdleCallback(processFile);
+        if (window.requestIdleCallback) {
+          window.requestIdleCallback(processFile);
         } else {
           setTimeout(processFile, 0);
         }

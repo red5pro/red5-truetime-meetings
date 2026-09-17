@@ -11,7 +11,7 @@ import GeneralSettingsDialog from './GeneralSettingsDialog.tsx';
 import { isMobile, isTablet } from 'react-device-detect';
 import i18n from 'i18next';
 import { ThemeList } from '../../../constants/themeList.js';
-import { ThemeContext } from '../../../App.js';
+import { ThemeContext } from '../../../contexts/ThemeContext';
 import { CustomizedBtn, rectangularStyle } from '../../CustomizedBtn.tsx';
 import log from 'loglevel';
 import { ClosedCaption, ClosedCaptionDisabled } from '@mui/icons-material';

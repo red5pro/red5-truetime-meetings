@@ -557,7 +557,7 @@ const VideoCard = React.memo<VideoCardProps>((props) => {
       borderRadius: 4,
       overflow: 'hidden' as const,
     }),
-    [isMobileView],
+    [],
   );
 
   const containerStyle = useMemo(

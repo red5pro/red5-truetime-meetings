@@ -1,4 +1,4 @@
-import { createContext, JSX, useEffect, useState } from 'react';
+import { JSX, useEffect, useState } from 'react';
 import './App.css';
 import { CssBaseline, ThemeProvider } from '@mui/material';
 import theme from './styles/theme';
@@ -11,6 +11,7 @@ import { ThemeList } from './constants/themeList';
 import { AvailableLanguages } from './constants/AvailableLanguages';
 import log from 'loglevel';
 import { getRuntimeConfig } from './utils/configStore';
+import { ThemeContext } from './contexts/ThemeContext';
 
 // Extend the global Window interface to include our custom functions
 declare global {
@@ -70,14 +71,6 @@ function copyWindowLocation(): void {
 // Attach functions to window
 window.getWindowLocation = getWindowLocation;
 window.copyWindowLocation = copyWindowLocation;
-
-// Theme context type
-interface ThemeContextType {
-  currentTheme: string;
-  setCurrentTheme: (theme: string) => void;
-}
-
-export const ThemeContext = createContext<ThemeContextType | null>(null);
 
 function App(): JSX.Element {
   const [currentTheme, setCurrentTheme] = useState<string>(
