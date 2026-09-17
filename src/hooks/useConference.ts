@@ -126,9 +126,7 @@ interface DeviceManagement {
   updateDevicesList: () => void;
 }
 
-interface Recording {
-  // Define recording interface based on your implementation
-}
+type Recording = ReturnType<typeof useRecording>;
 
 interface LocalRecording {
   isLocalRecordingActive: boolean;
@@ -148,21 +146,13 @@ interface LocalRecording {
   recordingStartTime: number | null;
 }
 
-interface ScreenShare {
-  // Define screen share interface based on your implementation
-}
+type ScreenShare = ReturnType<typeof useScreenShare>;
 
-interface VirtualBackground {
-  // Define virtual background interface based on your implementation
-}
+type VirtualBackground = ReturnType<typeof useVirtualBackground>;
 
-interface Chat {
-  // Define chat interface based on your implementation
-}
+type Chat = ReturnType<typeof useChat>;
 
-interface ClosedCaptions {
-  // Define closed captions interface based on your implementation
-}
+type ClosedCaptions = ReturnType<typeof useClosedCaptions>;
 
 interface Transcription {
   fetchTranscriptions: (startTime: number, endTime: number) => Promise<any>;
@@ -219,19 +209,19 @@ export const useConference = (roomId: string): UseConferenceReturn => {
   const { token: googleToken } = useGoogleAuth();
 
   // Initialize core hooks ONCE
-  // @ts-ignore
+  // @ts-expect-error - legacy type mismatch, needs proper typing
   const client: Client = useConferenceClient(peerConfig);
-  // @ts-ignore
+  // @ts-expect-error - legacy type mismatch, needs proper typing
   const conferenceState: ConferenceState = useConferenceState(roomId);
-  // @ts-ignore
+  // @ts-expect-error - legacy type mismatch, needs proper typing
   const roomState: RoomState = useRoomState();
   const participants: Participants = useParticipants();
-  // @ts-ignore
+  // @ts-expect-error - legacy type mismatch, needs proper typing
   const mediaControls: MediaControls = useMediaControls(client);
   const drawerStates: DrawerStates = useDrawerStates();
-  // @ts-ignore
+  // @ts-expect-error - legacy type mismatch, needs proper typing
   const permissions: Permissions = usePermissions();
-  // @ts-ignore
+  // @ts-expect-error - legacy type mismatch, needs proper typing
   const closedCaptions: ClosedCaptions = useClosedCaptions(client);
   const externalStreams = useExternalStreams(conferenceState.roomName);
 
@@ -247,9 +237,9 @@ export const useConference = (roomId: string): UseConferenceReturn => {
     (streamId: string, streamName: string, reactionRequest: string) => {
       let reaction = '😀';
 
-      // @ts-ignore
+      // @ts-expect-error - legacy type narrowing not recognized by compiler
       if (!isNull(reactions[reactionRequest])) {
-        // @ts-ignore
+        // @ts-expect-error - legacy type mismatch, needs proper typing
         reaction = reactions[reactionRequest];
       }
 
@@ -281,7 +271,7 @@ export const useConference = (roomId: string): UseConferenceReturn => {
         size: 3,
       });
     },
-    [t, roomState.publishStreamIdRef],
+    [t, roomState.publishStreamIdRef.current],
   );
 
   const localVideoCreate = useCallback(async (): Promise<void> => {
@@ -317,13 +307,13 @@ export const useConference = (roomId: string): UseConferenceReturn => {
       }
     }
 
-    // @ts-ignore
+    // @ts-expect-error - legacy type mismatch, needs proper typing
     localVideoElement.srcObject = mediaStream;
   }, [client, permissions.isPermissionDialogVisible]);
 
   // Initialize dependent hooks with stable dependencies
   const deviceManagement: DeviceManagement = useDeviceManagement(
-    // @ts-ignore
+    // @ts-expect-error - legacy type mismatch, needs proper typing
     client,
     roomState,
     mediaControls,
@@ -331,7 +321,7 @@ export const useConference = (roomId: string): UseConferenceReturn => {
   );
 
   const conferenceActions: ConferenceActions = useConferenceActions(
-    // @ts-ignore
+    // @ts-expect-error - legacy type mismatch, needs proper typing
     client,
     roomState,
     mediaControls,
@@ -349,22 +339,22 @@ export const useConference = (roomId: string): UseConferenceReturn => {
     conferenceState.token,
     conferenceState.role,
     showInfo,
-    // @ts-ignore
+    // @ts-expect-error - legacy type mismatch, needs proper typing
     client.conferenceClient,
     () => drawerStates.handleLocalRecordingDrawerOpen(true),
     () => drawerStates.handleLocalRecordingDrawerOpen(false),
-    // @ts-ignore
+    // @ts-expect-error - legacy type mismatch, needs proper typing
     (participants as any).subscribedParticipants,
-    // @ts-ignore
+    // @ts-expect-error - legacy type mismatch, needs proper typing
     (mediaControls as any).isMyCamTurnedOff as boolean,
-    // @ts-ignore
+    // @ts-expect-error - legacy type mismatch, needs proper typing
     (mediaControls as any).isMyMicMuted as boolean,
   );
 
   const localRecording = recording;
 
   const screenShare: ScreenShare = useScreenShare(
-    // @ts-ignore
+    // @ts-expect-error - legacy type mismatch, needs proper typing
     client.conferenceClient,
     roomState.publishStreamIdRef,
     roomState.streamName,
@@ -374,14 +364,14 @@ export const useConference = (roomId: string): UseConferenceReturn => {
   );
 
   const virtualBackground: VirtualBackground = useVirtualBackground(
-    // @ts-ignore
+    // @ts-expect-error - legacy type mismatch, needs proper typing
     client.conferenceClient,
     mediaControls.isMyCamTurnedOff,
     showWarning,
   );
 
   const chat: Chat = useChat(
-    // @ts-ignore
+    // @ts-expect-error - legacy type mismatch, needs proper typing
     client.conferenceClient,
     roomState.publishStreamIdRef,
     roomState.streamName,
@@ -397,7 +387,7 @@ export const useConference = (roomId: string): UseConferenceReturn => {
 
   // Setup conference events - call at top level but pass stable refs
   useConferenceEvents(
-    // @ts-ignore
+    // @ts-expect-error - legacy type mismatch, needs proper typing
     client,
     participants,
     closedCaptions,
@@ -465,7 +455,13 @@ export const useConference = (roomId: string): UseConferenceReturn => {
         // Add API call here
       },
     }),
-    [conferenceActions, roomState, conferenceState, displayMessage],
+    [
+      conferenceActions,
+      roomState,
+      roomState.publishStreamIdRef.current,
+      conferenceState,
+      displayMessage,
+    ],
   );
 
   // Effects - be very careful with dependencies
@@ -479,11 +475,6 @@ export const useConference = (roomId: string): UseConferenceReturn => {
       drawerStates.handleEffectsOpen(false);
     }
   }, [roomState.isPublished, roomState.isPlayed, roomState.isPlayOnly]);
-
-  // Sync stats ref - only run when printStatLogs changes
-  useEffect(() => {
-    conferenceState.printStatLogsRef.current = conferenceState.printStatLogs;
-  }, [conferenceState.printStatLogs]);
 
   // Sync bitrate - only run when outgoingBitrate changes
   useEffect(() => {
@@ -586,6 +577,7 @@ export const useConference = (roomId: string): UseConferenceReturn => {
       localRecording,
       closedCaptions,
       transcription,
+      externalStreams,
       client,
       showSuccess,
       showError,

@@ -50,6 +50,7 @@ const JsonContainer = styled(Box)(({ theme }: { theme: Theme }) => ({
 }));
 
 const TranscriptionDrawer = React.memo<TranscriptionDrawerProps>((props) => {
+  const { fetchTranscriptions } = props;
   const { t } = useTranslation();
   const theme = useTheme();
 
@@ -68,8 +69,8 @@ const TranscriptionDrawer = React.memo<TranscriptionDrawerProps>((props) => {
   const handleFetch = useCallback(() => {
     const startTs = new Date(startTime).getTime();
     const endTs = new Date(endTime).getTime();
-    props.fetchTranscriptions(startTs, endTs);
-  }, [startTime, endTime, props.fetchTranscriptions]);
+    fetchTranscriptions(startTs, endTs);
+  }, [startTime, endTime, fetchTranscriptions]);
 
   const handleCopy = useCallback(() => {
     if (props.data) {

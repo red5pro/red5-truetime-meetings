@@ -20,7 +20,7 @@ import { useTranslation } from 'react-i18next';
 import { SvgIcon } from '../../SvgIcon.js';
 //import debounce from 'lodash/debounce'
 import { getDialogStyle } from '../../../styles/themeUtil.js';
-// @ts-ignore
+// @ts-expect-error - legacy component has no proper type exports
 import { LayoutOptions } from '../../../utils/layoutOptions.ts';
 
 interface Red5DialogTitleProps {

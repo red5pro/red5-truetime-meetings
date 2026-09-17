@@ -10,12 +10,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
-          node-version: '20'
+          node-version: '24'
 
       - name: Install dependencies
         run: npm install
@@ -23,11 +23,8 @@ jobs:
       - name: Build project
         run: npm run build
 
-      #- name: Run Lint
-      #run: npm run lint
-
-      - name: Check Formatting
-        run: npm run format:check
+      - name: Run Lint
+        run: npm run lint
 
       - name: Run Tests with Coverage
         run: npm run test:coverage
@@ -37,12 +34,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
-          node-version: '20'
+          node-version: '24'
 
       - name: Install dependencies
         working-directory: config-service

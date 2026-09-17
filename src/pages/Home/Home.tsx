@@ -1,12 +1,12 @@
 import { Button, TextField, Typography } from '@mui/material';
 import Grid from '@mui/material/Grid2';
 import { Box } from '@mui/system';
-import { ChangeEvent, useRef, useState, useCallback } from 'react';
+import { ChangeEvent, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { nanoid } from 'nanoid';
 import Stack from '@mui/material/Stack';
-//@ts-ignore
+//@ts-expect-error - legacy component has no proper type exports
 import { GoToLobbyDialog } from '../../Components/Footer/Components/GoToLobbyDialog.tsx';
 import Logo from '../../static/images/logo.svg';
 import { getRuntimeConfig } from '../../utils/configStore';
@@ -16,7 +16,7 @@ function Home() {
   const navigate = useNavigate();
 
   const joinToken = useRef<string>('');
-  const joinRoomUrl = useRef<string>('');
+  const [joinRoomUrl] = useState<string>('');
 
   const [goToLobbyDialogOpen, setGoToLobbyDialogOpen] = useState(false);
   const [roomName, setRoomName] = useState('');
@@ -33,17 +33,12 @@ function Home() {
     goToLobby();
   };
 
-  const goToLobby = useCallback(
-    (roomId?: string, joinToken?: string) => {
-      const newMeetingPath =
-        roomId === undefined
-          ? `/${nanoid(8)}`
-          : `/${roomId}${joinToken ? `?token=${joinToken}` : ''}`;
+  const goToLobby = (roomId?: string, token?: string) => {
+    const newMeetingPath =
+      roomId === undefined ? `/${nanoid(8)}` : `/${roomId}${token ? `?token=${token}` : ''}`;
 
-      navigate(newMeetingPath); // Navigate to the new path programmatically
-    },
-    [navigate],
-  );
+    navigate(newMeetingPath); // Navigate to the new path programmatically
+  };
 
   const handleGoToLobbyDialogClose = () => {
     setGoToLobbyDialogOpen(false);
@@ -65,7 +60,7 @@ function Home() {
     <>
       <GoToLobbyDialog
         onClose={handleGoToLobbyDialogClose}
-        url={joinRoomUrl.current}
+        url={joinRoomUrl}
         open={goToLobbyDialogOpen}
         onGoToLobbyClicked={handleGoToLobbyClicked}
       />

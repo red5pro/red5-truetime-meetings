@@ -256,15 +256,146 @@ export const useDeviceManagement = (
     [setSelectedDevices],
   );
 
-  // Helper function to get device name for display
-  // @ts-ignore
-  const getDeviceName = (deviceId: string | null, deviceType: keyof DeviceList): string => {
-    if (!deviceId || deviceId === 'default') return 'Default';
+  // Helper functions
+  const checkDeviceAvailability = useCallback(
+    (selectedDevices: SelectedDevices): DeviceAvailability => {
+      const videoDevice = devicesRef.current.videoInputs?.find(
+        (d) => d.deviceId === selectedDevices.videoDeviceId,
+      );
+      const audioDevice = devicesRef.current.audioInputs?.find(
+        (d) => d.deviceId === selectedDevices.audioDeviceId,
+      );
 
-    const deviceList = devicesRef.current[deviceType] || [];
-    const device = deviceList.find((d) => d.deviceId === deviceId);
-    return device ? device.label || `${deviceType} Device` : 'Unknown Device';
-  };
+      return {
+        isVideoAvailable: Boolean(videoDevice),
+        isAudioAvailable: Boolean(audioDevice),
+      };
+    },
+    [],
+  );
+
+  const updateMediaControlsBasedOnAvailability = useCallback(
+    ({ isVideoAvailable, isAudioAvailable }: DeviceAvailability): void => {
+      if (isVideoAvailable) {
+        mediaControlsRef.current.setCameraButtonDisabled(false);
+      }
+      if (isAudioAvailable) {
+        mediaControlsRef.current.setMicrophoneButtonDisabled(false);
+      }
+    },
+    [],
+  );
+
+  const handleUnavailableVideoDevice = useCallback((): string => {
+    const availableCamera = devicesRef.current.videoInputs?.[0];
+
+    if (availableCamera) {
+      mediaControlsRef.current.setCameraButtonDisabled(false);
+      log.info('Unable to access selected camera, switching to first available camera.');
+      displayMessageRef.current(
+        'Unable to access selected camera, switching to first available camera.',
+      );
+      return availableCamera.deviceId;
+    } else {
+      // No camera available - disable video
+      clientRef.current
+        .muteVideo(true)
+        .then(() => mediaControlsRef.current.setIsMyCamTurnedOff(true));
+      mediaControlsRef.current.setCameraButtonDisabled(true);
+      log.info('No camera device available.');
+      displayMessageRef.current('No camera device available.');
+      return '';
+    }
+  }, []);
+
+  const handleUnavailableAudioDevice = useCallback((): string => {
+    const availableAudio = devicesRef.current.audioInputs?.[0];
+
+    if (availableAudio) {
+      mediaControlsRef.current.setMicrophoneButtonDisabled(false);
+      log.info('Unable to access selected microphone, switching to first available microphone.');
+      displayMessageRef.current(
+        'Unable to access selected microphone, switching to first available microphone.',
+      );
+      return availableAudio.deviceId;
+    } else {
+      // No microphone available - disable audio
+      mediaControlsRef.current.toggleMic(true);
+      mediaControlsRef.current.setMicrophoneButtonDisabled(true);
+      log.info('No microphone device available.');
+      displayMessageRef.current('No microphone device available.');
+      return '';
+    }
+  }, []);
+
+  const handleUnavailableDevices = useCallback(
+    (
+      selectedDevices: SelectedDevices,
+      { isVideoAvailable, isAudioAvailable }: DeviceAvailability,
+    ): SelectedDevices => {
+      const updatedDevices = { ...selectedDevices };
+
+      // Handle video device
+      if (!selectedDevices.videoDeviceId || !isVideoAvailable) {
+        updatedDevices.videoDeviceId = handleUnavailableVideoDevice();
+      }
+
+      // Handle audio device
+      if (!selectedDevices.audioDeviceId || !isAudioAvailable) {
+        updatedDevices.audioDeviceId = handleUnavailableAudioDevice();
+      }
+
+      return updatedDevices;
+    },
+    [handleUnavailableVideoDevice, handleUnavailableAudioDevice],
+  );
+
+  const hasDevicesChanged = useCallback(
+    (original: SelectedDevices, updated: SelectedDevices): boolean => {
+      return (
+        original.videoDeviceId !== updated.videoDeviceId ||
+        original.audioDeviceId !== updated.audioDeviceId
+      );
+    },
+    [],
+  );
+
+  const switchMediaSourcesIfNeeded = useCallback(
+    (
+      previousVideoId: string | null | undefined,
+      previousAudioId: string | null | undefined,
+      currentDevices: SelectedDevices,
+    ): void => {
+      if (!roomState.publishStreamIdRef.current) {
+        return;
+      }
+
+      try {
+        // Switch video source if changed
+        if (previousVideoId !== currentDevices.videoDeviceId && currentDevices.videoDeviceId) {
+          clientRef.current.switchVideoCameraCapture(
+            roomState.publishStreamIdRef.current,
+            currentDevices.videoDeviceId,
+          );
+        }
+
+        // Switch audio source if changed or using default
+        const shouldSwitchAudio =
+          previousAudioId !== currentDevices.audioDeviceId ||
+          currentDevices.audioDeviceId === 'default';
+
+        if (shouldSwitchAudio && currentDevices.audioDeviceId) {
+          clientRef.current.switchAudioInputSource(
+            roomState.publishStreamIdRef.current,
+            currentDevices.audioDeviceId,
+          );
+        }
+      } catch (error) {
+        log.error('Error while switching video/audio sources', error);
+      }
+    },
+    [roomState.publishStreamIdRef],
+  );
 
   const checkAndUpdateVideoAudioSources = useCallback((): void => {
     if (roomState.isPlayOnly) {
@@ -290,140 +421,20 @@ export const useDeviceManagement = (
 
     // Switch media sources if devices changed
     switchMediaSourcesIfNeeded(previousVideoDeviceId, previousAudioDeviceId, updatedDevices);
-  }, [roomState.isPlayOnly, getSelectedDevices, setSelectedDevices]);
-
-  // Helper functions
-  const checkDeviceAvailability = (selectedDevices: SelectedDevices): DeviceAvailability => {
-    const videoDevice = devicesRef.current.videoInputs?.find(
-      (d) => d.deviceId === selectedDevices.videoDeviceId,
-    );
-    const audioDevice = devicesRef.current.audioInputs?.find(
-      (d) => d.deviceId === selectedDevices.audioDeviceId,
-    );
-
-    return {
-      isVideoAvailable: Boolean(videoDevice),
-      isAudioAvailable: Boolean(audioDevice),
-    };
-  };
-
-  const updateMediaControlsBasedOnAvailability = ({
-    isVideoAvailable,
-    isAudioAvailable,
-  }: DeviceAvailability): void => {
-    if (isVideoAvailable) {
-      mediaControlsRef.current.setCameraButtonDisabled(false);
-    }
-    if (isAudioAvailable) {
-      mediaControlsRef.current.setMicrophoneButtonDisabled(false);
-    }
-  };
-
-  const handleUnavailableDevices = (
-    selectedDevices: SelectedDevices,
-    { isVideoAvailable, isAudioAvailable }: DeviceAvailability,
-  ): SelectedDevices => {
-    const updatedDevices = { ...selectedDevices };
-
-    // Handle video device
-    if (!selectedDevices.videoDeviceId || !isVideoAvailable) {
-      updatedDevices.videoDeviceId = handleUnavailableVideoDevice();
-    }
-
-    // Handle audio device
-    if (!selectedDevices.audioDeviceId || !isAudioAvailable) {
-      updatedDevices.audioDeviceId = handleUnavailableAudioDevice();
-    }
-
-    return updatedDevices;
-  };
-
-  const handleUnavailableVideoDevice = (): string => {
-    const availableCamera = devicesRef.current.videoInputs?.[0];
-
-    if (availableCamera) {
-      mediaControlsRef.current.setCameraButtonDisabled(false);
-      log.info('Unable to access selected camera, switching to first available camera.');
-      displayMessageRef.current(
-        'Unable to access selected camera, switching to first available camera.',
-      );
-      return availableCamera.deviceId;
-    } else {
-      // No camera available - disable video
-      clientRef.current
-        .muteVideo(true)
-        .then(() => mediaControlsRef.current.setIsMyCamTurnedOff(true));
-      mediaControlsRef.current.setCameraButtonDisabled(true);
-      log.info('No camera device available.');
-      displayMessageRef.current('No camera device available.');
-      return '';
-    }
-  };
-
-  const handleUnavailableAudioDevice = (): string => {
-    const availableAudio = devicesRef.current.audioInputs?.[0];
-
-    if (availableAudio) {
-      mediaControlsRef.current.setMicrophoneButtonDisabled(false);
-      log.info('Unable to access selected microphone, switching to first available microphone.');
-      displayMessageRef.current(
-        'Unable to access selected microphone, switching to first available microphone.',
-      );
-      return availableAudio.deviceId;
-    } else {
-      // No microphone available - disable audio
-      mediaControlsRef.current.toggleMic(true);
-      mediaControlsRef.current.setMicrophoneButtonDisabled(true);
-      log.info('No microphone device available.');
-      displayMessageRef.current('No microphone device available.');
-      return '';
-    }
-  };
-
-  const hasDevicesChanged = (original: SelectedDevices, updated: SelectedDevices): boolean => {
-    return (
-      original.videoDeviceId !== updated.videoDeviceId ||
-      original.audioDeviceId !== updated.audioDeviceId
-    );
-  };
-
-  const switchMediaSourcesIfNeeded = (
-    previousVideoId: string | null | undefined,
-    previousAudioId: string | null | undefined,
-    currentDevices: SelectedDevices,
-  ): void => {
-    if (!roomState.publishStreamIdRef.current) {
-      return;
-    }
-
-    try {
-      // Switch video source if changed
-      if (previousVideoId !== currentDevices.videoDeviceId && currentDevices.videoDeviceId) {
-        clientRef.current.switchVideoCameraCapture(
-          roomState.publishStreamIdRef.current,
-          currentDevices.videoDeviceId,
-        );
-      }
-
-      // Switch audio source if changed or using default
-      const shouldSwitchAudio =
-        previousAudioId !== currentDevices.audioDeviceId ||
-        currentDevices.audioDeviceId === 'default';
-
-      if (shouldSwitchAudio && currentDevices.audioDeviceId) {
-        clientRef.current.switchAudioInputSource(
-          roomState.publishStreamIdRef.current,
-          currentDevices.audioDeviceId,
-        );
-      }
-    } catch (error) {
-      log.error('Error while switching video/audio sources', error);
-    }
-  };
+  }, [
+    roomState.isPlayOnly,
+    getSelectedDevices,
+    setSelectedDevices,
+    checkDeviceAvailability,
+    updateMediaControlsBasedOnAvailability,
+    handleUnavailableDevices,
+    hasDevicesChanged,
+    switchMediaSourcesIfNeeded,
+  ]);
 
   useEffect(() => {
     if (devices.audioInputs?.length || devices.videoInputs?.length) {
-      checkAndUpdateVideoAudioSources();
+      requestAnimationFrame(() => checkAndUpdateVideoAudioSources());
     }
   }, [devices, checkAndUpdateVideoAudioSources]);
 

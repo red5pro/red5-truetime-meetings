@@ -6,7 +6,7 @@ import Divider from '@mui/material/Divider';
 import { SvgIcon } from './SvgIcon';
 import { useTheme, Theme } from '@mui/material';
 import { useTranslation } from 'react-i18next';
-// @ts-ignore
+// @ts-expect-error - legacy component has no proper type exports
 import { CustomizedBtn } from './CustomizedBtn.tsx';
 import { Box } from '@mui/system';
 import log from 'loglevel';
@@ -180,7 +180,7 @@ const VirtualBackgroundButton = React.memo<VirtualBackgroundButtonProps>(
     React.useEffect(() => {
       // If already cached, we're done
       if (globalImageCache.has(imageSrc)) {
-        setImageLoaded(true);
+        queueMicrotask(() => setImageLoaded(true));
         return;
       }
 
@@ -351,13 +351,13 @@ function EffectsTab({
       getRuntimeConfig().VITE_VIRTUAL_BACKGROUND_IMAGES !== undefined &&
       getRuntimeConfig().VITE_VIRTUAL_BACKGROUND_IMAGES !== null
     ) {
-      return getRuntimeConfig().VITE_VIRTUAL_BACKGROUND_IMAGES.split(',');
+      return getRuntimeConfig().VITE_VIRTUAL_BACKGROUND_IMAGES?.split(',');
     }
     return [];
   }, []);
 
   const saveImageToFileSystem = React.useCallback(
-    async (selectedFile: File, directoryHandle: any): Promise<void> => {
+    async (selectedFile: File, directoryHandle: FileSystemDirectoryHandle): Promise<void> => {
       log.log('Saving image to file system', selectedFile, directoryHandle);
     },
     [],
@@ -394,15 +394,15 @@ function EffectsTab({
 
       if (typeof selectedFile !== 'undefined' && selectedFile !== null) {
         const processFile = () => {
-          (navigator.storage as any).getDirectory().then((directoryHandle: any) => {
+          navigator.storage.getDirectory().then((directoryHandle) => {
             saveImageToFileSystem(selectedFile, directoryHandle).then(() => {
               log.log('Image saved to file system');
             });
           });
         };
 
-        if ((window as any).requestIdleCallback) {
-          (window as any).requestIdleCallback(processFile);
+        if (window.requestIdleCallback) {
+          window.requestIdleCallback(processFile);
         } else {
           setTimeout(processFile, 0);
         }

@@ -37,7 +37,7 @@ interface TabPanelProps {
   index: number;
 }
 
-// @ts-ignore
+// @ts-expect-error - styled() theme callback param type mismatch
 const Red5Drawer = styled(Drawer)(({ theme }: { theme: Theme }) =>
   getRed5DrawerStyle(theme, theme.palette.themeColor?.[60], false),
 );
@@ -72,32 +72,39 @@ const TabPanel = React.memo<TabPanelProps>(({ children, value, index, ...other }
 TabPanel.displayName = 'TabPanel';
 
 const EffectsDrawer = React.memo<EffectsDrawerProps>((props) => {
+  const {
+    setVirtualBackgroundImage,
+    handleBackgroundReplacement,
+    handleInfoDrawerOpen: handleInfoDrawerOpenProp,
+    handleLocalRecordingDrawerOpen: handleLocalRecordingDrawerOpenProp,
+    handleTranscriptionDrawerOpen: handleTranscriptionDrawerOpenProp,
+  } = props;
   const [value] = React.useState<number>(0);
   const { t } = useTranslation();
 
   const setVirtualBg = React.useCallback(
-    (img: VirtualBackgroundImage) => props.setVirtualBackgroundImage?.(img),
-    [props.setVirtualBackgroundImage],
+    (img: VirtualBackgroundImage) => setVirtualBackgroundImage?.(img),
+    [setVirtualBackgroundImage],
   );
 
   const handleBgReplacement = React.useCallback(
-    (mode: BackgroundReplacement) => props.handleBackgroundReplacement?.(mode),
-    [props.handleBackgroundReplacement],
+    (mode: BackgroundReplacement) => handleBackgroundReplacement?.(mode),
+    [handleBackgroundReplacement],
   );
 
   const handleInfoDrawerOpen = React.useCallback(
-    (open: boolean) => props.handleInfoDrawerOpen?.(open),
-    [props.handleInfoDrawerOpen],
+    (open: boolean) => handleInfoDrawerOpenProp?.(open),
+    [handleInfoDrawerOpenProp],
   );
 
   const handleLocalRecordingDrawerOpen = React.useCallback(
-    (open: boolean) => props.handleLocalRecordingDrawerOpen?.(open),
-    [props.handleLocalRecordingDrawerOpen],
+    (open: boolean) => handleLocalRecordingDrawerOpenProp?.(open),
+    [handleLocalRecordingDrawerOpenProp],
   );
 
   const handleTranscriptionDrawerOpen = React.useCallback(
-    (open: boolean) => props.handleTranscriptionDrawerOpen?.(open),
-    [props.handleTranscriptionDrawerOpen],
+    (open: boolean) => handleTranscriptionDrawerOpenProp?.(open),
+    [handleTranscriptionDrawerOpenProp],
   );
 
   return (

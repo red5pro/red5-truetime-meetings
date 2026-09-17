@@ -13,7 +13,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import { useSnackbar } from 'notistack';
 import { Check } from '@mui/icons-material';
-// @ts-ignore
+// @ts-expect-error - legacy component has no proper type exports
 import { CustomizedBtn, rectangularStyle } from '../../CustomizedBtn.tsx';
 import { Box } from '@mui/system';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';

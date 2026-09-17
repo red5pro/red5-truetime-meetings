@@ -115,7 +115,7 @@ export const useCustomNotification = (): CustomNotificationHook => {
           role: 'alert' as const,
 
           // Additional styling for visual distinction with your dark theme
-          //@ts-ignore
+          //@ts-expect-error - legacy type mismatch, needs proper typing
           sx: {
             '& .SnackbarContent-root': {
               backgroundColor: getVariantColor(variant, theme),
@@ -152,7 +152,7 @@ export const useCustomNotification = (): CustomNotificationHook => {
         },
 
         // Content wrapper for better screen reader support and dark theme compatibility
-        content: (key: SnackbarKey, message: React.ReactNode) => (
+        content: (key: SnackbarKey, _message: React.ReactNode) => (
           <div
             id={`snackbar-${key}`}
             role="alert"
@@ -268,17 +268,6 @@ const getVariantColor = (variant: VariantType, theme: Theme): string => {
     warning: theme.palette.warning.main,
     info: '#262626',
     default: theme.palette.primary.main,
-  };
-  return colorMap[variant] || colorMap.default;
-};
-
-const getContrastColor = (variant: VariantType, theme: Theme): string => {
-  const colorMap: Record<string, string> = {
-    success: theme.palette.success.contrastText,
-    error: theme.palette.error.contrastText,
-    warning: theme.palette.warning.contrastText,
-    info: theme.palette.info.contrastText,
-    default: theme.palette.primary.contrastText,
   };
   return colorMap[variant] || colorMap.default;
 };

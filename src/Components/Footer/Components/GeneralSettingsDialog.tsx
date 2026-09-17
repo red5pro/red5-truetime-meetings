@@ -111,7 +111,7 @@ function GeneralSettingsDialog({
                   {languageList.map((lang) => (
                     <MenuItem key={lang} value={lang}>
                       {
-                        //@ts-ignore
+                        //@ts-expect-error - legacy type mismatch, needs proper typing
                         AvailableLanguages[lang].name
                       }
                     </MenuItem>
