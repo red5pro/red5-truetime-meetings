@@ -35,6 +35,10 @@ const LayoutAuto = React.memo<LayoutAutoProps>((props) => {
     unpinVideo,
     layout,
     currentConferenceClient,
+    networkScore,
+    connectionStats,
+    setParticipantIdMuted,
+    setMuteParticipantDialogOpen,
   } = props;
 
   // Presenter and active speakers first, so the sidebar shows who is actually talking
@@ -42,6 +46,7 @@ const LayoutAuto = React.memo<LayoutAutoProps>((props) => {
     allParticipants,
     pinnedParticipantId,
     talkers,
+    slotCount: MAX_VIDEO_AT_SIDE,
   });
 
   // Memoized layout class calculator
@@ -127,8 +132,8 @@ const LayoutAuto = React.memo<LayoutAutoProps>((props) => {
       const videoId = isMine ? 'red5pro-publisher' : `red5pro-subscriber-${participant.uid}`;
 
       const connectionQualityScore = isMine
-        ? (props.networkScore?.outbound ?? 0)
-        : (calculateConnectionQualityScore(props.connectionStats?.[participant.uid]) ?? 0);
+        ? (networkScore?.outbound ?? 0)
+        : (calculateConnectionQualityScore(connectionStats?.[participant.uid]) ?? 0);
 
       return (
         <Box
@@ -161,12 +166,12 @@ const LayoutAuto = React.memo<LayoutAutoProps>((props) => {
             talkers={talkers}
             isScreenShare={isScreenShareParticipant(participant)}
             connectionQuality={connectionQualityScore}
-            // @ts-ignore
+            // @ts-expect-error - callback param type mismatch with legacy types
             setParticipantIdMuted={(participantId: string) =>
-              props?.setParticipantIdMuted?.(participantId)
+              setParticipantIdMuted?.(participantId)
             }
             setMuteParticipantDialogOpen={(isOpen: boolean) =>
-              props?.setMuteParticipantDialogOpen?.(isOpen)
+              setMuteParticipantDialogOpen?.(isOpen)
             }
           />
         </Box>
@@ -185,10 +190,10 @@ const LayoutAuto = React.memo<LayoutAutoProps>((props) => {
       unpinVideo,
       layout,
       handleVideoRef,
-      props.networkScore,
-      props.connectionStats,
-      props.setParticipantIdMuted,
-      props.setMuteParticipantDialogOpen,
+      networkScore,
+      connectionStats,
+      setParticipantIdMuted,
+      setMuteParticipantDialogOpen,
     ],
   );
 

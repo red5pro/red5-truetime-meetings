@@ -10,6 +10,7 @@ import VideoCard from '../../Components/Cards/VideoCard.tsx';
 import LayoutPinned from '../Layout/PinnedLayout.tsx';
 import LayoutTiled from '../Layout/TiledLayout.tsx';
 import LayoutAuto from '../Layout/AutoLayout.tsx';
+import LayoutMobile from '../Layout/MobileLayout.tsx';
 import { isNull } from '../../utils/utils.tsx';
 import { LayoutOptions } from '../../utils/layoutOptions.ts';
 import RecordingIndicator from '../../Components/RecordingIndicator.tsx';
@@ -57,11 +58,14 @@ const MeetingPage = React.memo<MeetingPageProps>((props) => {
   const isSmallScreen = useMediaQuery(theme.breakpoints.down('sm'));
   const isMobileLayout = isSmallScreen || props.isMobile;
 
-  // Create refs for props functions to prevent dependency issues.
-  // Assigned during render, not in an effect: renderLayout() reads this ref while rendering,
-  // so an effect would feed the layouts (and the talkers list) one render behind.
+  // Ref for props, kept fresh via effect so callbacks invoked later (event handlers, PiP
+  // controls) always see the latest values without needing `props` in their dependency arrays.
+  // Render-time reads (e.g. renderLayout(), pipOptions' screenShareStream/streamName) use
+  // `props` directly instead of this ref — see comments below.
   const propsRef = useRef(props);
-  propsRef.current = props;
+  useEffect(() => {
+    propsRef.current = props;
+  });
 
   // PiP integration
   const {
@@ -160,7 +164,9 @@ const MeetingPage = React.memo<MeetingPageProps>((props) => {
   // Memoized PiP callbacks — shared by openAllParticipantsPiP, updatePiP effect, and auto-open.
   // Using propsRef so the callbacks never go stale without needing to be listed as deps.
   const closePiPRef = useRef(closePiP);
-  closePiPRef.current = closePiP;
+  useEffect(() => {
+    closePiPRef.current = closePiP;
+  });
 
   const pipOptions = useMemo(
     () => ({
@@ -177,7 +183,11 @@ const MeetingPage = React.memo<MeetingPageProps>((props) => {
       onVideoToggle: (streamId: string) => {
         const p = propsRef.current;
         if (streamId === p.streamName) {
-          p.isMyCamTurnedOff ? p.checkAndTurnOnLocalCamera?.() : p.checkAndTurnOffLocalCamera?.();
+          if (p.isMyCamTurnedOff) {
+            p.checkAndTurnOnLocalCamera?.();
+          } else {
+            p.checkAndTurnOffLocalCamera?.();
+          }
         }
       },
       onVolumeToggle: (streamId: string) => {
@@ -189,11 +199,19 @@ const MeetingPage = React.memo<MeetingPageProps>((props) => {
       },
       onToggleCamera: () => {
         const p = propsRef.current;
-        p.isMyCamTurnedOff ? p.checkAndTurnOnLocalCamera?.() : p.checkAndTurnOffLocalCamera?.();
+        if (p.isMyCamTurnedOff) {
+          p.checkAndTurnOnLocalCamera?.();
+        } else {
+          p.checkAndTurnOffLocalCamera?.();
+        }
       },
       onToggleScreenShare: () => {
         const p = propsRef.current;
-        p.isScreenShared ? p.handleStopScreenShare?.() : p.handleStartScreenShare?.();
+        if (p.isScreenShared) {
+          p.handleStopScreenShare?.();
+        } else {
+          p.handleStartScreenShare?.();
+        }
       },
       onLeaveRoom: () => {
         closePiPRef.current?.();
@@ -206,11 +224,10 @@ const MeetingPage = React.memo<MeetingPageProps>((props) => {
       isMyCamTurnedOff: props.isMyCamTurnedOff,
       isScreenShared: props.isScreenShared,
       screenShareStream: props.isScreenShared
-        ? (propsRef.current.currentConferenceClient?.mediaStreamManager?.getScreenShareStream() ??
-          undefined)
+        ? (props.currentConferenceClient?.mediaStreamManager?.getScreenShareStream() ?? undefined)
         : undefined,
       talkers: props.talkers || [],
-      streamName: propsRef.current.streamName,
+      streamName: props.streamName,
     }),
 
     [
@@ -219,6 +236,8 @@ const MeetingPage = React.memo<MeetingPageProps>((props) => {
       props.isMyCamTurnedOff,
       props.isScreenShared,
       props.talkers,
+      props.currentConferenceClient?.mediaStreamManager,
+      props.streamName,
     ],
   );
 
@@ -277,9 +296,12 @@ const MeetingPage = React.memo<MeetingPageProps>((props) => {
     currentProps.setShowEmojis?.(!currentProps.showEmojis);
   }, []);
 
-  // Layout renderer
-  const renderLayout = useCallback(() => {
-    const currentProps = propsRef.current;
+  // Layout renderer. Called directly in JSX every render (see return below), so it reads
+  // `props` directly rather than through propsRef — no memoization benefit to gain here since
+  // nothing else consumes its identity, and reading `props` keeps it correctly in sync with the
+  // current render instead of lagging behind propsRef's effect-based update.
+  const renderLayout = () => {
+    const currentProps = props;
     const hasPin = !isNull(currentProps.pinnedParticipantId);
     const isAutoLayout =
       currentProps.layout === LayoutOptions.Auto &&
@@ -307,12 +329,16 @@ const MeetingPage = React.memo<MeetingPageProps>((props) => {
       pipSupported: pipSupported,
     };
 
+    if (isMobileLayout) {
+      return <LayoutMobile {...commonProps} layout={currentProps.layout} />;
+    }
+
     if (isAutoLayout && !currentProps?.closedCaptions.captionsVisible) {
       return (
         <LayoutAuto
           {...commonProps}
           pinLayout={hasPin}
-          // @ts-ignore
+          // @ts-expect-error - prop type mismatch with legacy component props
           pinnedParticipantId={currentProps.pinnedParticipantId}
           isScreenShared={currentProps.isScreenShared}
           isStartingScreenShare={currentProps.isStartingScreenShare}
@@ -325,7 +351,7 @@ const MeetingPage = React.memo<MeetingPageProps>((props) => {
       return (
         <LayoutPinned
           {...commonProps}
-          // @ts-ignore
+          // @ts-expect-error - prop type mismatch with legacy component props
           pinnedParticipantId={currentProps.pinnedParticipantId}
           layout={currentProps.layout}
           isMobile={isMobileLayout}
@@ -336,18 +362,21 @@ const MeetingPage = React.memo<MeetingPageProps>((props) => {
     return (
       <LayoutTiled
         {...commonProps}
-        // @ts-ignore
+        // @ts-expect-error - prop type mismatch with legacy component props
         isScreenShared={currentProps.isScreenShared}
         isStartingScreenShare={currentProps.isStartingScreenShare}
         layout={currentProps.layout}
       />
     );
-  }, [allParticipants, gallerySize, pipSupported, isMobileLayout]);
+  };
 
   // Effects
   useEffect(() => {
     props.updateAudioOutput?.();
-    handleGalleryResize(false);
+    // Deferred via rAF: gallery measurement reads the DOM, and this indirection keeps the
+    // setState call out of the effect's own synchronous body (see the resize-listener effect
+    // below, which uses the same debounce-based indirection).
+    requestAnimationFrame(() => handleGalleryResize(false));
   }, [
     props.participants,
     props.subscribedParticipants,
@@ -356,7 +385,7 @@ const MeetingPage = React.memo<MeetingPageProps>((props) => {
   ]);
 
   useEffect(() => {
-    handleGalleryResize(true);
+    requestAnimationFrame(() => handleGalleryResize(true));
   }, [
     props.infoDrawerOpen,
     props.messageDrawerOpen,
@@ -455,12 +484,12 @@ const MeetingPage = React.memo<MeetingPageProps>((props) => {
 
       {/* Mute Participant Dialog */}
       <MuteParticipantDialog
-        // @ts-ignore
+        // @ts-expect-error - prop type mismatch with legacy component props
         isMuteParticipantDialogOpen={props?.isMuteParticipantDialogOpen}
         setMuteParticipantDialogOpen={(open) => props?.setMuteParticipantDialogOpen?.(open)}
-        // @ts-ignore
+        // @ts-expect-error - prop type mismatch with legacy component props
         participantIdMuted={props?.participantIdMuted}
-        // @ts-ignore
+        // @ts-expect-error - callback param type mismatch with legacy types
         setParticipantIdMuted={(participant) => props?.setParticipantIdMuted?.(participant)}
         turnOffYourMicNotification={(streamId) => props?.turnOffYourMicNotification?.(streamId)}
       />
@@ -484,7 +513,7 @@ const MeetingPage = React.memo<MeetingPageProps>((props) => {
         autoPlay
         hidePin
         isMine
-        // @ts-ignore
+        // @ts-expect-error - prop type mismatch with legacy component props
         streamName={props.streamName}
         isPublished
         isPlayOnly={false}
@@ -495,7 +524,7 @@ const MeetingPage = React.memo<MeetingPageProps>((props) => {
         unpinVideo={props.unpinVideo}
         hidePlayer
         layout={props.layout}
-        // @ts-ignore
+        // @ts-expect-error - callback param type mismatch with legacy types
         setParticipantIdMuted={(participantId) => props?.setParticipantIdMuted?.(participantId)}
         setMuteParticipantDialogOpen={(isOpen) => props?.setMuteParticipantDialogOpen?.(isOpen)}
       />
@@ -511,7 +540,7 @@ const MeetingPage = React.memo<MeetingPageProps>((props) => {
         onCaptionTypeChange={(isLive) => props?.closedCaptions?.handleCaptionTypeChange(isLive)}
         selectedLanguage={props?.closedCaptions?.captionsLanguage}
         isLiveCaptions={props?.closedCaptions?.isLiveCaptions}
-        // @ts-ignore
+        // @ts-expect-error - prop type mismatch with legacy component props
         subscribedParticipants={props?.subscribedParticipants}
       />
 
@@ -546,7 +575,7 @@ const MeetingPage = React.memo<MeetingPageProps>((props) => {
         microphoneSelected={props.microphoneSelected}
         selectedSpeaker={props.selectedSpeaker}
         speakerSelected={props.speakerSelected}
-        // @ts-ignore
+        // @ts-expect-error - prop type mismatch with legacy component props
         devices={props.devices}
         selectedCamera={props.selectedCamera}
         cameraSelected={props.cameraSelected}
@@ -581,7 +610,7 @@ const MeetingPage = React.memo<MeetingPageProps>((props) => {
         openAllParticipantsPiP={openAllParticipantsPiP}
         closePiP={closePiP}
         allParticipants={allParticipants}
-        // @ts-ignore
+        // @ts-expect-error - prop type mismatch with legacy component props
         talkers={props.talkers}
         streamName={props.streamName}
         captionsVisible={props?.closedCaptions.captionsVisible}

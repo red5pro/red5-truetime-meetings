@@ -225,18 +225,20 @@ const LocalRecordingDrawer = React.memo<LocalRecordingDrawerProps>((props) => {
     if (!isActive || !recordingStartTime) {
       if (!isActive && elapsedSeconds > 0) {
         // Save the final duration before resetting
-        setFinalDuration(elapsedSeconds);
-        setElapsedSeconds(0);
+        queueMicrotask(() => {
+          setFinalDuration(elapsedSeconds);
+          setElapsedSeconds(0);
+        });
       }
       return;
     }
 
     // Reset finalDuration when starting a new recording
-    setFinalDuration(0);
+    queueMicrotask(() => setFinalDuration(0));
 
     // Calculate initial elapsed time
     const calculateElapsed = () => Math.floor((Date.now() - recordingStartTime) / 1000);
-    setElapsedSeconds(calculateElapsed());
+    queueMicrotask(() => setElapsedSeconds(calculateElapsed()));
 
     const interval = setInterval(() => {
       if (!isPaused) {

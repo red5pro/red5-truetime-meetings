@@ -34,6 +34,10 @@ const LayoutPinned = React.memo<LayoutPinnedProps>((props) => {
     layout,
     currentConferenceClient,
     isMobile,
+    networkScore,
+    connectionStats,
+    setParticipantIdMuted,
+    setMuteParticipantDialogOpen,
   } = props;
 
   const isMobileViewport = useMediaQuery('(max-width:600px)');
@@ -77,6 +81,7 @@ const LayoutPinned = React.memo<LayoutPinnedProps>((props) => {
     allParticipants,
     pinnedParticipantId,
     talkers,
+    slotCount: MAX_VIDEO_AT_SIDE,
   });
 
   // Split participants into visible and audio-only groups
@@ -120,8 +125,8 @@ const LayoutPinned = React.memo<LayoutPinnedProps>((props) => {
       participant.isScreenSharing === true && participant.ownerStreamId === publishStreamId;
 
     const connectionQualityScore = isMine
-      ? (props.networkScore?.outbound ?? 0)
-      : (calculateConnectionQualityScore(props.connectionStats?.[participant.uid]) ?? 0);
+      ? (networkScore?.outbound ?? 0)
+      : (calculateConnectionQualityScore(connectionStats?.[participant.uid]) ?? 0);
 
     return (
       <Box className="single-video-container pinned keep-ratio">
@@ -150,12 +155,12 @@ const LayoutPinned = React.memo<LayoutPinnedProps>((props) => {
             talkers={talkers}
             isScreenShare={isScreenShareParticipant(participant)}
             connectionQuality={connectionQualityScore}
-            // @ts-ignore
+            // @ts-expect-error - callback param type mismatch with legacy types
             setParticipantIdMuted={(participantId: string) =>
-              props?.setParticipantIdMuted?.(participantId)
+              setParticipantIdMuted?.(participantId)
             }
             setMuteParticipantDialogOpen={(isOpen: boolean) =>
-              props?.setMuteParticipantDialogOpen?.(isOpen)
+              setMuteParticipantDialogOpen?.(isOpen)
             }
           />
         </Box>
@@ -172,10 +177,10 @@ const LayoutPinned = React.memo<LayoutPinnedProps>((props) => {
     pinVideo,
     unpinVideo,
     layout,
-    props.networkScore,
-    props.connectionStats,
-    props.setParticipantIdMuted,
-    props.setMuteParticipantDialogOpen,
+    networkScore,
+    connectionStats,
+    setParticipantIdMuted,
+    setMuteParticipantDialogOpen,
   ]);
 
   // Render individual video card
@@ -192,8 +197,8 @@ const LayoutPinned = React.memo<LayoutPinnedProps>((props) => {
       const isMine = participant.uid === streamName;
 
       const connectionQualityScore = isMine
-        ? (props.networkScore?.outbound ?? 0)
-        : (calculateConnectionQualityScore(props.connectionStats?.[participant.uid]) ?? 0);
+        ? (networkScore?.outbound ?? 0)
+        : (calculateConnectionQualityScore(connectionStats?.[participant.uid]) ?? 0);
 
       const videoId = isMine ? 'red5pro-publisher' : `red5pro-subscriber-${participant.uid}`;
 
@@ -234,12 +239,12 @@ const LayoutPinned = React.memo<LayoutPinnedProps>((props) => {
                 talkers={talkers}
                 isScreenShare={isScreenShareParticipant(participant)}
                 connectionQuality={connectionQualityScore}
-                // @ts-ignore
+                // @ts-expect-error - callback param type mismatch with legacy types
                 setParticipantIdMuted={(participantId: string) =>
-                  props?.setParticipantIdMuted?.(participantId)
+                  setParticipantIdMuted?.(participantId)
                 }
                 setMuteParticipantDialogOpen={(isOpen: boolean) =>
-                  props?.setMuteParticipantDialogOpen?.(isOpen)
+                  setMuteParticipantDialogOpen?.(isOpen)
                 }
               />
             </Box>
@@ -257,10 +262,10 @@ const LayoutPinned = React.memo<LayoutPinnedProps>((props) => {
       pinVideo,
       unpinVideo,
       layout,
-      props.networkScore,
-      props.connectionStats,
-      props.setParticipantIdMuted,
-      props.setMuteParticipantDialogOpen,
+      networkScore,
+      connectionStats,
+      setParticipantIdMuted,
+      setMuteParticipantDialogOpen,
     ],
   );
 

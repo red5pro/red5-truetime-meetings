@@ -15,7 +15,7 @@ import {
 import { useTheme } from '@mui/material/styles';
 import { useTranslation } from 'react-i18next';
 import { Check, BarChart } from '@mui/icons-material';
-// @ts-ignore
+// @ts-expect-error - legacy component has no proper type exports
 import { CustomizedBtn, rectangularStyle } from '../../CustomizedBtn.tsx';
 import { Box } from '@mui/system';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
@@ -104,7 +104,7 @@ function MicButton(props: MicButtonProps) {
       updateAudioLevel();
     } catch (error) {
       console.error('Error accessing microphone:', error);
-      setAudioLevel(0);
+      queueMicrotask(() => setAudioLevel(0));
     }
   }, [props.selectedMicrophone]);
 
@@ -118,7 +118,7 @@ function MicButton(props: MicButtonProps) {
     if (audioContextRef.current) {
       audioContextRef.current.close();
     }
-    setAudioLevel(0);
+    queueMicrotask(() => setAudioLevel(0));
   }, []);
 
   // Start/stop audio monitoring when menu opens/closes

@@ -68,7 +68,7 @@ export const useConferenceState = () => {
   // Update role when isGuest changes
   useEffect(() => {
     if (isGuest) {
-      setRole(USER_ROLES.GUEST);
+      queueMicrotask(() => setRole(USER_ROLES.GUEST));
     }
   }, [isGuest]);
 
@@ -119,6 +119,11 @@ export const useConferenceState = () => {
     setLayout(newLayout);
     layoutRef.current = newLayout;
   };
+
+  // Keep printStatLogsRef in sync so consumers can read the latest value without re-rendering.
+  useEffect(() => {
+    printStatLogsRef.current = printStatLogs;
+  }, [printStatLogs]);
 
   return {
     // Basic state

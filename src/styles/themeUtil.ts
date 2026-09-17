@@ -68,7 +68,7 @@ export function getDialogStyle(theme: Theme): StyleObject {
   };
 }
 
-export function getGlassMenuStyle(theme: Theme, p0: string, p1: boolean): StyleObject {
+export function getGlassMenuStyle(theme: Theme, _p0: string, _p1: boolean): StyleObject {
   return {
     overflow: 'hidden',
     background: theme.palette.themeColor?.[90],

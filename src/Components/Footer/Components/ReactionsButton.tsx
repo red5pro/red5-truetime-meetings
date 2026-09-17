@@ -2,8 +2,8 @@ import { SvgIcon } from '../../SvgIcon';
 import { Tooltip } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '@mui/material/styles';
-// @ts-ignore
-import { CustomizedBtn, rectangularStyle, roundStyle } from '../../CustomizedBtn.tsx';
+// @ts-expect-error - legacy component has no proper type exports
+import { CustomizedBtn, rectangularStyle } from '../../CustomizedBtn.tsx';
 
 interface ReactionsButtonProps {
   rounded?: boolean;

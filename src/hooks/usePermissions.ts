@@ -219,15 +219,17 @@ export const usePermissions = (isPlayOnly: boolean = false): UsePermissionsRetur
    * Update dialog visibility based on permission states
    */
   useEffect(() => {
-    if (isPlayOnly) {
-      setIsPermissionDialogVisible(false);
-      return;
-    }
+    queueMicrotask(() => {
+      if (isPlayOnly) {
+        setIsPermissionDialogVisible(false);
+        return;
+      }
 
-    // Inline the logic instead of calling shouldShowPermissionDialog to avoid function dependency
-    const shouldShow =
-      cameraPermissionState !== 'granted' || microphonePermissionState !== 'granted';
-    setIsPermissionDialogVisible(shouldShow);
+      // Inline the logic instead of calling shouldShowPermissionDialog to avoid function dependency
+      const shouldShow =
+        cameraPermissionState !== 'granted' || microphonePermissionState !== 'granted';
+      setIsPermissionDialogVisible(shouldShow);
+    });
   }, [cameraPermissionState, microphonePermissionState, isPlayOnly]);
 
   /**

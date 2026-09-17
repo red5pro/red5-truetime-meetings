@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useMemo, useCallback } from 'react';
 import { Box } from '@mui/system';
 
 import VideoCard from '../../Components/Cards/VideoCard.tsx';
@@ -50,10 +50,14 @@ const LayoutTiled = React.memo<LayoutTiledProps>((props) => {
     unpinVideo,
     layout,
     globals,
+    networkScore,
+    connectionStats,
+    setParticipantIdMuted,
+    setMuteParticipantDialogOpen,
   } = props;
 
-  // State for card dimensions
-  const [cardDimensions, setCardDimensions] = useState<CardDimensions>(getInitialCardDimensions);
+  // Card dimensions derived from width/height/layout — a pure calculation, not a DOM
+  // measurement, so it's computed directly rather than via a setState-in-effect pattern.
 
   // Memoized calculations
   const layoutConfig = useMemo<LayoutConfig>(() => {
@@ -74,9 +78,9 @@ const LayoutTiled = React.memo<LayoutTiledProps>((props) => {
     return allParticipants.slice(0, tileCount);
   }, [allParticipants, globals?.desiredTileCount]);
 
-  // Calculate and update card dimensions
-  useEffect(() => {
-    if (!width || !height) return;
+  // Calculate card dimensions
+  const cardDimensions = useMemo<CardDimensions>(() => {
+    if (!width || !height) return getInitialCardDimensions();
 
     const layout = calculateOptimalLayout(
       width,
@@ -85,10 +89,10 @@ const LayoutTiled = React.memo<LayoutTiledProps>((props) => {
       layoutConfig.aspectRatio,
     );
 
-    setCardDimensions({
+    return {
       width: Math.max(0, layout.width - CARD_MARGIN),
       height: Math.max(0, layout.height - CARD_MARGIN),
-    });
+    };
   }, [width, height, layoutConfig.videoCount, layoutConfig.aspectRatio]);
 
   // Video ref handler
@@ -111,8 +115,8 @@ const LayoutTiled = React.memo<LayoutTiledProps>((props) => {
       const isMine = participant.uid === streamName;
 
       const connectionQualityScore = isMine
-        ? (props.networkScore?.outbound ?? 0)
-        : (calculateConnectionQualityScore(props.connectionStats?.[participant.uid]) ?? 0);
+        ? (networkScore?.outbound ?? 0)
+        : (calculateConnectionQualityScore(connectionStats?.[participant.uid]) ?? 0);
 
       const videoId = isMine ? 'red5pro-publisher' : `red5pro-subscriber-${participant.uid}`;
 
@@ -154,12 +158,12 @@ const LayoutTiled = React.memo<LayoutTiledProps>((props) => {
               talkers={talkers}
               isScreenShare={isScreenShareParticipant(participant)}
               connectionQuality={connectionQualityScore}
-              // @ts-ignore
+              // @ts-expect-error - callback param type mismatch with legacy types
               setParticipantIdMuted={(participantId: string) =>
-                props?.setParticipantIdMuted?.(participantId)
+                setParticipantIdMuted?.(participantId)
               }
               setMuteParticipantDialogOpen={(isOpen: boolean) =>
-                props?.setMuteParticipantDialogOpen?.(isOpen)
+                setMuteParticipantDialogOpen?.(isOpen)
               }
             />
           </Box>
@@ -177,10 +181,10 @@ const LayoutTiled = React.memo<LayoutTiledProps>((props) => {
       pinVideo,
       unpinVideo,
       layout,
-      props.networkScore,
-      props.connectionStats,
-      props.setParticipantIdMuted,
-      props.setMuteParticipantDialogOpen,
+      networkScore,
+      connectionStats,
+      setParticipantIdMuted,
+      setMuteParticipantDialogOpen,
     ],
   );
 

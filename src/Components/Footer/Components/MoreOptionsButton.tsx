@@ -11,7 +11,7 @@ import GeneralSettingsDialog from './GeneralSettingsDialog.tsx';
 import { isMobile, isTablet } from 'react-device-detect';
 import i18n from 'i18next';
 import { ThemeList } from '../../../constants/themeList.js';
-import { ThemeContext } from '../../../App.js';
+import { ThemeContext } from '../../../contexts/ThemeContext';
 import { CustomizedBtn, rectangularStyle } from '../../CustomizedBtn.tsx';
 import log from 'loglevel';
 import { ClosedCaption, ClosedCaptionDisabled } from '@mui/icons-material';
@@ -208,7 +208,7 @@ function MoreOptionsButton(props: MoreOptionsButtonProps) {
       <LayoutSettingsDialog
         open={layoutDialogOpen}
         onClose={handleLayoutDialogClose}
-        //@ts-ignore
+        //@ts-expect-error - prop type mismatch with legacy component props
         globals={props?.globals}
         handleSetDesiredTileCount={props?.handleSetDesiredTileCount}
         layout={props?.layout}
@@ -359,7 +359,7 @@ function MoreOptionsButton(props: MoreOptionsButtonProps) {
               viewBox="0 0 500 500"
               name={'call-settings'}
               color={getMenuIconColor()}
-              // @ts-ignore
+              // @ts-expect-error - prop type mismatch with legacy component props
               style={{ opacity: !isCaptionEnabled ? 0.5 : 1 }}
             />
           </ListItemIcon>
@@ -378,21 +378,34 @@ function MoreOptionsButton(props: MoreOptionsButtonProps) {
           />
         </MenuItem>
 
-        {!props?.hideExternalStreams && (
-          <MenuItem onClick={handleExternalStreamsToggle}>
-            <ListItemIcon>
-              <SvgIcon
-                size={24}
-                viewBox="0 0 512 512"
-                name={'database'}
-                color={getMenuIconColor()}
-              />
-            </ListItemIcon>
-            <ListItemText id={'more-options-external-streams-button'}>
-              {t('External Streams')}
-            </ListItemText>
-          </MenuItem>
-        )}
+        <MenuItem
+          onClick={!props?.hideExternalStreams ? handleExternalStreamsToggle : undefined}
+          disabled={props?.hideExternalStreams}
+        >
+          <ListItemIcon>
+            <SvgIcon
+              size={24}
+              viewBox="0 0 512 512"
+              name={'database'}
+              color={getMenuIconColor()}
+              // @ts-expect-error - prop type mismatch with legacy component props
+              style={{ opacity: props?.hideExternalStreams ? 0.5 : 1 }}
+            />
+          </ListItemIcon>
+          <ListItemText
+            id={'more-options-external-streams-button'}
+            primary={
+              props?.hideExternalStreams
+                ? t('Upgrade your plan to support external streams')
+                : t('External Streams')
+            }
+            sx={{
+              '& .MuiListItemText-primary': {
+                color: props?.hideExternalStreams ? 'text.disabled' : 'text.primary',
+              },
+            }}
+          />
+        </MenuItem>
       </Menu>
     </>
   );

@@ -8,6 +8,12 @@ import { sharedVariables } from '../constants/config';
 import { LayoutOptions } from '../utils/layoutOptions';
 import { useDataChannelHeartbeat } from './useDataChannelHeartbeat';
 
+// Tracks which conference client instances already have event listeners registered, so this
+// survives across remounts of the consuming component while the same client instance persists.
+// Kept out of the client instance itself (rather than a property stamped on it) since that
+// instance is a value derived from a hook argument and shouldn't be mutated directly.
+const registeredEventClients = new WeakSet<object>();
+
 // ---- Types ----
 type NetworkScore = {
   inbound: number;
@@ -116,37 +122,41 @@ export const useConferenceEvents = (
   );
   const heartbeatControlRef = useRef({ startHeartbeat, stopHeartbeat, sendHeartbeat });
 
-  heartbeatControlRef.current = { startHeartbeat, stopHeartbeat, sendHeartbeat };
+  useEffect(() => {
+    heartbeatControlRef.current = { startHeartbeat, stopHeartbeat, sendHeartbeat };
+  });
 
   // Store all dependencies in a ref to avoid closure issues
   const depsRef = useRef<any>({});
 
-  depsRef.current = {
-    participantsHook,
-    closedCaptions,
-    roomState,
-    mediaControls,
-    chat,
-    screenShare,
-    virtualBackground,
-    recording,
-    localRecording,
-    displayMessage,
-    showSuccess,
-    showError,
-    setNetworkScore,
-    setConnectionStats,
-    setCurrentIssues,
-    printStatLogsRef,
-    setUnAuthorizedDialogMessage,
-    setUnAuthorizedDialogOpen,
-    handleLeaveFromRoom,
-    pinVideo,
-    unpinVideo,
-    layoutRef,
-    role,
-    localVideoCreate,
-  };
+  useEffect(() => {
+    depsRef.current = {
+      participantsHook,
+      closedCaptions,
+      roomState,
+      mediaControls,
+      chat,
+      screenShare,
+      virtualBackground,
+      recording,
+      localRecording,
+      displayMessage,
+      showSuccess,
+      showError,
+      setNetworkScore,
+      setConnectionStats,
+      setCurrentIssues,
+      printStatLogsRef,
+      setUnAuthorizedDialogMessage,
+      setUnAuthorizedDialogOpen,
+      handleLeaveFromRoom,
+      pinVideo,
+      unpinVideo,
+      layoutRef,
+      role,
+      localVideoCreate,
+    };
+  });
 
   // Event handlers stored in ref
   const eventHandlersRef = useRef<any>({});
@@ -171,10 +181,8 @@ export const useConferenceEvents = (
     }, delay);
   };
 
-  if (!eventHandlersRef.current.initialized) {
+  useEffect(() => {
     eventHandlersRef.current = {
-      initialized: true,
-
       handlePublishFailure: async (reason: string) => {
         if (publishFailureReportedRef.current) return;
         publishFailureReportedRef.current = true;
@@ -635,7 +643,7 @@ export const useConferenceEvents = (
         const participantsHook = depsRef.current.participantsHook;
 
         // Update main participants
-        // @ts-ignore
+        // @ts-expect-error - state setter callback param type mismatch
         participantsHook.setParticipants((prevParticipants) => ({
           ...prevParticipants,
           [streamName]: {
@@ -646,7 +654,7 @@ export const useConferenceEvents = (
         }));
 
         // Update subscribedParticipants if the participant exists
-        // @ts-ignore
+        // @ts-expect-error - state setter callback param type mismatch
         participantsHook.setSubscribedParticipants((prev) => {
           const existing = prev[streamName];
           if (!existing) return prev;
@@ -685,7 +693,7 @@ export const useConferenceEvents = (
           inProgress: false,
         };
 
-        // @ts-ignore
+        // @ts-expect-error - state setter callback param type mismatch
         participantsHook.setSubscribedParticipants((prev) => ({
           ...prev,
           [data.uid]: {
@@ -756,7 +764,7 @@ export const useConferenceEvents = (
 
         const participantsHook = depsRef.current.participantsHook;
 
-        // @ts-ignore
+        // @ts-expect-error - state setter callback param type mismatch
         participantsHook.setParticipants((prev) => ({
           ...prev,
           [newParticipant.uid]: newParticipant,
@@ -784,14 +792,14 @@ export const useConferenceEvents = (
         eventHandlersRef.current.clearRemoteSubscriber(data.participant.uid);
 
         // Remove from participants
-        // @ts-ignore
+        // @ts-expect-error - state setter callback param type mismatch
         participantsHook.setParticipants((prev) => {
           const newParticipants = { ...prev };
           delete newParticipants[data.participant.uid];
           return newParticipants;
         });
 
-        // @ts-ignore
+        // @ts-expect-error - state setter callback param type mismatch
         participantsHook.setSubscribedParticipants((prev) => {
           const newSubscribed = { ...prev };
           delete newSubscribed[data.participant.uid];
@@ -849,7 +857,7 @@ export const useConferenceEvents = (
       webrtcIssuesDetected: (issues: any) => {
         if (depsRef.current.printStatLogsRef.current) {
           console.log('WebRTC Issues Detected:');
-          // @ts-ignore
+          // @ts-expect-error - callback param type mismatch with generic array type
           issues.forEach((issue) => {
             console.log(`${issue.type}: ${issue.reason}`);
             console.log('Details:', issue.statsSample);
@@ -868,7 +876,7 @@ export const useConferenceEvents = (
               client.conferenceClient.current.streamName,
             );
             if (publisherStats.current) {
-              // @ts-ignore
+              // @ts-expect-error - index signature type mismatch on stats object
               detailedStats[client.conferenceClient.current.streamName] = {
                 ...publisherStats.current,
                 connectionType: 'publisher',
@@ -880,7 +888,7 @@ export const useConferenceEvents = (
           client.conferenceClient.current.subscribers.forEach((_sub: any, userId: any) => {
             const subStats = client.conferenceClient.current.getConnectionStats(userId);
             if (subStats.current) {
-              // @ts-ignore
+              // @ts-expect-error - index signature type mismatch on stats object
               detailedStats[userId] = {
                 ...subStats.current,
                 connectionType: 'subscriber',
@@ -896,7 +904,7 @@ export const useConferenceEvents = (
             const screenShareId = client.conferenceClient.current.streamName + '-screenshare';
             const screenStats = client.conferenceClient.current.getConnectionStats(screenShareId);
             if (screenStats.current) {
-              // @ts-ignore
+              // @ts-expect-error - index signature type mismatch on stats object
               detailedStats[screenShareId] = {
                 ...screenStats.current,
                 connectionType: 'screen-share-publisher',
@@ -910,7 +918,7 @@ export const useConferenceEvents = (
 
       subscribeToParticipants: async (participantsObj: any) => {
         for (const [_userId, participant] of Object.entries(participantsObj)) {
-          // @ts-ignore
+          // @ts-expect-error - legacy type narrowing not recognized by compiler
           if (participant.role !== 'subscriber') {
             eventHandlersRef.current.subscribeToParticipant(participant);
           }
@@ -927,7 +935,7 @@ export const useConferenceEvents = (
             log.warn(`Already attempting to subscribe to ${participant.uid}. Skipping...`);
             return;
           }
-          // @ts-ignore
+          // @ts-expect-error - legacy type narrowing not recognized by compiler
           if (
             participantsHook.subscribeAttemptsRef.current[participant.uid]?.retryCount >=
             sharedVariables.maxRetries
@@ -936,7 +944,7 @@ export const useConferenceEvents = (
               `Max subscription attempts reached for ${participant.uid}. Removing participant.`,
             );
             // Remove from participants (this will remove their video from DOM)
-            // @ts-ignore
+            // @ts-expect-error - state setter callback param type mismatch
             participantsHook.setParticipants((prev) => {
               const newParticipants = { ...prev };
               delete newParticipants[participant.uid];
@@ -976,14 +984,14 @@ export const useConferenceEvents = (
         }
       },
     };
-  }
+  }, []);
 
   useEffect(() => {
     if (!client.conferenceClient.current) return;
 
     const clientInstance = client.conferenceClient.current;
 
-    if (clientInstance._eventsRegistered) return;
+    if (registeredEventClients.has(clientInstance)) return;
 
     const events: Record<string, (...args: any[]) => void> = {
       [ConferenceEvents.JOIN_FAILED]: eventHandlersRef.current.handleJoinFail,
@@ -1040,7 +1048,7 @@ export const useConferenceEvents = (
       clientInstance.on(event, handler);
     });
 
-    clientInstance._eventsRegistered = true;
+    registeredEventClients.add(clientInstance);
     console.log('Event listeners registered for client instance');
 
     return () => {
@@ -1049,7 +1057,7 @@ export const useConferenceEvents = (
         clientInstance?.off(event, handler);
       });
       if (clientInstance) {
-        clientInstance._eventsRegistered = false;
+        registeredEventClients.delete(clientInstance);
       }
     };
   }, [client.conferenceClient]);

@@ -1,8 +1,8 @@
 import React from 'react';
 import { Tooltip } from '@mui/material';
 import { ClosedCaption, ClosedCaptionDisabled } from '@mui/icons-material';
-// @ts-ignore
-import { CustomizedBtn, rectangularStyle, roundStyle } from '../../CustomizedBtn.tsx';
+// @ts-expect-error - legacy component has no proper type exports
+import { CustomizedBtn, rectangularStyle } from '../../CustomizedBtn.tsx';
 import { getRuntimeConfig } from '../../../utils/configStore';
 
 interface CaptionsButtonProps {

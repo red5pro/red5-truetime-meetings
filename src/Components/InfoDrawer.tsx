@@ -20,7 +20,7 @@ interface InfoDrawerProps {
   handleTranscriptionDrawerOpen?: (open: boolean) => void;
 }
 
-// @ts-ignore
+// @ts-expect-error - styled() theme callback param type mismatch
 const Red5Drawer = styled(Drawer)(({ theme }: { theme: Theme }) =>
   getRed5DrawerStyle(theme, theme.palette.themeColor?.[60], false),
 );

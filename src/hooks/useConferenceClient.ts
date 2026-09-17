@@ -1,7 +1,7 @@
 // hooks/useConferenceClient.ts
 
 import { useRef, useEffect, useCallback } from 'react';
-// @ts-ignore
+// @ts-expect-error - conference SDK type exports incomplete
 import { ConferenceClient, ConferenceConfig, User } from 'red5pro-conference-sdk';
 import { getConferenceClientConfig } from '../utils/conferenceConfig';
 import log from 'loglevel';
@@ -219,6 +219,16 @@ export const useConferenceClient = () => {
       log.error('Failed to send event:', error);
       return false;
     }
+  }, []);
+
+  /**
+   * Set the publisher name on the media stream manager
+   */
+  const setPublisherName = useCallback((name: string | null) => {
+    if (!conferenceClient.current || !conferenceClient.current.mediaStreamManager) return false;
+
+    conferenceClient.current.mediaStreamManager.publisherName = name;
+    return true;
   }, []);
 
   /**
@@ -665,6 +675,7 @@ export const useConferenceClient = () => {
 
     // Communication
     sendEvent,
+    setPublisherName,
     setUserMetaData,
     approveGuest,
     rejectGuest,

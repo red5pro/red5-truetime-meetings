@@ -1,10 +1,10 @@
 import { Avatar } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
-// @ts-ignore
+// @ts-expect-error - legacy component has no proper type exports
 import CustomCard from '../CustomCard';
-// @ts-ignore
+// @ts-expect-error - no type declarations for static asset import
 import defaultAvatar from '../../static/images/defaultAvatar.png';
-// @ts-ignore
+// @ts-expect-error - no type declarations available for this import
 import { getFirstLetter, isNull } from '../../utils/utils';
 
 interface DummyCardProps {
