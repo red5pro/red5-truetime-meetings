@@ -208,7 +208,7 @@ function MoreOptionsButton(props: MoreOptionsButtonProps) {
       <LayoutSettingsDialog
         open={layoutDialogOpen}
         onClose={handleLayoutDialogClose}
-        //@ts-ignore
+        //@ts-expect-error - prop type mismatch with legacy component props
         globals={props?.globals}
         handleSetDesiredTileCount={props?.handleSetDesiredTileCount}
         layout={props?.layout}
@@ -359,7 +359,7 @@ function MoreOptionsButton(props: MoreOptionsButtonProps) {
               viewBox="0 0 500 500"
               name={'call-settings'}
               color={getMenuIconColor()}
-              // @ts-ignore
+              // @ts-expect-error - prop type mismatch with legacy component props
               style={{ opacity: !isCaptionEnabled ? 0.5 : 1 }}
             />
           </ListItemIcon>
@@ -388,7 +388,7 @@ function MoreOptionsButton(props: MoreOptionsButtonProps) {
               viewBox="0 0 512 512"
               name={'database'}
               color={getMenuIconColor()}
-              // @ts-ignore
+              // @ts-expect-error - prop type mismatch with legacy component props
               style={{ opacity: props?.hideExternalStreams ? 0.5 : 1 }}
             />
           </ListItemIcon>

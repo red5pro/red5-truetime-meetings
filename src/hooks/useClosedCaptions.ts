@@ -58,17 +58,6 @@ export const useClosedCaptions = (client: Client): UseClosedCaptionsReturn => {
   const [captions, setCaptions] = useState<Caption[]>([]);
 
   // Captions handlers
-  const handleToggleCaptions = useCallback(() => {
-    if (captionsVisible) {
-      stopCaption().then(() => {
-        setCaptions([]);
-      });
-    } else {
-      startCaption();
-    }
-    setCaptionsVisible((prev) => !prev);
-  }, [captionsVisible]);
-
   const startCaption = useCallback(async (): Promise<void> => {
     try {
       const backendConfig = getBackendConfig();
@@ -80,7 +69,7 @@ export const useClosedCaptions = (client: Client): UseClosedCaptionsReturn => {
     } catch (error) {
       console.error('Error starting caption:', error);
     }
-  }, [client]);
+  }, [client, postData]);
 
   const stopCaption = useCallback(async (): Promise<void> => {
     try {
@@ -93,7 +82,18 @@ export const useClosedCaptions = (client: Client): UseClosedCaptionsReturn => {
     } catch (error) {
       console.error('Error stopping caption:', error);
     }
-  }, [client]);
+  }, [client, postData]);
+
+  const handleToggleCaptions = useCallback(() => {
+    if (captionsVisible) {
+      stopCaption().then(() => {
+        setCaptions([]);
+      });
+    } else {
+      startCaption();
+    }
+    setCaptionsVisible((prev) => !prev);
+  }, [captionsVisible, startCaption, stopCaption]);
 
   const handleCaptionsLanguageChange = useCallback((language: string) => {
     setCaptionsLanguage(language);

@@ -43,6 +43,14 @@ export const AuthProvider: React.FC<GoogleAuthProviderProps> = ({ children }) =>
   const [token, setToken] = useState<string | null>(localStorage.getItem('google_token'));
   const [isGuest, setIsGuest] = useState<boolean>(false);
 
+  const logOut = () => {
+    googleLogout();
+    setUser(null);
+    setToken(null);
+    setIsGuest(false);
+    localStorage.removeItem('google_token');
+  };
+
   // Load user from token on mount or when token changes
   React.useEffect(() => {
     const storedToken = localStorage.getItem('google_token');
@@ -109,14 +117,6 @@ export const AuthProvider: React.FC<GoogleAuthProviderProps> = ({ children }) =>
       verified_email: true,
     });
     log.info('Logged in as Guest');
-  };
-
-  const logOut = () => {
-    googleLogout();
-    setUser(null);
-    setToken(null);
-    setIsGuest(false);
-    localStorage.removeItem('google_token');
   };
 
   return (

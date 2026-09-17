@@ -21,7 +21,7 @@ import { SvgIcon } from '../../SvgIcon.js';
 import { useTheme } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 import { getDialogStyle } from '../../../styles/themeUtil.js';
-// @ts-ignore
+// @ts-expect-error - legacy component has no proper type exports
 import { isNull } from '../../../utils/utils.tsx';
 import { BitrateOptionsList } from '../../../constants/bitrateOptionsList.js';
 import { QuestionMarkRounded } from '@mui/icons-material';
@@ -363,7 +363,7 @@ export default function SettingsDialog(props: SettingsDialogProps) {
                       </Typography>
                       <Tooltip title="Press and hold spacebar to unmute your mic">
                         {
-                          //@ts-ignore
+                          //@ts-expect-error - legacy type mismatch, needs proper typing
                           <QuestionMarkRounded color={'#fff'} fontSize={'small'} />
                         }
                       </Tooltip>

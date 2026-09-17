@@ -83,7 +83,7 @@ export const useVirtualBackground = (
   const [isVirtualBackgroundInitialized, setIsVirtualBackgroundInitialized] =
     useState<boolean>(false);
   const [isVirtualBackgroundEnabled, setIsVirtualBackgroundEnabled] = useState<boolean>(false);
-  // @ts-ignore
+  // @ts-expect-error - legacy type mismatch, needs proper typing
   const [currentBackgroundType, setCurrentBackgroundType] = useState<VirtualBackgroundType>(
     VirtualBackgroundTypes.NONE,
   );
@@ -114,7 +114,7 @@ export const useVirtualBackground = (
     const handleDisabled = (): void => {
       log.log('Virtual background disabled');
       setIsVirtualBackgroundEnabled(false);
-      // @ts-ignore
+      // @ts-expect-error - legacy type mismatch, needs proper typing
       setCurrentBackgroundType(VirtualBackgroundTypes.NONE);
     };
 
@@ -231,7 +231,7 @@ export const useVirtualBackground = (
         const action = shouldEnable ? 'enableVirtualBackground' : 'changeVirtualBackground';
 
         // Get configuration for the background type
-        // @ts-ignore
+        // @ts-expect-error - legacy type mismatch, needs proper typing
         const configs: VirtualBackgroundConfigs = getVirtualBackgroundConfigs();
         let config = configs[type];
 
@@ -313,7 +313,7 @@ export const useVirtualBackground = (
       await conferenceClientRef.current.disableVirtualBackground();
       setSelectedBackgroundMode('');
       setIsVirtualBackgroundEnabled(false);
-      // @ts-ignore
+      // @ts-expect-error - legacy type mismatch, needs proper typing
       setCurrentBackgroundType(VirtualBackgroundTypes.NONE);
       log.log('Virtual background disabled');
       return true;
@@ -331,7 +331,7 @@ export const useVirtualBackground = (
       return {
         isInitialized: false,
         isEnabled: false,
-        // @ts-ignore
+        // @ts-expect-error - legacy type mismatch, needs proper typing
         backgroundType: VirtualBackgroundTypes.NONE,
       };
     }

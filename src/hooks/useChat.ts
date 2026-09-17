@@ -109,6 +109,34 @@ export const useChat = (
     setMessageDrawerOpenRef.current = setMessageDrawerOpen;
   }, [setMessageDrawerOpen]);
 
+  const handleSetMessages = useCallback((newMessage: Message) => {
+    setMessages((oldMessages) => {
+      const lastMessage = oldMessages[oldMessages.length - 1];
+      const isSameUser = lastMessage?.name === newMessage?.name;
+      const sentInSameTime = lastMessage?.date === newMessage?.date;
+      const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      const updatedDate = new Date(newMessage?.date).toLocaleString(getLang(), {
+        timeZone: timezone,
+        hour: '2-digit',
+        minute: '2-digit',
+      });
+
+      if ('Invalid Date'.localeCompare(updatedDate) !== 0) {
+        newMessage.date = updatedDate;
+      }
+
+      // Don't merge messages if they contain files
+      if (isSameUser && sentInSameTime && !newMessage.files && !lastMessage?.files) {
+        if (lastMessage) {
+          lastMessage.message = lastMessage.message + '\n' + newMessage.message;
+        }
+        return [...oldMessages];
+      } else {
+        return [...oldMessages, newMessage];
+      }
+    });
+  }, []);
+
   const handleSendMessage = useCallback(
     async (message: string, files?: File[]) => {
       console.log('handleSendMessage', message, files);
@@ -172,36 +200,8 @@ export const useChat = (
         });
       }
     },
-    [conferenceClientRef, streamName],
+    [conferenceClientRef, streamName, handleSetMessages],
   );
-
-  const handleSetMessages = useCallback((newMessage: Message) => {
-    setMessages((oldMessages) => {
-      const lastMessage = oldMessages[oldMessages.length - 1];
-      const isSameUser = lastMessage?.name === newMessage?.name;
-      const sentInSameTime = lastMessage?.date === newMessage?.date;
-      const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-      const updatedDate = new Date(newMessage?.date).toLocaleString(getLang(), {
-        timeZone: timezone,
-        hour: '2-digit',
-        minute: '2-digit',
-      });
-
-      if ('Invalid Date'.localeCompare(updatedDate) !== 0) {
-        newMessage.date = updatedDate;
-      }
-
-      // Don't merge messages if they contain files
-      if (isSameUser && sentInSameTime && !newMessage.files && !lastMessage?.files) {
-        if (lastMessage) {
-          lastMessage.message = lastMessage.message + '\n' + newMessage.message;
-        }
-        return [...oldMessages];
-      } else {
-        return [...oldMessages, newMessage];
-      }
-    });
-  }, []);
 
   const handleChatMessage = useCallback(
     (chatMessage: ChatMessage) => {
@@ -271,22 +271,22 @@ export const useChat = (
           setNumberOfUnReadMessages((numb) => numb + 1);
         }
 
-        // @ts-ignore
+        // @ts-expect-error - legacy type mismatch, needs proper typing
         handleSetMessages(notificationEvent);
       } else if (eventType === 'REACTIONS') {
         showReactionsRef.current(
-          // @ts-ignore
+          // @ts-expect-error - legacy type mismatch, needs proper typing
           notificationEvent.senderStreamId,
           notificationEvent.senderStreamName,
           notificationEvent.reaction,
         );
       } else if (eventType === 'RAISED_HAND') {
         if (notificationEvent.isRaisedHand) {
-          // @ts-ignore
+          // @ts-expect-error - callback param type mismatch with legacy types
           setRaisedHandsRef.current((prev) => [...prev, notificationEvent.senderStreamId]);
         } else {
           setRaisedHandsRef.current((prev) =>
-            // @ts-ignore
+            // @ts-expect-error - legacy type mismatch, needs proper typing
             prev.filter(
               (streamId) => streamId.localeCompare(notificationEvent.senderStreamId) !== 0,
             ),

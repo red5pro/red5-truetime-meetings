@@ -86,14 +86,14 @@ export function urlify(text: string | null | undefined): (string | React.ReactEl
 
     if (!hasExternalLink) {
       const externalizedLink = 'https://' + parts[i];
-      // @ts-ignore
+      // @ts-expect-error - callback param type mismatch with legacy types
       parts[i] = (
         <a href={externalizedLink} key={i} target="_blank" rel="noreferrer">
           {parts[i].length > 60 ? parts[i].slice(0, 55) + '...' : parts[i]}
         </a>
       );
     } else {
-      // @ts-ignore
+      // @ts-expect-error - callback param type mismatch with legacy types
       parts[i] = (
         <a href={parts[i]} key={i} target="_blank" rel="noreferrer">
           {parts[i].length > 60 ? parts[i].slice(0, 55) + '...' : parts[i]}

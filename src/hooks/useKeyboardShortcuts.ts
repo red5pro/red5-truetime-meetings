@@ -139,7 +139,7 @@ export const useKeyboardShortcuts = ({
   // Reset tap-to-talk state when mute state changes externally
   useEffect(() => {
     if (!isCurrentlyMuted && wasMutedBeforeTalk && !isSpacePressed) {
-      setWasMutedBeforeTalk(false);
+      queueMicrotask(() => setWasMutedBeforeTalk(false));
     }
   }, [isCurrentlyMuted, wasMutedBeforeTalk, isSpacePressed]);
 

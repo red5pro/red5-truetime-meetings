@@ -251,7 +251,11 @@ const PinButton = React.memo<PinButtonProps>(({ pinned, name, pinVideo, unpinVid
   );
 
   const handleClick = useCallback(() => {
-    pinned ? unpinVideo() : pinVideo(streamId);
+    if (pinned) {
+      unpinVideo();
+    } else {
+      pinVideo(streamId);
+    }
   }, [pinned, unpinVideo, pinVideo, streamId]);
 
   return (
@@ -329,7 +333,7 @@ const VideoPlayer = React.memo<VideoPlayerProps>(
       }
 
       return {
-        // @ts-ignore
+        // @ts-expect-error - legacy type mismatch, needs proper typing
         visibility: (isCamTurnedOff ? 'hidden' : 'visible') as const,
         objectFit: 'contain' as const,
       };
@@ -380,7 +384,6 @@ const OverlayButtons = React.memo<OverlayButtonsProps>(
     displayHover,
     hidePin,
     pinned,
-    layout,
     streamId,
     name,
     micMuted,
@@ -390,8 +393,6 @@ const OverlayButtons = React.memo<OverlayButtonsProps>(
     unpinVideo,
     metaData,
   }) => {
-    if (hidePin) return null;
-
     const shouldShowPinButton = !isMobile && !isTablet;
 
     const isExternalStream = metaData === 'external-stream';
@@ -410,6 +411,8 @@ const OverlayButtons = React.memo<OverlayButtonsProps>(
       },
       [isMine, streamId],
     );
+
+    if (hidePin) return null;
 
     const showOverlay = displayHover || pinned;
 
@@ -515,11 +518,11 @@ const VideoCard = React.memo<VideoCardProps>((props) => {
   // Pinned cards remount after pin/unpin; mouse does not move so :hover state is lost.
   useLayoutEffect(() => {
     if (pinned) {
-      setDisplayHover(true);
+      queueMicrotask(() => setDisplayHover(true));
       return;
     }
     if (containerRef.current?.matches(':hover')) {
-      setDisplayHover(true);
+      queueMicrotask(() => setDisplayHover(true));
     }
   }, [pinned, streamId, layout]);
 

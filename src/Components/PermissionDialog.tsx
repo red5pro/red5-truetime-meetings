@@ -421,7 +421,7 @@ export default function PermissionFlowManager({
   // Reset to initial state and check permissions whenever dialog opens
   useEffect(() => {
     if (open) {
-      setCurrentStep('initial');
+      queueMicrotask(() => setCurrentStep('initial'));
 
       // Check current permission state
       const checkPermissions = async () => {

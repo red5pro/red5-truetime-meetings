@@ -98,7 +98,7 @@ const LobbyPage = React.memo<LobbyPageProps>((props) => {
   const showPermissionError = useCallback(() => {
     enqueueSnackbar(
       {
-        // @ts-ignore
+        // @ts-expect-error - legacy type mismatch, needs proper typing
         message: t('You need to allow microphone and camera permissions before joining'),
         variant: 'info',
         icon: <SvgIcon size={24} viewBox="0 0 500 500" name="muted-microphone" color="#fff" />,
@@ -110,7 +110,7 @@ const LobbyPage = React.memo<LobbyPageProps>((props) => {
   const showDeviceError = useCallback(() => {
     enqueueSnackbar(
       {
-        // @ts-ignore
+        // @ts-expect-error - legacy type mismatch, needs proper typing
         message: t('You need to allow microphone and camera permissions before changing settings'),
         variant: 'info',
         icon: <SvgIcon size={24} viewBox="0 0 500 500" name="muted-microphone" color="#fff" />,
@@ -133,7 +133,7 @@ const LobbyPage = React.memo<LobbyPageProps>((props) => {
         streamId = generateStreamId(streamName);
         log.log('generatedStreamId:', streamId);
       } else {
-        // @ts-ignore
+        // @ts-expect-error - legacy type mismatch, needs proper typing
         streamId = currentPublishStreamId;
       }
 
@@ -202,7 +202,7 @@ const LobbyPage = React.memo<LobbyPageProps>((props) => {
                 onRoleChange={handleRoleChange}
                 onSubmit={handleJoinRoom}
                 isJoining={isJoining}
-                // @ts-ignore
+                // @ts-expect-error - prop type mismatch with legacy component props
                 roomInfo={roomInfo}
               />
             </Grid>
@@ -254,7 +254,7 @@ const LobbyPage = React.memo<LobbyPageProps>((props) => {
         </Grid>
         <Grid size={{ md: 12 }}>
           <DeviceSelector
-            //@ts-ignore
+            //@ts-expect-error - prop type mismatch with legacy component props
             devices={devices}
             selectedCamera={selectedCamera}
             selectedMicrophone={selectedMicrophone}
@@ -275,7 +275,7 @@ const LobbyPage = React.memo<LobbyPageProps>((props) => {
             onRoleChange={handleRoleChange}
             onSubmit={handleJoinRoom}
             isJoining={isJoining}
-            // @ts-ignore
+            // @ts-expect-error - prop type mismatch with legacy component props
             roomInfo={roomInfo}
           />
         </Grid>
@@ -292,22 +292,22 @@ const LobbyPage = React.memo<LobbyPageProps>((props) => {
       <SettingsDialog
         open={dialogOpen}
         onClose={handleSettingsClose}
-        //@ts-ignore
+        //@ts-expect-error - prop type mismatch with legacy component props
         selectFocus={selectFocus}
         handleBackgroundReplacement={handleBackgroundReplacement}
         microphoneSelected={microphoneSelected}
         selectedSpeaker={selectedSpeaker}
         speakerSelected={speakerSelected}
-        //@ts-ignore
+        //@ts-expect-error - prop type mismatch with legacy component props
         devices={devices}
         selectedCamera={selectedCamera}
         cameraSelected={cameraSelected}
         selectedMicrophone={selectedMicrophone}
         selectedBackgroundMode={selectedBackgroundMode}
         setSelectedBackgroundMode={setSelectedBackgroundMode}
-        //@ts-ignore
+        //@ts-expect-error - prop type mismatch with legacy component props
         outgoingBitrate={outgoingBitrate}
-        //@ts-ignore
+        //@ts-expect-error - prop type mismatch with legacy component props
         updateOutgoingBitrate={updateOutgoingBitrate}
       />
 
@@ -317,7 +317,7 @@ const LobbyPage = React.memo<LobbyPageProps>((props) => {
       <EffectsDrawer
         effectsDrawerOpen={effectsDrawerOpen}
         setVirtualBackgroundImage={setVirtualBackgroundImage}
-        //@ts-ignore
+        //@ts-expect-error - prop type mismatch with legacy component props
         handleBackgroundReplacement={handleBackgroundReplacement}
         handleInfoDrawerOpen={(open: boolean) => handleInfoDrawerOpen(open)}
         handleMessageDrawerOpen={handleMessageDrawerOpen}

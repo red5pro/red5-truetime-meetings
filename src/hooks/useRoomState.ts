@@ -28,6 +28,7 @@ interface UseRoomStateReturn {
   setStreamName: React.Dispatch<React.SetStateAction<string | null>>;
   streamNameRef: MutableRefObject<string | null>;
   publishStreamIdRef: MutableRefObject<string | null>;
+  setPublishStreamId: (streamId: string | null) => void;
 }
 
 export const useRoomState = (): UseRoomStateReturn => {
@@ -43,6 +44,10 @@ export const useRoomState = (): UseRoomStateReturn => {
   const [streamName, setStreamName] = useState<string | null>(null);
   const streamNameRef = useRef<string | null>(null);
   const publishStreamIdRef = useRef<string | null>(null);
+
+  const setPublishStreamId = (streamId: string | null) => {
+    publishStreamIdRef.current = streamId;
+  };
 
   return {
     lobbyOrMeetingPage,
@@ -67,5 +72,6 @@ export const useRoomState = (): UseRoomStateReturn => {
     setStreamName,
     streamNameRef,
     publishStreamIdRef,
+    setPublishStreamId,
   };
 };

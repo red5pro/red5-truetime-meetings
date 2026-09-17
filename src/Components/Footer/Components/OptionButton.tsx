@@ -346,7 +346,7 @@ function OptionButton(props: OptionButtonProps) {
       <SettingsDialog
         open={dialogOpen}
         onClose={handleDialogClose}
-        //@ts-ignore
+        //@ts-expect-error - prop type mismatch with legacy component props
         selectFocus={selectFocus}
         devices={props?.devices}
         selectedCamera={props?.selectedCamera}
@@ -365,7 +365,7 @@ function OptionButton(props: OptionButtonProps) {
       <LayoutSettingsDialog
         open={layoutDialogOpen}
         onClose={handleLayoutDialogClose}
-        //@ts-ignore
+        //@ts-expect-error - prop type mismatch with legacy component props
         globals={props?.globals}
         handleSetDesiredTileCount={props?.handleSetDesiredTileCount}
         layout={props?.layout}
@@ -667,7 +667,7 @@ function OptionButton(props: OptionButtonProps) {
                 viewBox="0 0 500 500"
                 name={'camera'}
                 color={getMenuIconColor()}
-                // @ts-ignore
+                // @ts-expect-error - prop type mismatch with legacy component props
                 style={{ opacity: !isRecordingEnabled ? 0.5 : 1 }}
               />
             </ListItemIcon>
@@ -699,7 +699,7 @@ function OptionButton(props: OptionButtonProps) {
                 viewBox="0 0 500 500"
                 name={'camera'}
                 color={getMenuIconColor()}
-                // @ts-ignore
+                // @ts-expect-error - prop type mismatch with legacy component props
                 style={{ opacity: !isRecordingEnabled ? 0.5 : 1 }}
               />
             </ListItemIcon>
@@ -768,7 +768,7 @@ function OptionButton(props: OptionButtonProps) {
               viewBox="0 0 500 500"
               name={'call-settings'}
               color={getMenuIconColor()}
-              // @ts-ignore
+              // @ts-expect-error - prop type mismatch with legacy component props
               style={{ opacity: !isCaptionEnabled ? 0.5 : 1 }}
             />
           </ListItemIcon>

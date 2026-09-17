@@ -204,9 +204,9 @@ function Footer(props: FooterProps) {
                 }
                 layout={props?.layout}
                 changeLayout={(layout: string) => props?.changeLayout?.(layout)}
-                //@ts-ignore
+                //@ts-expect-error - prop type mismatch with legacy component props
                 outgoingBitrate={props?.outgoingBitrate}
-                //@ts-ignore
+                //@ts-expect-error - callback param type mismatch with legacy types
                 updateOutgoingBitrate={(bitrate: number) => props?.updateOutgoingBitrate?.(bitrate)}
                 isRecordingActive={props?.isRecordingActive}
                 startRecord={(
@@ -217,7 +217,7 @@ function Footer(props: FooterProps) {
                 stopRecord={(serverRecording?: boolean, localRecording?: boolean) =>
                   props?.stopRecord?.(serverRecording, localRecording)
                 }
-                //@ts-ignore
+                //@ts-expect-error - prop type mismatch with legacy component props
                 networkScore={props?.networkScore}
                 connectionStats={props?.connectionStats}
                 currentIssues={props?.currentIssues}
@@ -355,7 +355,7 @@ function Footer(props: FooterProps) {
                   microphoneSelected={(mic: string) => props?.microphoneSelected?.(mic)}
                   selectedSpeaker={props?.selectedSpeaker}
                   speakerSelected={(speaker: string) => props?.speakerSelected?.(speaker)}
-                  //@ts-ignore
+                  //@ts-expect-error - prop type mismatch with legacy component props
                   devices={props?.devices}
                   updateDevicesList={props?.updateDevicesList}
                   selectedCamera={props?.selectedCamera}
@@ -369,9 +369,9 @@ function Footer(props: FooterProps) {
                   handleParticipantListOpen={(open: boolean) =>
                     props?.handleParticipantListOpen?.(open)
                   }
-                  //@ts-ignore
+                  //@ts-expect-error - prop type mismatch with legacy component props
                   outgoingBitrate={props?.outgoingBitrate}
-                  //@ts-ignore
+                  //@ts-expect-error - callback param type mismatch with legacy types
                   updateOutgoingBitrate={(bitrate: number) =>
                     props?.updateOutgoingBitrate?.(bitrate)
                   }

@@ -163,7 +163,7 @@ function App(): JSX.Element {
         maxSnack={3}
         Components={{
           info: Red5SnackBar,
-          // @ts-ignore
+          // @ts-expect-error - legacy type mismatch, needs proper typing
           message: Red5SnackBar,
         }}
       >

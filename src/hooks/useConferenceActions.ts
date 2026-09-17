@@ -1,7 +1,7 @@
 // hooks/useConferenceActions.ts
 import { useCallback, useRef, useEffect, MutableRefObject } from 'react';
 import { USER_ROLES, UserRole } from '../constants/userRoles';
-import { isConfigServiceAvailable, isNull, updateMetaData } from '../utils/utils';
+import { isConfigServiceAvailable, updateMetaData } from '../utils/utils';
 import { MetaDataKeys } from '../constants/metaDataKeys';
 import log from 'loglevel';
 import { getRuntimeConfig } from '../utils/configStore';
@@ -41,10 +41,11 @@ interface Client {
   ) => Promise<void>;
   leaveRoom: () => Promise<void>;
   sendEvent: (eventType: string, data: any) => void;
+  setPublisherName: (name: string | null) => void;
 }
 
 interface RoomState {
-  publishStreamIdRef: MutableRefObject<string | null>;
+  setPublishStreamId: (streamId: string | null) => void;
   streamName: string;
   isPlayOnly: boolean;
   setIsJoining: (joining: boolean) => void;
@@ -67,7 +68,6 @@ interface ParticipantsHook {
   setSubscribedParticipants: (participants: Participants) => void;
   talkerAudioLevelsRef: MutableRefObject<{ [key: string]: number }>;
   resetTalkers: () => void;
-  pinnedParticipantIdRef: MutableRefObject<string | null>;
   setPinnedParticipantId: (id: string | null) => void;
   setGuestsWaitingApproval: React.Dispatch<React.SetStateAction<Participants>>;
   setGuestParticipantRequestList: React.Dispatch<React.SetStateAction<string[]>>;
@@ -181,7 +181,7 @@ export const useConferenceActions = (
           return false;
         }
       }
-    } catch (error) {
+    } catch {
       displayMessageRef.current('Unable to reach the node group. Please check your deployment.');
       return false;
     }
@@ -189,7 +189,7 @@ export const useConferenceActions = (
     if (configServiceAvailable && configServiceUrl) {
       try {
         await fetch(`${configServiceUrl}/api/health-check`);
-      } catch (error) {
+      } catch {
         displayMessageRef.current(
           'The configuration server is unreachable. Please verify your connection or contact support.',
         );
@@ -209,7 +209,7 @@ export const useConferenceActions = (
         return;
       }
 
-      roomState.publishStreamIdRef.current = generatedStreamId;
+      roomState.setPublishStreamId(generatedStreamId);
       roomState.setIsJoining(true);
       roomState.setLeaveRoomError(null);
       roomState.setLeftTheRoom(false);
@@ -218,9 +218,7 @@ export const useConferenceActions = (
         roomState.setIsWaitingApproval(true);
       }
 
-      if (client.conferenceClient.current) {
-        client.conferenceClient.current.mediaStreamManager.publisherName = roomState.streamName;
-      }
+      client.setPublisherName(roomState.streamName);
 
       const metadata = updateMetaData(null, MetaDataKeys.NAME, roomState.streamName);
       let result;
@@ -282,7 +280,7 @@ export const useConferenceActions = (
         roomState.setIsWaitingApproval(false);
       }
     },
-    [client, roomState, mediaControls, role],
+    [client, roomState, mediaControls, role, googleToken, preJoinChecks],
   );
 
   const leaveRoom = useCallback(async (): Promise<void> => {
@@ -305,7 +303,6 @@ export const useConferenceActions = (
   const pinVideo = useCallback(
     (streamId: string): void => {
       log.log('Participant', streamId, 'pinned.');
-      participantsHook.pinnedParticipantIdRef.current = streamId;
       participantsHook.setPinnedParticipantId(streamId);
     },
     [participantsHook],
@@ -314,7 +311,6 @@ export const useConferenceActions = (
   const unpinVideo = useCallback(
     (streamId: string = ''): void => {
       log.log('Participant', streamId, 'unpinned.');
-      participantsHook.pinnedParticipantIdRef.current = null;
       participantsHook.setPinnedParticipantId(null);
     },
     [participantsHook],
@@ -370,7 +366,7 @@ export const useConferenceActions = (
 
       displayMessageRef.current(`${userId}'s join request rejected`);
     },
-    [participantsHook],
+    [participantsHook, client],
   );
 
   return {
