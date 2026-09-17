@@ -36,6 +36,7 @@ export default defineConfig(({ mode }) => {
     },
     optimizeDeps: {
       include: ['@aws-sdk/client-s3', '@aws-sdk/lib-storage'],
+      exclude: ['@mediapipe/selfie_segmentation'],
     },
     build: {
       rollupOptions: {
