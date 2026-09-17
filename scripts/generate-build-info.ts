@@ -55,7 +55,8 @@ const monthNum: string = (date.getMonth() + 1).toString().padStart(2, '0');
 const buildDate: string = `${day}.${monthNum}.${date.getFullYear()}`;
 const buildTimestamp: string = Math.floor(date.getTime() / 1000).toString();
 
-const version = `${PRODUCT_PREFIX}-${base}.${buildNumber}-${status}-${buildDate}-${buildTimestamp}`;
+const version = `${PRODUCT_PREFIX}-${base}.${buildNumber}-${status}`;
+const buildTime = `${buildDate}-${buildTimestamp}`;
 
 const buildInfo = {
   version,
@@ -65,13 +66,14 @@ const buildInfo = {
   latestTag,
   buildDate,
   buildTimestamp,
+  buildTime,
 };
 
 // Write to public folder
 fs.writeFileSync('public/build-info.json', JSON.stringify(buildInfo, null, 2));
 
 // Write to env file
-const envContent: string = `VITE_VERSION=${version}\n`;
+const envContent: string = `VITE_VERSION=${version}\nVITE_BUILD_TIME=${buildTime}\n`;
 
 fs.writeFileSync('.env.local', envContent);
 console.log('Build info generated:', buildInfo);

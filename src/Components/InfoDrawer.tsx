@@ -44,6 +44,7 @@ const InfoDrawer = React.memo<InfoDrawerProps>((props) => {
   const theme = useTheme();
 
   const appVersion: string = getRuntimeConfig().VITE_VERSION || 'unknown';
+  const buildTime: string = getRuntimeConfig().VITE_BUILD_TIME || 'unknown';
 
   const meetingLink: string = window.location.href;
 
@@ -90,7 +91,7 @@ const InfoDrawer = React.memo<InfoDrawerProps>((props) => {
           style={{ flex: '1 1 auto', overflowY: 'hidden' }}
         >
           <TabGrid container sx={{ pb: 0 }} direction="column">
-            <InfoTab meetingLink={meetingLink} appVersion={appVersion} />
+            <InfoTab meetingLink={meetingLink} appVersion={appVersion} buildTime={buildTime} />
           </TabGrid>
         </Grid>
       </InfoGrid>
