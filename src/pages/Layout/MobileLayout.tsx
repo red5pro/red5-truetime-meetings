@@ -33,6 +33,10 @@ const LayoutMobile = React.memo<LayoutTiledProps>((props) => {
     pinVideo,
     unpinVideo,
     layout,
+    networkScore,
+    connectionStats,
+    setParticipantIdMuted,
+    setMuteParticipantDialogOpen,
   } = props;
 
   const localParticipant = useMemo(
@@ -62,8 +66,8 @@ const LayoutMobile = React.memo<LayoutTiledProps>((props) => {
       const isOwnScreenShare =
         participant.isScreenSharing === true && participant.ownerStreamId === publishStreamId;
       const connectionQualityScore = isMine
-        ? (props.networkScore?.outbound ?? 0)
-        : (calculateConnectionQualityScore(props.connectionStats?.[participant.uid]) ?? 0);
+        ? (networkScore?.outbound ?? 0)
+        : (calculateConnectionQualityScore(connectionStats?.[participant.uid]) ?? 0);
       const videoId = isMine ? 'red5pro-publisher' : `red5pro-subscriber-${participant.uid}`;
 
       return (
@@ -91,13 +95,9 @@ const LayoutMobile = React.memo<LayoutTiledProps>((props) => {
           talkers={talkers}
           isScreenShare={isScreenShareParticipant(participant)}
           connectionQuality={connectionQualityScore}
-          // @ts-ignore
-          setParticipantIdMuted={(participantId: string) =>
-            props?.setParticipantIdMuted?.(participantId)
-          }
-          setMuteParticipantDialogOpen={(isOpen: boolean) =>
-            props?.setMuteParticipantDialogOpen?.(isOpen)
-          }
+          // @ts-expect-error - callback param type mismatch with legacy types
+          setParticipantIdMuted={(participantId: string) => setParticipantIdMuted?.(participantId)}
+          setMuteParticipantDialogOpen={(isOpen: boolean) => setMuteParticipantDialogOpen?.(isOpen)}
         />
       );
     },
@@ -110,10 +110,10 @@ const LayoutMobile = React.memo<LayoutTiledProps>((props) => {
       pinVideo,
       unpinVideo,
       layout,
-      props.networkScore,
-      props.connectionStats,
-      props.setParticipantIdMuted,
-      props.setMuteParticipantDialogOpen,
+      networkScore,
+      connectionStats,
+      setParticipantIdMuted,
+      setMuteParticipantDialogOpen,
     ],
   );
 

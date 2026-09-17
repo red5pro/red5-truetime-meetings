@@ -37,7 +37,7 @@ interface TabPanelProps {
   index: number;
 }
 
-// @ts-ignore
+// @ts-expect-error - styled() theme callback param type mismatch
 const Red5Drawer = styled(Drawer)(({ theme }: { theme: Theme }) =>
   getRed5DrawerStyle(theme, theme.palette.themeColor?.[60], false),
 );
@@ -57,25 +57,21 @@ const TabGrid = styled(Grid)(({}: { theme: Theme }) => ({
   flexWrap: 'nowrap',
 }));
 
+const TabPanel = ({ children, value, index }: TabPanelProps) => (
+  <Box
+    role="tabpanel"
+    hidden={value !== index}
+    id={`drawer-tabpanel-${index}`}
+    aria-labelledby={`drawer-tab-${index}`}
+    style={{ height: '100%', width: '100%', overflowY: 'auto' }}
+  >
+    {value === index && children}
+  </Box>
+);
+
 const MessageDrawer = React.memo<MessageDrawerProps>((props) => {
   const [value] = React.useState<number>(0);
   const { t } = useTranslation();
-
-  const TabPanel = React.useMemo(() => {
-    return ({ children, value, index }: TabPanelProps) => {
-      return (
-        <Box
-          role="tabpanel"
-          hidden={value !== index}
-          id={`drawer-tabpanel-${index}`}
-          aria-labelledby={`drawer-tab-${index}`}
-          style={{ height: '100%', width: '100%', overflowY: 'auto' }}
-        >
-          {value === index && children}
-        </Box>
-      );
-    };
-  }, []);
 
   return (
     <Red5Drawer
@@ -125,7 +121,7 @@ const MessageDrawer = React.memo<MessageDrawerProps>((props) => {
           handleSendMessage={(message: string, files?: File[]) =>
             props?.sendMessage?.(message, files)
           }
-          //@ts-ignore
+          //@ts-expect-error - callback param type mismatch with legacy types
           handleSetMessages={(messages: Message[]) => props?.handleSetMessages?.(messages)}
         />
       </MessageGrid>

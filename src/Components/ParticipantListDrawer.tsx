@@ -34,7 +34,7 @@ interface ParticipantListDrawerProps {
   handleTranscriptionDrawerOpen?: (open: boolean) => void;
 }
 
-// @ts-ignore
+// @ts-expect-error - styled() theme callback param type mismatch
 const Red5Drawer = styled(Drawer)(({ theme }: { theme: Theme }) =>
   getRed5DrawerStyle(theme, theme.palette.themeColor?.[60], false),
 );
@@ -107,7 +107,7 @@ const ParticipantListDrawer = memo<ParticipantListDrawerProps>((props) => {
               isMyMicMuted={props?.isMyMicMuted}
               publishStreamId={props?.publishStreamId ?? ''}
               muteLocalMic={() => props?.muteLocalMic?.()}
-              //@ts-ignore
+              //@ts-expect-error - prop type mismatch with legacy component props
               participants={props?.participants}
               role={props?.role ?? ''}
               blockUser={(userId: string, duration?: number) =>

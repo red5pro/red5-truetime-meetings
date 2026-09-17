@@ -56,6 +56,61 @@ interface DeviceButtonProps {
   disabled?: boolean;
 }
 
+const DeviceButton: React.FC<DeviceButtonProps> = ({
+  icon,
+  selectedDevice,
+  onClick,
+  disabled = false,
+}) => (
+  <Button
+    variant="outlined"
+    onClick={onClick}
+    disabled={disabled}
+    sx={{
+      minWidth: { xs: '20vw', sm: '15vw', md: '12vw', lg: '10vw' },
+      maxWidth: { xs: '25vw', sm: '18vw', md: '15vw', lg: '13vw' },
+      justifyContent: 'space-between',
+      textTransform: 'none',
+      color: 'white',
+      borderColor: alpha('#fff', 0.3),
+      backgroundColor: alpha('#000', 0.2),
+      backdropFilter: 'blur(10px)',
+      '&:hover': {
+        borderColor: alpha('#fff', 0.5),
+        backgroundColor: alpha('#000', 0.3),
+      },
+      '&:disabled': {
+        color: alpha('#fff', 0.5),
+        borderColor: alpha('#fff', 0.2),
+      },
+    }}
+    startIcon={icon}
+    endIcon={<ExpandMore />}
+  >
+    <Box
+      sx={{
+        flex: 1,
+        textAlign: 'left',
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
+        whiteSpace: 'nowrap',
+        mx: 1,
+      }}
+    >
+      <Typography
+        variant="body2"
+        sx={{
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          whiteSpace: 'nowrap',
+        }}
+      >
+        {selectedDevice}
+      </Typography>
+    </Box>
+  </Button>
+);
+
 // Extend Window interface for AudioContext
 declare global {
   interface Window {
@@ -150,7 +205,7 @@ const DeviceSelector: React.FC<DeviceSelectorProps> = ({
       updateAudioLevel();
     } catch (error) {
       console.error('Error accessing microphone:', error);
-      setAudioLevel(0);
+      queueMicrotask(() => setAudioLevel(0));
     }
   }, [selectedMicrophone]);
 
@@ -161,7 +216,7 @@ const DeviceSelector: React.FC<DeviceSelectorProps> = ({
     if (micStreamRef.current) {
       micStreamRef.current.getTracks().forEach((track) => track.stop());
     }
-    setAudioLevel(0);
+    queueMicrotask(() => setAudioLevel(0));
   }, []);
 
   // Start/stop audio monitoring when microphone menu opens/closes
@@ -225,61 +280,6 @@ const DeviceSelector: React.FC<DeviceSelectorProps> = ({
     const device = deviceList?.find((d) => d.deviceId === selectedId);
     return device?.label || 'No device selected';
   };
-
-  const DeviceButton: React.FC<DeviceButtonProps> = ({
-    icon,
-    selectedDevice,
-    onClick,
-    disabled = false,
-  }) => (
-    <Button
-      variant="outlined"
-      onClick={onClick}
-      disabled={disabled}
-      sx={{
-        minWidth: { xs: '20vw', sm: '15vw', md: '12vw', lg: '10vw' },
-        maxWidth: { xs: '25vw', sm: '18vw', md: '15vw', lg: '13vw' },
-        justifyContent: 'space-between',
-        textTransform: 'none',
-        color: 'white',
-        borderColor: alpha('#fff', 0.3),
-        backgroundColor: alpha('#000', 0.2),
-        backdropFilter: 'blur(10px)',
-        '&:hover': {
-          borderColor: alpha('#fff', 0.5),
-          backgroundColor: alpha('#000', 0.3),
-        },
-        '&:disabled': {
-          color: alpha('#fff', 0.5),
-          borderColor: alpha('#fff', 0.2),
-        },
-      }}
-      startIcon={icon}
-      endIcon={<ExpandMore />}
-    >
-      <Box
-        sx={{
-          flex: 1,
-          textAlign: 'left',
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
-          whiteSpace: 'nowrap',
-          mx: 1,
-        }}
-      >
-        <Typography
-          variant="body2"
-          sx={{
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            whiteSpace: 'nowrap',
-          }}
-        >
-          {selectedDevice}
-        </Typography>
-      </Box>
-    </Button>
-  );
 
   // Common menu props with disablePortal and high z-index
   const getMenuProps = (anchorEl: HTMLElement | null) => ({

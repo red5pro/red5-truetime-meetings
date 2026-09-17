@@ -43,42 +43,52 @@ export const AuthProvider: React.FC<GoogleAuthProviderProps> = ({ children }) =>
   const [token, setToken] = useState<string | null>(localStorage.getItem('google_token'));
   const [isGuest, setIsGuest] = useState<boolean>(false);
 
+  const logOut = () => {
+    googleLogout();
+    setUser(null);
+    setToken(null);
+    setIsGuest(false);
+    localStorage.removeItem('google_token');
+  };
+
   // Load user from token on mount or when token changes
   React.useEffect(() => {
-    const storedToken = localStorage.getItem('google_token');
-    if (storedToken) {
-      if (storedToken === 'guest') {
-        setToken(storedToken);
-        setIsGuest(true);
-        setUser({
-          email: 'guest@red5.net',
-          family_name: 'Guest',
-          given_name: 'User',
-          id: 'guest',
-          name: 'Guest User',
-          picture: '',
-          verified_email: true,
-        });
-        log.info('Restored Guest session');
-      } else {
-        try {
-          const decoded = jwtDecode<GoogleUser & { exp: number }>(storedToken);
-          // Check expiration
-          if (decoded.exp * 1000 < Date.now()) {
-            log.warn('Token expired');
+    queueMicrotask(() => {
+      const storedToken = localStorage.getItem('google_token');
+      if (storedToken) {
+        if (storedToken === 'guest') {
+          setToken(storedToken);
+          setIsGuest(true);
+          setUser({
+            email: 'guest@red5.net',
+            family_name: 'Guest',
+            given_name: 'User',
+            id: 'guest',
+            name: 'Guest User',
+            picture: '',
+            verified_email: true,
+          });
+          log.info('Restored Guest session');
+        } else {
+          try {
+            const decoded = jwtDecode<GoogleUser & { exp: number }>(storedToken);
+            // Check expiration
+            if (decoded.exp * 1000 < Date.now()) {
+              log.warn('Token expired');
+              logOut();
+            } else {
+              setToken(storedToken);
+              setUser(decoded);
+              setIsGuest(false);
+              log.info('Restored Google User session:', decoded);
+            }
+          } catch (error) {
+            log.error('Failed to decode stored token', error);
             logOut();
-          } else {
-            setToken(storedToken);
-            setUser(decoded);
-            setIsGuest(false);
-            log.info('Restored Google User session:', decoded);
           }
-        } catch (error) {
-          log.error('Failed to decode stored token', error);
-          logOut();
         }
       }
-    }
+    });
   }, []);
 
   const setCredential = (credential: string) => {
@@ -109,14 +119,6 @@ export const AuthProvider: React.FC<GoogleAuthProviderProps> = ({ children }) =>
       verified_email: true,
     });
     log.info('Logged in as Guest');
-  };
-
-  const logOut = () => {
-    googleLogout();
-    setUser(null);
-    setToken(null);
-    setIsGuest(false);
-    localStorage.removeItem('google_token');
   };
 
   return (

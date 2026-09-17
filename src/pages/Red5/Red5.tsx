@@ -1,5 +1,4 @@
 // Red5.tsx
-// @ts-nocheck
 import { useEffect, useCallback, useRef, ReactNode } from 'react';
 import { Backdrop, Button, CircularProgress, Grid } from '@mui/material';
 import { useBeforeUnload, useParams } from 'react-router-dom';
@@ -25,6 +24,7 @@ import { useConference } from '../../hooks/useConference.ts';
 
 // Utils
 import { setupPeerConnectionConfig } from '../../utils/utils.tsx';
+import { saveDesiredTileCount } from '../../utils/conferenceConfig.ts';
 import log from 'loglevel';
 import { sharedVariables } from '../../constants/config.ts';
 import GuestWaiting from '../GuestWaiting/GuestWaiting.tsx';
@@ -84,7 +84,7 @@ function Red5(props: Red5Props) {
   }, [conference.features.chat.messages, scrollToBottom]);
 
   const makeFullScreen = useCallback((divId: string) => {
-    // @ts-ignore
+    // @ts-expect-error - legacy type narrowing not recognized by compiler
     if (sharedVariables.fullScreenId === divId) {
       document.getElementById(divId)?.classList.remove('selected');
       document.getElementById(divId)?.classList.add('unselected');
@@ -97,14 +97,14 @@ function Red5(props: Red5Props) {
         publisherContent.className = 'publisher-content chat-active fullscreen-layout';
       }
       if (sharedVariables.fullScreenId !== -1) {
-        // @ts-ignore
+        // @ts-expect-error - legacy type mismatch, needs proper typing
         document.getElementById(sharedVariables.fullScreenId)?.classList.remove('selected');
-        // @ts-ignore
+        // @ts-expect-error - legacy type mismatch, needs proper typing
         document.getElementById(sharedVariables.fullScreenId)?.classList.add('unselected');
       }
       document.getElementById(divId)?.classList.remove('unselected');
       document.getElementById(divId)?.classList.add('selected');
-      // @ts-ignore
+      // @ts-expect-error - legacy type mismatch, needs proper typing
       sharedVariables.fullScreenId = divId;
     }
   }, []);
@@ -119,7 +119,6 @@ function Red5(props: Red5Props) {
   const handleSetDesiredTileCount = useCallback((maxTrackCount: number) => {
     sharedVariables.desiredTileCount = maxTrackCount;
     // This will be moved to conference.room in future iterations
-    const { saveDesiredTileCount } = require('../../utils/conferenceConfig.ts');
     saveDesiredTileCount(maxTrackCount);
   }, []);
 
@@ -153,7 +152,7 @@ function Red5(props: Red5Props) {
         <UnauthorizedDialog
           onClose={handleUnauthorizedDialogExitClicked}
           open={conference.ui.unAuthorizedDialogOpen}
-          //@ts-ignore
+          //@ts-expect-error - prop type mismatch with legacy component props
           onExitClicked={handleUnauthorizedDialogExitClicked}
           message={conference.ui.unAuthorizedDialogMessage}
         />
@@ -161,7 +160,7 @@ function Red5(props: Red5Props) {
         <MeetingPermissionDialog
           open={conference.ui.permissions.isPermissionDialogVisible}
           setIsPermissionDialogVisible={conference.ui.permissions.setIsPermissionDialogVisible}
-          //@ts-ignore
+          //@ts-expect-error - prop type mismatch with legacy component props
           requestPermissions={conference.ui.permissions.requestPermissions}
           localVideoCreate={conference.media.localVideoCreate}
           updateDevicesList={conference.media.updateDevicesList}
@@ -303,7 +302,7 @@ function Red5(props: Red5Props) {
             // Permissions
             cameraPermissionState={conference.ui.permissions.cameraPermissionState}
             microphonePermissionState={conference.ui.permissions.microphonePermissionState}
-            //@ts-ignore
+            //@ts-expect-error - prop type mismatch with legacy component props
             updatePermissions={conference.ui.permissions.updatePermissions}
             // Virtual background
             selectedBackgroundMode={conference.features.virtualBackground.selectedBackgroundMode}
@@ -506,7 +505,7 @@ function Red5(props: Red5Props) {
             />
 
             <InfoDrawer
-              //@ts-ignore
+              //@ts-expect-error - prop type mismatch with legacy component props
               publishStreamId={conference.room.publishStreamIdRef?.current}
               infoDrawerOpen={conference.ui.infoDrawerOpen}
               handleInfoDrawerOpen={conference.ui.handleInfoDrawerOpen}

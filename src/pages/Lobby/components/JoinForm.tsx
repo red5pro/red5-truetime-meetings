@@ -11,7 +11,7 @@ export const JoinForm = React.memo<JoinFormProps>(
     streamName,
     onStreamNameChange,
     streamNameFieldError,
-    isAuthEnabled,
+    isAuthEnabled: _isAuthEnabled,
     isGuest,
     onSubmit,
     isJoining,

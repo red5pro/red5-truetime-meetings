@@ -84,7 +84,15 @@ export const useParticipants = (): UseParticipantsReturn => {
 
   // Use ref to store participants to avoid recreating findParticipantName on every participant change
   const participantsRef = useRef(participants);
-  participantsRef.current = participants;
+  useEffect(() => {
+    participantsRef.current = participants;
+  }, [participants]);
+
+  // Keep pinnedParticipantIdRef in sync so consumers (e.g. event handlers) can read the latest
+  // value without needing it in dependency arrays.
+  useEffect(() => {
+    pinnedParticipantIdRef.current = pinnedParticipantId;
+  }, [pinnedParticipantId]);
 
   const findParticipantName = useCallback((streamId: string): string => {
     const participant = participantsRef.current[streamId];

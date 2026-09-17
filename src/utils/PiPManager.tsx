@@ -810,7 +810,7 @@ const PiPParticipant: React.FC<PiPParticipantProps> = ({
 
     videoEl.srcObject = mediaStream;
     videoEl.muted = isLocalUser;
-    setNeedsUnmute(false);
+    queueMicrotask(() => setNeedsUnmute(false));
     if (uid) onAutoplayBlockedChange?.(uid, false);
 
     videoEl.play().catch(() => {
@@ -1093,7 +1093,7 @@ export const usePictureInPicture = (): UsePictureInPictureReturn => {
 
   // Event-based state sync — no more setInterval polling
   useEffect(() => {
-    setIsOpen(pipManager.isOpen());
+    queueMicrotask(() => setIsOpen(pipManager.isOpen()));
     return pipManager.onStateChange(setIsOpen);
   }, []);
 

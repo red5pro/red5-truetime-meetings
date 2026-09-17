@@ -22,7 +22,7 @@ export const VideoPreview = React.memo<VideoPreviewProps>(
         autoPlay
         hidePin
         isMine={true}
-        //@ts-ignore
+        //@ts-expect-error - prop type mismatch with legacy component props
         streamName={streamName}
         isPublished={isPublished}
         isPlayOnly={isPlayOnly}
