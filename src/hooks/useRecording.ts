@@ -125,6 +125,7 @@ export const useRecording = (
     'idle',
   );
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [recordingStartTime, setRecordingStartTime] = useState<number | null>(null);
 
   const { postData }: UsePostRequestReturn = usePostRequest();
   const backendConfig: BackendConfig = getBackendConfig();
@@ -156,6 +157,16 @@ export const useRecording = (
   useEffect(() => {
     isRecordingStoppingRef.current = isRecordingStopping;
   }, [isRecordingStopping]);
+
+  // Declared here (rather than alongside the other local-recording refs below) since they're
+  // read by the effects immediately following.
+  const compositeHandleRef = useRef<ReturnType<typeof createCompositeStream> | null>(null);
+  // Tracks the local user's stream so mute changes can be applied to the composite
+  const localStreamRef = useRef<MediaStream | null>(null);
+  // Tracks which participants were present when the composite was last synced
+  const prevSubscribedParticipantsRef = useRef<
+    Record<string, { participant: any; mediaStream: MediaStream }>
+  >({});
 
   // Dynamically add/remove streams in the composite when participants join or leave mid-recording
   useEffect(() => {
@@ -499,20 +510,18 @@ export const useRecording = (
   const localOnlyRecorderRef = useRef<MediabunnyRecorder | null>(null);
   const localOnlyRecordedSegmentsRef = useRef<Blob[]>([]);
   const localOnlyStreamRef = useRef<MediaStream | null>(null);
+  // Mirrors recordingStartTime for use inside stable (empty-deps) callbacks that need the
+  // latest value without being recreated when it changes.
   const recordingStartTimeRef = useRef<number | null>(null);
+  useEffect(() => {
+    recordingStartTimeRef.current = recordingStartTime;
+  }, [recordingStartTime]);
   const currentRecordingStreamRef = useRef<MediaStream | null>(null);
   // Stable ref to the latest subscribedParticipants for use inside callbacks
   const subscribedParticipantsRef = useRef(subscribedParticipants ?? {});
-  subscribedParticipantsRef.current = subscribedParticipants ?? {};
-
-  // Tracks which participants were present when the composite was last synced
-  const prevSubscribedParticipantsRef = useRef<
-    Record<string, { participant: any; mediaStream: MediaStream }>
-  >({});
-
-  const compositeHandleRef = useRef<ReturnType<typeof createCompositeStream> | null>(null);
-  // Tracks the local user's stream so mute changes can be applied to the composite
-  const localStreamRef = useRef<MediaStream | null>(null);
+  useEffect(() => {
+    subscribedParticipantsRef.current = subscribedParticipants ?? {};
+  }, [subscribedParticipants]);
 
   /**
    * Start local recording using Mediabunny
@@ -591,7 +600,7 @@ export const useRecording = (
 
         mediabunnyRecorderRef.current = recorder;
         currentRecordingStreamRef.current = recordingStream;
-        recordingStartTimeRef.current = Date.now();
+        setRecordingStartTime(Date.now());
 
         await recorder.start(recordingStream);
 
@@ -973,7 +982,7 @@ export const useRecording = (
       mediabunnyRecorderRef.current = null;
       localOnlyRecorderRef.current = null;
       localOnlyStreamRef.current = null;
-      recordingStartTimeRef.current = null;
+      setRecordingStartTime(null);
       currentRecordingStreamRef.current = null;
 
       // Close local recording drawer
@@ -1009,7 +1018,7 @@ export const useRecording = (
     uploadStatus,
     uploadError,
     hasS3Config,
-    recordingStartTime: recordingStartTimeRef.current,
+    recordingStartTime,
 
     // Setters
     setIsRecordingActive,
