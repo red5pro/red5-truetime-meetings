@@ -5,6 +5,7 @@ export interface RuntimeConfig {
   VITE_HOST?: string;
   VITE_NODE_GROUP?: string;
   VITE_BACKEND_HOST?: string;
+  VITE_USE_LOCAL_API_PROXY?: string;
   VITE_ENABLE_CLOSED_CAPTION?: string;
   VITE_ENABLE_RECORDING?: string;
   VITE_ENABLE_EXTERNAL_STREAMS?: string;

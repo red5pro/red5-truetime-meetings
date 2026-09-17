@@ -27,3 +27,4 @@ public/build-info.json
 public/config.json
 config-service/config.json
 coverage
+e2e/.tmp

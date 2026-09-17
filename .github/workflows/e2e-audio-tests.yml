@@ -1,0 +1,67 @@
+name: E2E Audio Tests
+
+# These tests join real Selenium/Chrome participants into a room against a
+# live Red5 Pro deployment (VITE_HOST) to verify audio is actually delivered
+# between participants — there's no local/mocked media server to run this
+# against, so it's manual-trigger only rather than wired into pr-checks.yml.
+on:
+  workflow_dispatch:
+    inputs:
+      headless:
+        description: 'Run Chrome headless'
+        required: false
+        default: 'true'
+
+jobs:
+  audio-tests:
+    name: Audio delivery (2 / 3 / 4 participants)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Setup Chrome
+        uses: browser-actions/setup-chrome@v1
+        with:
+          chrome-version: stable
+
+      - name: Write build-time env config
+        run: |
+          cat <<EOF > .env
+          VITE_HOST=${{ secrets.VITE_HOST }}
+          VITE_BACKEND_HOST=${{ secrets.VITE_BACKEND_HOST }}
+          VITE_NODE_GROUP=${{ secrets.VITE_NODE_GROUP }}
+          VITE_TURN_SERVER_URL=${{ secrets.VITE_TURN_SERVER_URL }}
+          VITE_TURN_SERVER_USERNAME=${{ secrets.VITE_TURN_SERVER_USERNAME }}
+          VITE_TURN_SERVER_CREDENTIAL=${{ secrets.VITE_TURN_SERVER_CREDENTIAL }}
+          VITE_BASENAME=/
+          VITE_ENABLE_GOOGLE_AUTH=false
+          # Red5 Pro's REST API (/as/v1) isn't CORS-allow-listed for CI/localhost
+          # origins, so proxy it same-origin instead (see vite.config.js).
+          VITE_USE_LOCAL_API_PROXY=true
+          EOF
+
+      - name: Build app
+        run: npm run build
+
+      - name: Start preview server
+        run: npx vite preview --port 4173 --strictPort &
+
+      - name: Wait for preview server
+        run: npx wait-on http://localhost:4173 --timeout 30000
+
+      - name: Run audio E2E tests
+        env:
+          E2E_APP_URL: http://localhost:4173
+          E2E_HEADLESS: ${{ inputs.headless }}
+          # Matches VITE_BASENAME=/ above — root, no prefix.
+          E2E_APP_BASENAME: /
+        run: npm run test:e2e
