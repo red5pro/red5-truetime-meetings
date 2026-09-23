@@ -27,7 +27,6 @@
     "@mui/material": "^6.2.0",
     "@mui/styles": "^6.4.8",
     "@react-oauth/google": "^0.13.5",
-    "@sapphi-red/web-noise-suppressor": "^0.4.0",
     "emoji-picker-react": "^4.22.2",
     "i18next": "^26.4.1",
     "i18next-browser-languagedetector": "^8.2.1",
@@ -46,7 +45,7 @@
     "react-dom": "^19.3.0",
     "react-i18next": "^17.0.14",
     "react-router-dom": "^7.18.4",
-    "red5pro-conference-sdk": "^1.0.7",
+    "red5pro-conference-sdk": "^1.0.8",
     "red5pro-webrtc-sdk": "^16.0.0",
     "slick-carousel": "^2.0.0",
     "url": "^0.11.4"

@@ -8,7 +8,7 @@ import eslintConfigPrettier from 'eslint-config-prettier';
 
 export default [
   {
-    ignores: ['dist', 'public/rnnoiseWorklet.js', '**/coverage/**'],
+    ignores: ['dist', '**/coverage/**'],
   },
   // Configuration for JavaScript files
   {
