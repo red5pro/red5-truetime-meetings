@@ -36,6 +36,14 @@ interface ExternalStreamsDrawerProps {
   error: string | null;
 }
 
+const EXTERNAL_STREAM_METADATA = 'external-stream';
+
+interface StreamItem {
+  key: string;
+  streamName: string;
+  isJoined: boolean;
+}
+
 const Red5Drawer = styled(Drawer)(({ theme }: { theme: Theme }) => ({
   ...getRed5DrawerStyle(theme, theme.palette.themeColor?.[60], false),
 }));
@@ -93,24 +101,32 @@ const ExternalStreamsDrawer = React.memo<ExternalStreamsDrawerProps>((props) => 
   const sortedStreams = React.useMemo(() => {
     const participantEntries = Object.values(participants);
 
-    const isJoined = (streamName: string) => {
-      return participantEntries.some((p) => {
-        const meta = parseMetaData(p.metaData);
-        return (
-          p.uid === streamName ||
-          (meta[MetaDataKeys.NAME] === streamName &&
-            (p.uid === streamName || meta[MetaDataKeys.NAME] === streamName))
-        );
-      });
-    };
+    // External streams that joined the room carry the raw 'external-stream' metaData
+    const externalParticipants = participantEntries.filter(
+      (p) => p?.metaData === EXTERNAL_STREAM_METADATA,
+    );
 
-    return [...streams].sort((a, b) => {
-      const aJoined = isJoined(a.streamName);
-      const bJoined = isJoined(b.streamName);
-      if (aJoined && !bJoined) return -1;
-      if (!aJoined && bJoined) return 1;
-      return 0;
+    const isJoined = (streamName: string) =>
+      participantEntries.some(
+        (p) => p.uid === streamName || parseMetaData(p.metaData)[MetaDataKeys.NAME] === streamName,
+      );
+
+    const items: StreamItem[] = streams.map((stream) => ({
+      key: stream.streamGuid,
+      streamName: stream.streamName,
+      isJoined: isJoined(stream.streamName),
+    }));
+
+    // Joined external streams that the external streams API did not return
+    const knownNames = new Set(streams.map((stream) => stream.streamName));
+    externalParticipants.forEach((p) => {
+      const streamName = p.uid || p.streamName || p.streamId;
+      if (!streamName || knownNames.has(streamName)) return;
+      knownNames.add(streamName);
+      items.push({ key: `participant-${streamName}`, streamName, isJoined: true });
     });
+
+    return items.sort((a, b) => Number(b.isJoined) - Number(a.isJoined));
   }, [streams, participants]);
 
   return (
@@ -138,7 +154,7 @@ const ExternalStreamsDrawer = React.memo<ExternalStreamsDrawerProps>((props) => 
         </Grid>
 
         <Box sx={{ flex: 1, overflowY: 'auto', pr: 1 }}>
-          {loading && streams.length === 0 ? (
+          {loading && sortedStreams.length === 0 ? (
             <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
               <CircularProgress size={32} color="inherit" />
             </Box>
@@ -153,22 +169,11 @@ const ExternalStreamsDrawer = React.memo<ExternalStreamsDrawerProps>((props) => 
           ) : (
             <List sx={{ background: theme.palette.themeColor?.[60] }}>
               {sortedStreams.map((stream) => {
-                const participantEntries = Object.values(participants);
-                const joinedParticipant = participantEntries.find((p) => {
-                  const meta = parseMetaData(p.metaData);
-                  return (
-                    p.uid === stream.streamName ||
-                    meta[MetaDataKeys.NAME] === stream.streamName ||
-                    (meta[MetaDataKeys.EXTERNAL_STREAM] === 'external-stream' &&
-                      (p.uid === stream.streamName ||
-                        meta[MetaDataKeys.NAME] === stream.streamName))
-                  );
-                });
-                const isJoined = !!joinedParticipant;
+                const { isJoined } = stream;
 
                 return (
                   <ListItem
-                    key={stream.streamGuid}
+                    key={stream.key}
                     sx={{
                       mb: 2,
                       background: isJoined ? 'rgba(36, 255, 0, 0.05)' : 'rgba(255, 255, 255, 0.03)',
