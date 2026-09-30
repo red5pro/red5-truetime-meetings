@@ -159,7 +159,7 @@ export const getConferenceClientConfig = (): ConferenceClientConfig => {
     configServiceUrl: isConfigServiceAvailable()
       ? getRuntimeConfig().VITE_CONFIG_SERVICE_URL
       : undefined,
-    enableNoiseCancellation: false,
+    enableNoiseCancellation: true,
 
     // Keep the publisher data channel active during idle sessions
     dataChannelHeartbeatEnabled: true,

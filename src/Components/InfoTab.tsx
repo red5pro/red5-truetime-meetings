@@ -10,10 +10,11 @@ import { Box } from '@mui/system';
 
 interface InfoTabProps {
   appVersion: string;
+  buildTime: string;
   meetingLink: string;
 }
 
-function InfoTab({ appVersion, meetingLink }: InfoTabProps): JSX.Element {
+function InfoTab({ appVersion, buildTime, meetingLink }: InfoTabProps): JSX.Element {
   const { t } = useTranslation();
 
   const handleCopyLink = async (): Promise<void> => {
@@ -56,7 +57,14 @@ function InfoTab({ appVersion, meetingLink }: InfoTabProps): JSX.Element {
           </Stack>
         </Grid>
         <Box mt="auto" p={2} textAlign="center">
-          <Typography variant="caption">Version: {appVersion}</Typography>
+          <Typography variant="caption" component="div">
+            Version: {appVersion}
+          </Typography>
+          {appVersion.endsWith('-beta') && (
+            <Typography variant="caption" component="div">
+              Build: {buildTime}
+            </Typography>
+          )}
         </Box>
       </Box>
     </>
