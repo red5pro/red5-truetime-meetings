@@ -190,6 +190,12 @@ export const getBackendConfig = (): BackendConfig => {
     apiHost = getRuntimeConfig().VITE_CONFIG_SERVICE_URL;
   } else if (getRuntimeConfig().VITE_BACKEND_HOST) {
     apiHost = `https://${getRuntimeConfig().VITE_BACKEND_HOST}`;
+  } else if (getRuntimeConfig().VITE_USE_LOCAL_API_PROXY === 'true') {
+    // Same-origin so the Vite dev/preview proxy (vite.config.js) forwards
+    // /as/v1 to VITE_HOST server-side, sidestepping that server's CORS
+    // restrictions on browser-origin requests. Local/CI testing only.
+    apiHost = '';
+    shouldGenerateToken = false;
   } else {
     apiHost = `https://${getRuntimeConfig().VITE_HOST}`;
     shouldGenerateToken = false;
