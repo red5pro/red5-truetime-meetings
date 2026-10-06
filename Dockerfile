@@ -1,5 +1,5 @@
 # Multi-stage build for React app
-FROM node:22-alpine AS builder
+FROM --platform=$BUILDPLATFORM node:22-bookworm-slim AS builder
 
 # Set working directory
 WORKDIR /app
