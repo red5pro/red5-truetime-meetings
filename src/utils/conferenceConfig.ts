@@ -162,10 +162,10 @@ export const getConferenceClientConfig = (): ConferenceClientConfig => {
       : undefined,
     enableNoiseCancellation: true,
     // DeepFilterNet3 assets are mirrored into public/ by scripts/fetch-noise-suppression-assets.ts;
-    // the SDK's default CDN rejects cross-origin requests
+    // the SDK's default CDN rejects cross-origin requests. Served under the app's basename (e.g. /meetings)
     noiseSuppressionAssetsUrl:
       getRuntimeConfig().VITE_NOISE_SUPPRESSION_ASSETS_URL ||
-      `${window.location.origin}/noise-suppression`,
+      `${window.location.origin}${(getRuntimeConfig().VITE_BASENAME || '/meetings').replace(/\/+$/, '')}/noise-suppression`,
 
     // Keep the publisher data channel active during idle sessions
     dataChannelHeartbeatEnabled: true,
