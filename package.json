@@ -4,9 +4,9 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "dev": "npx tsx scripts/generate-build-info.ts && vite",
-    "build": "npx tsx scripts/generate-build-info.ts && vite build",
-    "build:docker": "npx tsx scripts/generate-build-info.ts && env-cmd -f .env.docker vite build",
+    "dev": "npx tsx scripts/generate-build-info.ts && npx tsx scripts/fetch-noise-suppression-assets.ts && vite",
+    "build": "npx tsx scripts/generate-build-info.ts && npx tsx scripts/fetch-noise-suppression-assets.ts && vite build",
+    "build:docker": "npx tsx scripts/generate-build-info.ts && npx tsx scripts/fetch-noise-suppression-assets.ts && env-cmd -f .env.docker vite build",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",

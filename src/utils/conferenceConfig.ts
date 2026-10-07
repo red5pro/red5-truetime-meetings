@@ -40,6 +40,7 @@ interface ConferenceClientConfig {
   analyticsEndpoint?: string | null | undefined;
   configServiceUrl?: string;
   enableNoiseCancellation?: boolean;
+  noiseSuppressionAssetsUrl?: string;
   dataChannelHeartbeatEnabled?: boolean;
   dataChannelHeartbeatIntervalMs?: number;
 }
@@ -160,6 +161,11 @@ export const getConferenceClientConfig = (): ConferenceClientConfig => {
       ? getRuntimeConfig().VITE_CONFIG_SERVICE_URL
       : undefined,
     enableNoiseCancellation: true,
+    // DeepFilterNet3 assets are mirrored into public/ by scripts/fetch-noise-suppression-assets.ts;
+    // the SDK's default CDN rejects cross-origin requests
+    noiseSuppressionAssetsUrl:
+      getRuntimeConfig().VITE_NOISE_SUPPRESSION_ASSETS_URL ||
+      `${window.location.origin}/noise-suppression`,
 
     // Keep the publisher data channel active during idle sessions
     dataChannelHeartbeatEnabled: true,
