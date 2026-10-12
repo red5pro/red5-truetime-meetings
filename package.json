@@ -14,6 +14,7 @@
     "test": "vitest",
     "test:coverage": "vitest run --coverage",
     "preview": "npx tsx scripts/generate-build-info.ts && vite preview",
+    "ui:sync": "node -e \"for (const d of ['node_modules/truetime-ui', 'node_modules/.vite']) require('fs').rmSync(d, { recursive: true, force: true })\" && npm install --no-audit --no-fund",
     "prepare": "husky"
   },
   "dependencies": {
@@ -48,6 +49,7 @@
     "red5pro-conference-sdk": "^1.0.8",
     "red5pro-webrtc-sdk": "^16.0.0",
     "slick-carousel": "^2.0.0",
+    "truetime-ui": "file:../truetime-ui",
     "url": "^0.11.4"
   },
   "devDependencies": {

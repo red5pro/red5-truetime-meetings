@@ -1,7 +1,6 @@
 import { JSX, useEffect, useState } from 'react';
 import './App.css';
-import { CssBaseline, ThemeProvider } from '@mui/material';
-import theme from './styles/theme';
+import { TrueTimeThemeProvider } from 'truetime-ui';
 import { SnackbarProvider } from 'notistack';
 import Red5SnackBar from './Components/Red5SnackBar';
 import { initReactI18next } from 'react-i18next';
@@ -146,8 +145,7 @@ function App(): JSX.Element {
   }, []);
 
   return (
-    <ThemeProvider theme={theme(currentTheme)}>
-      <CssBaseline />
+    <TrueTimeThemeProvider theme={currentTheme}>
       <SnackbarProvider
         anchorOrigin={{
           vertical: 'top',
@@ -169,7 +167,7 @@ function App(): JSX.Element {
           <CustomRoutes />
         </ThemeContext.Provider>
       </SnackbarProvider>
-    </ThemeProvider>
+    </TrueTimeThemeProvider>
   );
 }
 

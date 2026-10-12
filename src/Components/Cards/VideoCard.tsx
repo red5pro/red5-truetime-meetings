@@ -18,7 +18,7 @@ import DummyCard from './DummyCard';
 import CustomCard from '../CustomCard.tsx';
 import { CustomizedBtn, roundStyle } from '../CustomizedBtn.tsx';
 import { SvgIcon } from '../SvgIcon';
-import CustomSpinner from '../CustomSpinner.tsx';
+import { Spinner } from 'truetime-ui';
 import { ConnectionQualityBar } from '../ConnectionQualityBar.tsx';
 import TalkingIndicator from '../TalkingIndicator.tsx';
 
@@ -352,7 +352,7 @@ const VideoPlayer = React.memo<VideoPlayerProps>(
         {isPending ? (
           <LoadingContainer>
             Connecting
-            <CustomSpinner type="dots" size={40} color="white" thickness={4} />
+            <Spinner type="dots" size={40} color="white" thickness={4} />
           </LoadingContainer>
         ) : (
           <DummyCard streamName={streamId} isVisible={isCamTurnedOff} />
