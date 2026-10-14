@@ -7,6 +7,8 @@ export default defineConfig({
     globals: true,
     environment: 'jsdom',
     setupFiles: './src/setupTests.ts',
+    // truetime-ui is ESM that imports MUI subpaths Node can't resolve; let Vite transform it
+    server: { deps: { inline: ['truetime-ui'] } },
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
