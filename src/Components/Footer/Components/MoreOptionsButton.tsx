@@ -15,7 +15,7 @@ import { ThemeContext } from '../../../contexts/ThemeContext';
 import { CustomizedBtn, rectangularStyle } from '../../CustomizedBtn.tsx';
 import log from 'loglevel';
 import { ClosedCaption, ClosedCaptionDisabled } from '@mui/icons-material';
-import { Devices } from '../../DeviceSelector.tsx';
+import type { Devices } from 'truetime-ui';
 import { getRuntimeConfig } from '../../../utils/configStore';
 
 interface Globals {

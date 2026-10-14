@@ -10,7 +10,8 @@ import SettingsDialog from '../../Components/Footer/Components/SettingsDialog.ts
 import { SvgIcon } from '../../Components/SvgIcon.tsx';
 import { getUrlParameter, makeId } from '../../utils/utils.tsx';
 import { useRoomInfo } from '../../hooks/useRoomInfo.ts';
-import DeviceSelector from '../../Components/DeviceSelector.tsx';
+import { isMobile } from 'react-device-detect';
+import { DeviceSelector } from 'truetime-ui';
 import EffectsDrawer from '../../Components/EffectsDrawer.tsx';
 import { LobbyPageProps } from './types.ts';
 import { JoinForm } from './components/JoinForm.tsx';
@@ -256,6 +257,7 @@ const LobbyPage = React.memo<LobbyPageProps>((props) => {
           <DeviceSelector
             //@ts-expect-error - prop type mismatch with legacy component props
             devices={devices}
+            isMobile={isMobile}
             selectedCamera={selectedCamera}
             selectedMicrophone={selectedMicrophone}
             selectedSpeaker={selectedSpeaker}

@@ -24,7 +24,7 @@ import MoreOptionsButton from './Components/MoreOptionsButton.tsx';
 import { useTheme } from '@mui/material/styles';
 import RaiseHandButton from './Components/RaiseHandButton.tsx';
 import CaptionsButton from './Components/CaptionsButton.tsx';
-import { Devices } from '../DeviceSelector.tsx';
+import type { Devices } from 'truetime-ui';
 import LocalRecordingButton from './Components/LocalRecordingButton.tsx';
 import { isNull } from 'lodash';
 import { getRuntimeConfig } from '../../utils/configStore';
