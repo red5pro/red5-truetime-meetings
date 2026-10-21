@@ -40,6 +40,7 @@ interface ConferenceClientConfig {
   analyticsEndpoint?: string | null | undefined;
   configServiceUrl?: string;
   enableNoiseCancellation?: boolean;
+  noiseSuppressionLevel?: number;
   noiseSuppressionAssetsUrl?: string;
   dataChannelHeartbeatEnabled?: boolean;
   dataChannelHeartbeatIntervalMs?: number;
@@ -134,6 +135,16 @@ export const getInitialPlayOnlyMode = (): boolean => {
 /**
  * Get conference client configuration
  */
+const DEFAULT_NOISE_SUPPRESSION_LEVEL = 20;
+
+const getNoiseSuppressionLevel = (): number => {
+  const level = Number(getRuntimeConfig().VITE_NOISE_SUPPRESSION_LEVEL);
+  if (!getRuntimeConfig().VITE_NOISE_SUPPRESSION_LEVEL || !Number.isFinite(level)) {
+    return DEFAULT_NOISE_SUPPRESSION_LEVEL;
+  }
+  return Math.max(0, Math.min(100, level));
+};
+
 export const getConferenceClientConfig = (): ConferenceClientConfig => {
   const peerConfig = setupPeerConnectionConfig();
 
@@ -161,6 +172,9 @@ export const getConferenceClientConfig = (): ConferenceClientConfig => {
       ? getRuntimeConfig().VITE_CONFIG_SERVICE_URL
       : undefined,
     enableNoiseCancellation: true,
+    // DeepFilterNet3 attenuation limit in dB (0-100). The SDK default (50) suppresses so hard that
+    // speech over loud background noise turns robotic; ~20 dB keeps voices natural.
+    noiseSuppressionLevel: getNoiseSuppressionLevel(),
     // DeepFilterNet3 assets are mirrored into public/ by scripts/fetch-noise-suppression-assets.ts;
     // the SDK's default CDN rejects cross-origin requests. Served under the app's basename (e.g. /meetings)
     noiseSuppressionAssetsUrl:
