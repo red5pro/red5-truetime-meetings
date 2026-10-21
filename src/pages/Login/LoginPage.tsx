@@ -6,7 +6,7 @@ import { useGoogleAuth } from '../../contexts/GoogleAuthContext';
 import log from 'loglevel';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { getRuntimeConfig } from '../../utils/configStore';
-import Logo from '../../static/images/logo.svg';
+import Logo from 'truetime-ui/assets/images/red5-cloud-logo.svg';
 import { useTranslation } from 'react-i18next';
 
 const LoginPage = (): JSX.Element => {

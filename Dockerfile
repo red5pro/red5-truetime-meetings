@@ -4,6 +4,9 @@ FROM --platform=$BUILDPLATFORM node:22-bookworm-slim AS builder
 # Set working directory
 WORKDIR /app
 
+# git is needed to install truetime-ui from GitHub
+RUN apt-get update && apt-get install -y --no-install-recommends git ca-certificates && rm -rf /var/lib/apt/lists/*
+
 # Copy package files
 COPY package*.json ./
 

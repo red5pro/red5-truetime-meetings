@@ -8,7 +8,7 @@ import { nanoid } from 'nanoid';
 import Stack from '@mui/material/Stack';
 //@ts-expect-error - legacy component has no proper type exports
 import { GoToLobbyDialog } from '../../Components/Footer/Components/GoToLobbyDialog.tsx';
-import Logo from '../../static/images/logo.svg';
+import Logo from 'truetime-ui/assets/images/red5-cloud-logo.svg';
 import { getRuntimeConfig } from '../../utils/configStore';
 
 function Home() {

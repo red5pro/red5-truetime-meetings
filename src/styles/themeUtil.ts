@@ -1,4 +1,5 @@
 import { Theme, SxProps } from '@mui/material/styles';
+import { shadows } from 'truetime-ui';
 
 // Type for drawer style return object
 interface DrawerStyleObject {
@@ -43,12 +44,7 @@ export function getRed5DrawerStyle(
             backdropFilter: 'blur(20px)',
             WebkitBackdropFilter: 'blur(20px)',
             border: `1px solid ${color}55`,
-            boxShadow: `
-              0 8px 32px rgba(0, 0, 0, 0.1),
-              inset 0 1px 0 rgba(255, 255, 255, 0.3),
-              inset 0 -1px 0 rgba(255, 255, 255, 0.05),
-              inset 0 0 20px 10px rgba(255, 255, 255, 0.05)
-            `,
+            boxShadow: shadows.glass,
           }
         : {
             backgroundColor: 'transparent',
