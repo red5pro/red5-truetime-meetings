@@ -1,4 +1,5 @@
 import React from 'react';
+import type { NoiseSuppressionStatus } from '../../hooks/useNoiseSuppression';
 
 export interface Participant {
   uid: string;
@@ -94,6 +95,9 @@ export interface MeetingPageProps {
   selectedCamera: string;
   cameraSelected: (deviceId: string) => void;
   selectedMicrophone: string;
+  noiseSuppressionEnabled: boolean;
+  noiseSuppressionStatus: NoiseSuppressionStatus;
+  toggleNoiseSuppression: (enabled: boolean) => void;
   selectedBackgroundMode: string;
   setSelectedBackgroundMode: (mode: string) => void;
   handleEffectsOpen: () => void;

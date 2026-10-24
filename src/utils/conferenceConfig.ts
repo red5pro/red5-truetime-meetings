@@ -137,7 +137,7 @@ export const getInitialPlayOnlyMode = (): boolean => {
  */
 const DEFAULT_NOISE_SUPPRESSION_LEVEL = 20;
 
-const getNoiseSuppressionLevel = (): number => {
+export const getNoiseSuppressionLevel = (): number => {
   const level = Number(getRuntimeConfig().VITE_NOISE_SUPPRESSION_LEVEL);
   if (!getRuntimeConfig().VITE_NOISE_SUPPRESSION_LEVEL || !Number.isFinite(level)) {
     return DEFAULT_NOISE_SUPPRESSION_LEVEL;
@@ -174,7 +174,9 @@ export const getConferenceClientConfig = (): ConferenceClientConfig => {
     enableNoiseCancellation: true,
     // DeepFilterNet3 attenuation limit in dB (0-100). The SDK default (50) suppresses so hard that
     // speech over loud background noise turns robotic; ~20 dB keeps voices natural.
-    noiseSuppressionLevel: getNoiseSuppressionLevel(),
+    // Turned off in the microphone menu: level 0 (no attenuation) keeps the suppressor in place so
+    // it can be turned back on mid-meeting
+    noiseSuppressionLevel: getNoiseSuppressionPreference() ? getNoiseSuppressionLevel() : 0,
     // DeepFilterNet3 assets are mirrored into public/ by scripts/fetch-noise-suppression-assets.ts;
     // the SDK's default CDN rejects cross-origin requests. Served under the app's basename (e.g. /meetings)
     noiseSuppressionAssetsUrl:
@@ -279,6 +281,20 @@ export const getVirtualBackgroundConfigs = (): VirtualBackgroundConfigs => {
       options: { color: null }, // Color will be provided dynamically
     },
   };
+};
+
+/**
+ * Get noise suppression preference (on unless turned off)
+ */
+export const getNoiseSuppressionPreference = (): boolean => {
+  return localStorage.getItem('noiseSuppressionEnabled') !== 'false';
+};
+
+/**
+ * Save noise suppression preference
+ */
+export const saveNoiseSuppressionPreference = (enabled: boolean): void => {
+  localStorage.setItem('noiseSuppressionEnabled', String(enabled));
 };
 
 /**

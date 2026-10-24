@@ -44,7 +44,7 @@ const LoginPage = (): JSX.Element => {
             <img src={logoUrl} alt="Red5 Logo" style={{ maxWidth: '100%', maxHeight: '100px' }} />
           </Box>
           <Typography variant="h6" align="center" sx={{ mb: 4 }}>
-            {t('TrueTime Meeting')}
+            {t('TrueTime Meeting™')}
           </Typography>
 
           <Box

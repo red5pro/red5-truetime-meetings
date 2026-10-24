@@ -28,6 +28,7 @@ import type { Devices } from 'truetime-ui';
 import LocalRecordingButton from './Components/LocalRecordingButton.tsx';
 import { isNull } from 'lodash';
 import { getRuntimeConfig } from '../../utils/configStore';
+import type { NoiseSuppressionStatus } from '../../hooks/useNoiseSuppression';
 
 interface FooterProps {
   updateDevicesList: () => void;
@@ -43,6 +44,9 @@ interface FooterProps {
   selectedCamera?: string;
   cameraSelected?: (camera: string) => void;
   selectedMicrophone?: string;
+  noiseSuppressionEnabled?: boolean;
+  noiseSuppressionStatus?: NoiseSuppressionStatus;
+  toggleNoiseSuppression?: (enabled: boolean) => void;
   selectedSpeaker?: string;
   speakerSelected?: (speaker: string) => void;
   selectedBackgroundMode?: string;
@@ -272,6 +276,9 @@ function Footer(props: FooterProps) {
                   audioInputs={props?.devices?.audioInputs}
                   selectedMicrophone={props?.selectedMicrophone}
                   onMicrophoneChange={(mic: string) => props?.microphoneSelected?.(mic)}
+                  noiseSuppressionEnabled={props?.noiseSuppressionEnabled}
+                  noiseSuppressionStatus={props?.noiseSuppressionStatus}
+                  onNoiseSuppressionChange={props?.toggleNoiseSuppression}
                 />
               </Grid>
             ) : null}

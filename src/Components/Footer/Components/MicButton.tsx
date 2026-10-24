@@ -14,7 +14,9 @@ import {
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import { useTranslation } from 'react-i18next';
-import { Check, BarChart } from '@mui/icons-material';
+import { Check, BarChart, NoiseAware } from '@mui/icons-material';
+import { Spinner, Switch } from 'truetime-ui';
+import type { NoiseSuppressionStatus } from '../../../hooks/useNoiseSuppression';
 // @ts-expect-error - legacy component has no proper type exports
 import { CustomizedBtn, rectangularStyle } from '../../CustomizedBtn.tsx';
 import { Box } from '@mui/system';
@@ -38,6 +40,10 @@ interface MicButtonProps {
   selectedMicrophone?: string;
   onMicrophoneChange?: (deviceId: string) => void;
   showMicrophoneOptions?: boolean; // Flag to show/hide dropdown button (default: true)
+  // Noise suppression switch in the menu (shown when onNoiseSuppressionChange is given)
+  noiseSuppressionEnabled?: boolean;
+  noiseSuppressionStatus?: NoiseSuppressionStatus;
+  onNoiseSuppressionChange?: (enabled: boolean) => void;
 }
 
 // Extend Window interface for AudioContext
@@ -169,6 +175,15 @@ function MicButton(props: MicButtonProps) {
     // Don't close menu immediately to allow seeing audio level change
     // User can click outside or select another option to close
   };
+
+  // The model loads once the microphone goes through it; until then a change wouldn't take effect
+  const noiseSuppressionReady = props.noiseSuppressionStatus === 'ready';
+  const noiseSuppressionNote =
+    props.noiseSuppressionStatus === 'unavailable'
+      ? t('Not available')
+      : noiseSuppressionReady
+        ? null
+        : t('Initializing…');
 
   const getIconColor = (): string => {
     return theme.palette.themeColor[99];
@@ -338,6 +353,47 @@ function MicButton(props: MicButtonProps) {
             )}
 
             <Divider />
+
+            {/* Noise Suppression */}
+            {props.onNoiseSuppressionChange && (
+              <MenuItem
+                role="menuitemcheckbox"
+                aria-checked={Boolean(props.noiseSuppressionEnabled)}
+                disabled={!noiseSuppressionReady}
+                onClick={() => props.onNoiseSuppressionChange?.(!props.noiseSuppressionEnabled)}
+                sx={{ '&.Mui-disabled': { opacity: 1 } }}
+              >
+                <ListItemIcon>
+                  <NoiseAware sx={{ color: theme.palette.text.secondary }} />
+                </ListItemIcon>
+                <ListItemText
+                  primary={t('Noise suppression')}
+                  primaryTypographyProps={{ variant: 'body2' }}
+                  secondary={
+                    noiseSuppressionNote && (
+                      <Box
+                        component="span"
+                        sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}
+                      >
+                        {!noiseSuppressionReady &&
+                          props.noiseSuppressionStatus !== 'unavailable' && <Spinner size={12} />}
+                        {noiseSuppressionNote}
+                      </Box>
+                    )
+                  }
+                  secondaryTypographyProps={{ variant: 'caption', component: 'div' }}
+                />
+                {/* Shows the state; the menu item takes the click and the keyboard */}
+                <Switch
+                  checked={Boolean(props.noiseSuppressionEnabled)}
+                  disabled={!noiseSuppressionReady}
+                  readOnly
+                  inputProps={{ tabIndex: -1, 'aria-hidden': true }}
+                  sx={{ ml: 1, pointerEvents: 'none' }}
+                />
+              </MenuItem>
+            )}
+            {props.onNoiseSuppressionChange && <Divider />}
 
             {/* Audio Level Indicator */}
             <MenuItem

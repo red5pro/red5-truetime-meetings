@@ -84,7 +84,7 @@ function Home() {
               <img src={logoUrl} alt="Red5 Logo" />
             </Box>
             <Typography variant="h6" align="center" sx={{ mb: 4 }}>
-              {t('TrueTime Meeting')}
+              {t('TrueTime Meeting™')}
             </Typography>
 
             <Stack
