@@ -342,6 +342,12 @@ form {
   aspect-ratio: 1 / 1;
 }
 
+/* Pinned participant takes the whole first row of the mobile grid */
+.mobile-grid-layout .single-video-container.mobile-pinned-tile {
+  grid-column: 1 / -1;
+  aspect-ratio: 16 / 9;
+}
+
 /* Mobile pinned layout - horizontal scrollable strip for unpinned participants */
 .mobile-unpinned-strip {
   overflow-x: auto;

@@ -330,7 +330,13 @@ const MeetingPage = React.memo<MeetingPageProps>((props) => {
     };
 
     if (isMobileLayout) {
-      return <LayoutMobile {...commonProps} layout={currentProps.layout} />;
+      return (
+        <LayoutMobile
+          {...commonProps}
+          layout={currentProps.layout}
+          pinnedParticipantId={currentProps.pinnedParticipantId}
+        />
+      );
     }
 
     if (isAutoLayout && !currentProps?.closedCaptions.captionsVisible) {
