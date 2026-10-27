@@ -135,14 +135,23 @@ export const getInitialPlayOnlyMode = (): boolean => {
 /**
  * Get conference client configuration
  */
-const DEFAULT_NOISE_SUPPRESSION_LEVEL = 20;
+// Percentage of the background noise removed (0-100)
+const DEFAULT_NOISE_SUPPRESSION_PERCENT = 20;
 
+/**
+ * The SDK passes its level straight to DeepFilterNet3 as an attenuation limit in dB (100 = no
+ * limit), so 20 would remove 90% of the noise. This turns the configured percentage into dB.
+ */
 export const getNoiseSuppressionLevel = (): number => {
-  const level = Number(getRuntimeConfig().VITE_NOISE_SUPPRESSION_LEVEL);
-  if (!getRuntimeConfig().VITE_NOISE_SUPPRESSION_LEVEL || !Number.isFinite(level)) {
-    return DEFAULT_NOISE_SUPPRESSION_LEVEL;
-  }
-  return Math.max(0, Math.min(100, level));
+  const configured = getRuntimeConfig().VITE_NOISE_SUPPRESSION_LEVEL;
+  const percent = configured ? Number(configured) : NaN;
+  const removed = Number.isFinite(percent)
+    ? Math.max(0, Math.min(100, percent))
+    : DEFAULT_NOISE_SUPPRESSION_PERCENT;
+  if (removed >= 100) return 100;
+  const db = -20 * Math.log10(1 - removed / 100);
+  // DeepFilterNet3 floors the level to whole dB and treats 0 as off, so keep at least 1 dB
+  return removed > 0 ? Math.max(1, Math.round(db)) : 0;
 };
 
 export const getConferenceClientConfig = (): ConferenceClientConfig => {
@@ -172,8 +181,8 @@ export const getConferenceClientConfig = (): ConferenceClientConfig => {
       ? getRuntimeConfig().VITE_CONFIG_SERVICE_URL
       : undefined,
     enableNoiseCancellation: true,
-    // DeepFilterNet3 attenuation limit in dB (0-100). The SDK default (50) suppresses so hard that
-    // speech over loud background noise turns robotic; ~20 dB keeps voices natural.
+    // DeepFilterNet3 attenuation limit in dB (see getNoiseSuppressionLevel). The SDK default (50 dB)
+    // suppresses so hard that speech over loud background noise turns robotic.
     // Turned off in the microphone menu: level 0 (no attenuation) keeps the suppressor in place so
     // it can be turned back on mid-meeting
     noiseSuppressionLevel: getNoiseSuppressionPreference() ? getNoiseSuppressionLevel() : 0,
