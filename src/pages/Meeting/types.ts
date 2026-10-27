@@ -1,4 +1,6 @@
 import React from 'react';
+import type { RecordingSources } from '../../hooks/useRecording';
+import type { ResolutionPreset } from '../../utils/recordingResolution';
 
 export interface Participant {
   uid: string;
@@ -113,6 +115,10 @@ export interface MeetingPageProps {
   isLocalRecordingActive?: boolean;
   startLocalRecording?: () => void;
   stopLocalRecording?: () => void;
+  applyRecordingResolution?: (
+    preset: ResolutionPreset,
+    options?: { raiseCamera?: boolean },
+  ) => Promise<RecordingSources>;
   downloadLocalRecording?: (filename?: string) => Promise<boolean>;
   localRecordingStatus?: string;
   currentIssues?: string[];
