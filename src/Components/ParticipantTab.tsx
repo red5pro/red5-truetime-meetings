@@ -74,10 +74,10 @@ const ParticipantItem = React.memo<ParticipantItemProps>(
         container
         alignItems="center"
         justifyContent="space-between"
-        style={{ borderBottomWidth: 1 }}
+        style={{ borderBottomWidth: 1, flexWrap: 'nowrap' }}
         sx={{ borderColor: 'primary.main' }}
       >
-        <Grid sx={{ pr: 1 }}>
+        <Grid size="grow" sx={{ pr: 1, minWidth: 0 }}>
           <ParticipantName
             variant="body1"
             sx={{
@@ -90,7 +90,7 @@ const ParticipantItem = React.memo<ParticipantItemProps>(
             {name}
           </ParticipantName>
         </Grid>
-        <Box style={{ display: 'flex' }}>{moderationButtons}</Box>
+        <Box style={{ display: 'flex', flexShrink: 0 }}>{moderationButtons}</Box>
       </Grid>
     );
   },
@@ -225,12 +225,16 @@ function ParticipantTab({
   }, [guestsWaitingApproval, approveGuest, rejectGuest, t]);
 
   return (
-    <Grid container sx={{ mt: 1 }} style={{ flexWrap: 'nowrap', flex: 'auto', overflowY: 'auto' }}>
-      <Stack sx={{ width: '100%' }} spacing={3}>
+    <Grid
+      container
+      sx={{ mt: 1 }}
+      style={{ flexWrap: 'nowrap', flex: 'auto', minHeight: 0, overflow: 'hidden' }}
+    >
+      <Stack sx={{ width: '100%', minHeight: 0 }} spacing={3}>
         {participantCountDisplay}
         <Stack
           id="participant-scroll"
-          style={{ flexWrap: 'nowrap', flex: 'auto', overflowY: 'scroll' }}
+          style={{ flexWrap: 'nowrap', flex: '1 1 auto', minHeight: 0, overflowY: 'auto' }}
           spacing={2}
         >
           {requestList && requestList.length > 0 && (

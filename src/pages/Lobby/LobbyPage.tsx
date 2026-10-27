@@ -223,12 +223,26 @@ const LobbyPage = React.memo<LobbyPageProps>((props) => {
       );
     }
 
+    // Fill the viewport (minus .App-header padding) so the video takes the leftover height and
+    // the device selectors and join button always stay on screen without scrolling.
     return (
-      <Grid size={{ md: 7 }} sx={{ alignSelf: 'stretch' }}>
-        <Typography variant="h4" align="center" sx={{ mb: 3 }}>
+      <Grid
+        size={{ md: 7 }}
+        sx={{
+          alignSelf: 'stretch',
+          display: 'flex',
+          flexDirection: 'column',
+          height: { xs: 'calc(100dvh - 32px)', md: 'calc(100dvh - 48px)' },
+        }}
+      >
+        <Typography variant="h4" align="center" sx={{ mb: 3, flexShrink: 0 }}>
           {t('TrueTime Meeting by Red5')}
         </Typography>
-        <Grid container className="lobby-page-video" sx={{ position: 'relative' }}>
+        <Grid
+          container
+          className="lobby-page-video"
+          sx={{ position: 'relative', flex: '1 1 0', minHeight: 120 }}
+        >
           <VideoPreview
             publishStreamId={publishStreamId}
             talkers={talkers}
@@ -253,7 +267,7 @@ const LobbyPage = React.memo<LobbyPageProps>((props) => {
             onVirtualEffectsClick={() => handleEffectsOpen(!effectsDrawerOpen)}
           />
         </Grid>
-        <Grid size={{ md: 12 }}>
+        <Grid size={{ md: 12 }} sx={{ flexShrink: 0 }}>
           <DeviceSelector
             //@ts-expect-error - prop type mismatch with legacy component props
             devices={devices}
@@ -268,7 +282,7 @@ const LobbyPage = React.memo<LobbyPageProps>((props) => {
             isMicOn={!isMyMicMuted}
           />
         </Grid>
-        <Grid size={{ md: 12 }}>
+        <Grid size={{ md: 12 }} sx={{ flexShrink: 0 }}>
           <JoinForm
             streamName={streamName}
             onStreamNameChange={handleStreamNameChange}
