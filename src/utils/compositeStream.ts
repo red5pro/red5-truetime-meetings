@@ -9,6 +9,12 @@
  * When one or more streams are marked as screen shares, the layout switches to a
  * "presenter" mode: screen shares fill the left 75% of the canvas and camera feeds
  * are stacked in a sidebar on the right.
+ *
+ * Input streams are re-checked on every tick so track swaps are followed. The SDK
+ * replaces the local mic/camera by removing and stopping the old track and adding a
+ * new one to the same MediaStream (device change, "default" device re-selection).
+ * A MediaStreamAudioSourceNode stays bound to the track it was created with, so
+ * without this the swapped participant goes silent for the rest of the recording.
  */
 export interface CompositeStreamHandle {
   stream: MediaStream;
@@ -24,12 +30,45 @@ export interface CompositeStreamHandle {
 type Entry = {
   stream: MediaStream;
   videoElement: HTMLVideoElement | null;
-  audioSource: MediaStreamAudioSourceNode | null;
-  gainNode: GainNode | null;
+  videoTrack: MediaStreamTrack | null;
+  // One source node per live audio track, all feeding the entry's gain node
+  audioSources: Map<MediaStreamTrack, MediaStreamAudioSourceNode>;
+  gainNode: GainNode;
   videoEnabled: boolean;
   audioEnabled: boolean;
   isScreenShare: boolean;
 };
+
+// Re-sync input tracks this often (in draw ticks) to pick up track swaps
+const TRACK_SYNC_INTERVAL_TICKS = 15;
+
+// requestAnimationFrame stops in hidden or fully covered tabs, which freezes the
+// recorded video. Timers in a dedicated worker keep running in the background.
+const TICKER_WORKER_SOURCE = `
+let id;
+onmessage = (e) => {
+  clearInterval(id);
+  if (e.data > 0) id = setInterval(() => postMessage(0), e.data);
+};
+`;
+
+function startTicker(fps: number, tick: () => void): () => void {
+  if (typeof Worker === 'undefined' || typeof URL.createObjectURL !== 'function') {
+    let frameId = requestAnimationFrame(function loop() {
+      tick();
+      frameId = requestAnimationFrame(loop);
+    });
+    return () => cancelAnimationFrame(frameId);
+  }
+  const url = URL.createObjectURL(
+    new Blob([TICKER_WORKER_SOURCE], { type: 'application/javascript' }),
+  );
+  const worker = new Worker(url);
+  URL.revokeObjectURL(url);
+  worker.onmessage = tick;
+  worker.postMessage(1000 / fps);
+  return () => worker.terminate();
+}
 
 export function createCompositeStream(
   streams: MediaStream[],
@@ -43,18 +82,61 @@ export function createCompositeStream(
   canvas.height = height;
   const ctx = canvas.getContext('2d')!;
 
-  const audioContext = new AudioContext();
+  // Without an explicit rate the mix runs at the output device's rate, which can be
+  // 16/24 kHz on a Bluetooth headset and would cap the recording at that quality.
+  const audioContext = new AudioContext({ sampleRate: 48000 });
   const destination = audioContext.createMediaStreamDestination();
 
   // AudioContexts created without a direct user-gesture call stack (e.g. when local
   // recording is auto-started via a room state event) can start in "suspended" state.
   // While suspended, the destination's audio track produces no data, resulting in a
   // recording with no sound even though the video track works fine.
+  // Browsers that require a gesture in the same call stack (Safari) keep rejecting
+  // resume() until the next click or key press, so retry on the next one.
+  const resumeOnGesture = () => {
+    if (audioContext.state === 'suspended') {
+      audioContext.resume().catch(() => {});
+    }
+  };
   if (audioContext.state === 'suspended') {
     audioContext.resume().catch(() => {});
+    document.addEventListener('pointerdown', resumeOnGesture, true);
+    document.addEventListener('keydown', resumeOnGesture, true);
   }
 
   const entries: Entry[] = [];
+
+  const syncTracks = (entry: Entry) => {
+    const liveAudio: MediaStreamTrack[] = entry.stream
+      .getAudioTracks()
+      .filter((t) => t.readyState !== 'ended');
+    entry.audioSources.forEach((source, track) => {
+      if (!liveAudio.includes(track)) {
+        source.disconnect();
+        entry.audioSources.delete(track);
+      }
+    });
+    liveAudio.forEach((track) => {
+      if (entry.audioSources.has(track)) return;
+      const source = audioContext.createMediaStreamSource(new MediaStream([track]));
+      source.connect(entry.gainNode);
+      entry.audioSources.set(track, source);
+    });
+
+    const videoTrack = entry.stream.getVideoTracks()[0] ?? null;
+    if (videoTrack === entry.videoTrack) return;
+    entry.videoTrack = videoTrack;
+    if (!videoTrack) return;
+    if (!entry.videoElement) {
+      entry.videoElement = document.createElement('video');
+      entry.videoElement.muted = true;
+      entry.videoElement.autoplay = true;
+      entry.videoElement.playsInline = true;
+    }
+    // Reassign so the element picks up a track that was swapped into the same stream
+    entry.videoElement.srcObject = entry.stream;
+    entry.videoElement.play().catch(() => {});
+  };
 
   const addEntry = (
     stream: MediaStream,
@@ -62,36 +144,22 @@ export function createCompositeStream(
     audioEnabled = true,
     isScreenShare = false,
   ) => {
-    let videoElement: HTMLVideoElement | null = null;
-    let audioSource: MediaStreamAudioSourceNode | null = null;
-    let gainNode: GainNode | null = null;
+    const gainNode = audioContext.createGain();
+    gainNode.gain.value = audioEnabled ? 1 : 0;
+    gainNode.connect(destination);
 
-    if (stream.getVideoTracks().length > 0) {
-      videoElement = document.createElement('video');
-      videoElement.srcObject = stream;
-      videoElement.muted = true;
-      videoElement.autoplay = true;
-      videoElement.playsInline = true;
-      videoElement.play().catch(() => {});
-    }
-
-    if (stream.getAudioTracks().length > 0) {
-      audioSource = audioContext.createMediaStreamSource(stream);
-      gainNode = audioContext.createGain();
-      gainNode.gain.value = audioEnabled ? 1 : 0;
-      audioSource.connect(gainNode);
-      gainNode.connect(destination);
-    }
-
-    entries.push({
+    const entry: Entry = {
       stream,
-      videoElement,
-      audioSource,
+      videoElement: null,
+      videoTrack: null,
+      audioSources: new Map(),
       gainNode,
       videoEnabled,
       audioEnabled,
       isScreenShare,
-    });
+    };
+    syncTracks(entry);
+    entries.push(entry);
   };
 
   streams.forEach((s) => addEntry(s, true, true, screenShareStreams?.has(s) ?? false));
@@ -116,8 +184,12 @@ export function createCompositeStream(
   // Continuously draw all video frames to the canvas.
   // When screen shares are present, they take the left 75% of the canvas and camera
   // feeds are stacked in a sidebar on the right. Otherwise a square grid is used.
-  let animFrameId: number;
+  let ticks = 0;
   const draw = () => {
+    if (++ticks % TRACK_SYNC_INTERVAL_TICKS === 0) {
+      entries.forEach(syncTracks);
+    }
+
     ctx.fillStyle = '#000';
     ctx.fillRect(0, 0, width, height);
 
@@ -169,10 +241,9 @@ export function createCompositeStream(
         });
       }
     }
-
-    animFrameId = requestAnimationFrame(draw);
   };
   draw();
+  const stopTicker = startTicker(fps, draw);
 
   const canvasStream = canvas.captureStream(fps);
   const compositeStream = new MediaStream([
@@ -188,10 +259,10 @@ export function createCompositeStream(
   const removeStream = (stream: MediaStream) => {
     const idx = entries.findIndex((e) => e.stream === stream);
     if (idx === -1) return;
-    const { videoElement, audioSource, gainNode } = entries[idx];
+    const { videoElement, audioSources, gainNode } = entries[idx];
     if (videoElement) videoElement.srcObject = null;
-    if (gainNode) gainNode.disconnect();
-    if (audioSource) audioSource.disconnect();
+    gainNode.disconnect();
+    audioSources.forEach((source) => source.disconnect());
     entries.splice(idx, 1);
   };
 
@@ -200,9 +271,7 @@ export function createCompositeStream(
     if (!entry) return;
     entry.videoEnabled = videoEnabled;
     entry.audioEnabled = audioEnabled;
-    if (entry.gainNode) {
-      entry.gainNode.gain.value = audioEnabled ? 1 : 0;
-    }
+    entry.gainNode.gain.value = audioEnabled ? 1 : 0;
   };
 
   const setStreamScreenShare = (stream: MediaStream, isScreenShare: boolean) => {
@@ -212,7 +281,9 @@ export function createCompositeStream(
   };
 
   const cleanup = () => {
-    cancelAnimationFrame(animFrameId);
+    stopTicker();
+    document.removeEventListener('pointerdown', resumeOnGesture, true);
+    document.removeEventListener('keydown', resumeOnGesture, true);
     audioContext.close().catch(() => {});
     entries.forEach(({ videoElement }) => {
       if (videoElement) videoElement.srcObject = null;

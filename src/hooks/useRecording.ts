@@ -175,17 +175,19 @@ export const useRecording = (
     const current = subscribedParticipants ?? {};
     const prev = prevSubscribedParticipantsRef.current;
 
-    Object.entries(current).forEach(([uid, { participant, mediaStream }]) => {
-      if (!prev[uid] && mediaStream) {
-        compositeHandleRef.current!.addStream(mediaStream, {
-          isScreenShare: participant?.isScreenSharing ?? false,
-        });
+    // Compare streams, not just uids: a subscribe retry hands the same participant a new
+    // MediaStream, and the old one stops producing audio and video.
+    Object.entries(prev).forEach(([uid, { mediaStream }]) => {
+      if (mediaStream && current[uid]?.mediaStream !== mediaStream) {
+        compositeHandleRef.current!.removeStream(mediaStream);
       }
     });
 
-    Object.entries(prev).forEach(([uid, { mediaStream }]) => {
-      if (!current[uid] && mediaStream) {
-        compositeHandleRef.current!.removeStream(mediaStream);
+    Object.entries(current).forEach(([uid, { participant, mediaStream }]) => {
+      if (mediaStream && prev[uid]?.mediaStream !== mediaStream) {
+        compositeHandleRef.current!.addStream(mediaStream, {
+          isScreenShare: participant?.isScreenSharing ?? false,
+        });
       }
     });
 
