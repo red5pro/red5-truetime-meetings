@@ -1,6 +1,11 @@
 // utils/conferenceConfig.ts
 
 import { getUrlParameter, isNull, isConfigServiceAvailable } from './utils.tsx';
+import {
+  RESOLUTION_PRESETS,
+  isResolutionPreset,
+  type VideoResolution,
+} from './recordingResolution';
 import { getRuntimeConfig } from './configStore';
 
 // Types
@@ -42,6 +47,7 @@ interface ConferenceClientConfig {
   enableNoiseCancellation?: boolean;
   noiseSuppressionLevel?: number;
   noiseSuppressionAssetsUrl?: string;
+  videoResolution?: VideoResolution;
   dataChannelHeartbeatEnabled?: boolean;
   dataChannelHeartbeatIntervalMs?: number;
 }
@@ -145,6 +151,13 @@ const getNoiseSuppressionLevel = (): number => {
   return Math.max(0, Math.min(100, level));
 };
 
+// Camera capture resolution for everyone in the room ('360p', '720p' or '1080p').
+// Unset keeps the SDK default (640x360).
+const getCameraResolution = (): VideoResolution | undefined => {
+  const preset = getRuntimeConfig().VITE_CAMERA_RESOLUTION;
+  return isResolutionPreset(preset) ? RESOLUTION_PRESETS[preset] : undefined;
+};
+
 export const getConferenceClientConfig = (): ConferenceClientConfig => {
   const peerConfig = setupPeerConnectionConfig();
 
@@ -175,6 +188,7 @@ export const getConferenceClientConfig = (): ConferenceClientConfig => {
     // DeepFilterNet3 attenuation limit in dB (0-100). The SDK default (50) suppresses so hard that
     // speech over loud background noise turns robotic; ~20 dB keeps voices natural.
     noiseSuppressionLevel: getNoiseSuppressionLevel(),
+    videoResolution: getCameraResolution(),
     // DeepFilterNet3 assets are mirrored into public/ by scripts/fetch-noise-suppression-assets.ts;
     // the SDK's default CDN rejects cross-origin requests. Served under the app's basename (e.g. /meetings)
     noiseSuppressionAssetsUrl:

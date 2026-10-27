@@ -46,6 +46,10 @@ export interface LayoutTiledProps {
   setMuteParticipantDialogOpen?: (isOpen: boolean) => void;
 }
 
+export interface LayoutMobileProps extends LayoutTiledProps {
+  pinnedParticipantId?: string | null;
+}
+
 export interface LayoutAutoProps {
   pinLayout: boolean;
   allParticipants?: ParticipantObject[];
