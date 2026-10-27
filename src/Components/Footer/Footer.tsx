@@ -29,6 +29,8 @@ import LocalRecordingButton from './Components/LocalRecordingButton.tsx';
 import { isNull } from 'lodash';
 import { getRuntimeConfig } from '../../utils/configStore';
 import type { NoiseSuppressionStatus } from '../../hooks/useNoiseSuppression';
+import type { RecordingSources } from '../../hooks/useRecording';
+import type { ResolutionPreset } from '../../utils/recordingResolution';
 
 interface FooterProps {
   updateDevicesList: () => void;
@@ -65,6 +67,10 @@ interface FooterProps {
   isLocalRecordingActive?: boolean;
   startLocalRecording?: () => void;
   stopLocalRecording?: () => void;
+  applyRecordingResolution?: (
+    preset: ResolutionPreset,
+    options?: { raiseCamera?: boolean },
+  ) => Promise<RecordingSources>;
   downloadLocalRecording?: (filename?: string) => Promise<boolean>;
   networkScore?: number;
   connectionStats?: any;
@@ -241,6 +247,7 @@ function Footer(props: FooterProps) {
                 isLocalRecordingActive={props?.isLocalRecordingActive}
                 startLocalRecording={props?.startLocalRecording}
                 stopLocalRecording={props?.stopLocalRecording}
+                applyRecordingResolution={props?.applyRecordingResolution}
                 downloadLocalRecording={props?.downloadLocalRecording}
                 transcriptionDrawerOpen={props?.transcriptionDrawerOpen}
                 handleTranscriptionDrawerOpen={props?.handleTranscriptionDrawerOpen}

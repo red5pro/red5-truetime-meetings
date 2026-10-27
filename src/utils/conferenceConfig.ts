@@ -1,6 +1,11 @@
 // utils/conferenceConfig.ts
 
 import { getUrlParameter, isNull, isConfigServiceAvailable } from './utils.tsx';
+import {
+  RESOLUTION_PRESETS,
+  isResolutionPreset,
+  type VideoResolution,
+} from './recordingResolution';
 import { getRuntimeConfig } from './configStore';
 
 // Types
@@ -42,6 +47,7 @@ interface ConferenceClientConfig {
   enableNoiseCancellation?: boolean;
   noiseSuppressionLevel?: number;
   noiseSuppressionAssetsUrl?: string;
+  videoResolution?: VideoResolution;
   dataChannelHeartbeatEnabled?: boolean;
   dataChannelHeartbeatIntervalMs?: number;
 }
@@ -159,6 +165,13 @@ export const getNoiseSuppressionLevel = (): number => {
   return removed > 0 ? Math.max(1, Math.round(db)) : 0;
 };
 
+// Camera capture resolution for everyone in the room ('360p', '720p' or '1080p').
+// Unset keeps the SDK default (640x360).
+const getCameraResolution = (): VideoResolution | undefined => {
+  const preset = getRuntimeConfig().VITE_CAMERA_RESOLUTION;
+  return isResolutionPreset(preset) ? RESOLUTION_PRESETS[preset] : undefined;
+};
+
 export const getConferenceClientConfig = (): ConferenceClientConfig => {
   const peerConfig = setupPeerConnectionConfig();
 
@@ -200,6 +213,7 @@ export const getConferenceClientConfig = (): ConferenceClientConfig => {
     // Keep the publisher data channel active during idle sessions
     dataChannelHeartbeatEnabled: true,
     dataChannelHeartbeatIntervalMs: 30000,
+    videoResolution: getCameraResolution(),
   };
 };
 

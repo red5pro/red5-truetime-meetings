@@ -11,6 +11,7 @@ body::-webkit-scrollbar {
 .App {
   text-align: center;
   min-height: 100vh;
+  min-height: 100dvh;
 }
 
 .App-logo {
@@ -48,28 +49,6 @@ form {
   color: #e5e6e7;
 }
 
-#participant-scroll::-webkit-scrollbar {
-  width: 12px;
-}
-
-#participant-scroll:hover {
-  overflow-y: overlay;
-}
-#participant-scroll::-webkit-scrollbar-button {
-  width: 0;
-  height: 0;
-  display: none;
-}
-#participant-scroll::-webkit-scrollbar-corner {
-  background-color: initial;
-}
-#participant-scroll::-webkit-scrollbar-thumb {
-  background-clip: content-box;
-  border: 4px solid transparent;
-  border-radius: 7px;
-  box-shadow: inset 0 0 0 10px;
-  color: #e5e6e7;
-}
 .App-header {
   min-height: 100vh;
   padding: 24px 50px;
@@ -121,7 +100,6 @@ form {
   font-size: 16px;
 }
 .lobby-page-video {
-  aspect-ratio: 16 / 9;
   width: 100% !important;
   max-width: 100%;
 }
@@ -135,6 +113,8 @@ form {
   left: 0;
   width: 100%;
   height: calc(100vh - 80px);
+  /* Mobile browsers count the hidden address bar in 100vh; dvh is the visible height */
+  height: calc(100dvh - 80px);
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
@@ -326,20 +306,56 @@ form {
 .mobile-grid-layout {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  grid-auto-rows: min-content;
+  /* Rows share the available height so the grid always fits without scrolling
+     (the grid is capped at 8 tiles, see LayoutMobile) */
+  grid-auto-rows: minmax(0, 1fr);
   gap: 8px;
   width: 100%;
   height: 100%;
   padding: 8px;
-  align-content: center;
-  overflow-y: auto;
+  overflow: hidden;
   box-sizing: border-box;
 }
 
 .mobile-grid-layout .single-video-container {
   width: 100%;
-  height: auto;
+  height: 100%;
+  min-height: 0;
+}
+
+/* A lone tile on the last row takes the full width instead of leaving a gap */
+.mobile-grid-layout .single-video-container:last-child:nth-child(odd) {
+  grid-column: 1 / -1;
+}
+
+/* Mobile pinned layout: pinned tile fills the top, the rest scroll horizontally below */
+.mobile-pinned-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px;
+  box-sizing: border-box;
+}
+
+.mobile-pinned-layout .mobile-pinned-tile {
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+}
+
+.mobile-pinned-strip {
+  display: flex;
+  flex: 0 0 auto;
+  gap: 8px;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+/* Three tiles fit across; the rest are reached by scrolling */
+.mobile-pinned-strip .single-video-container {
+  flex: 0 0 calc((100% - 16px) / 3);
   aspect-ratio: 1 / 1;
+  height: auto;
 }
 
 /* Mobile pinned layout - horizontal scrollable strip for unpinned participants */

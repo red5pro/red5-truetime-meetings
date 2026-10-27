@@ -34,6 +34,13 @@ import { PictureInPicture, PictureInPictureAlt } from '@mui/icons-material';
 import log from 'loglevel';
 import { getRuntimeConfig } from '../../../utils/configStore';
 import { isMobile } from 'react-device-detect';
+import { RecordingResolutionCheck } from '../../RecordingResolutionCheck';
+import type { RecordingSources } from '../../../hooks/useRecording';
+import {
+  DEFAULT_RECORDING_PRESET,
+  isResolutionPreset,
+  type ResolutionPreset,
+} from '../../../utils/recordingResolution';
 
 interface Device {
   deviceId: string;
@@ -126,6 +133,10 @@ interface OptionButtonProps {
   isLocalRecordingActive?: boolean;
   startLocalRecording?: () => void;
   stopLocalRecording?: () => void;
+  applyRecordingResolution?: (
+    preset: ResolutionPreset,
+    options?: { raiseCamera?: boolean },
+  ) => Promise<RecordingSources>;
   downloadLocalRecording?: (filename?: string) => Promise<boolean>;
   handleEffectsOpen?: (open: boolean) => void;
   updateDevicesList: () => void;
@@ -144,6 +155,10 @@ function OptionButton(props: OptionButtonProps) {
   const [recordingModalOpen, setRecordingModalOpen] = React.useState<boolean>(false);
   const [localRecordingChecked, setLocalRecordingChecked] = React.useState<boolean>(() => {
     return localStorage.getItem('localRecordingChecked') === 'true';
+  });
+  const [recordingPreset, setRecordingPreset] = React.useState<ResolutionPreset>(() => {
+    const saved = localStorage.getItem('recordingResolution');
+    return isResolutionPreset(saved) ? saved : DEFAULT_RECORDING_PRESET;
   });
   const [serverSideRecordingChecked, setServerSideRecordingChecked] = React.useState<boolean>(
     () => {
@@ -164,6 +179,10 @@ function OptionButton(props: OptionButtonProps) {
   React.useEffect(() => {
     localStorage.setItem('serverSideRecordingChecked', String(serverSideRecordingChecked));
   }, [serverSideRecordingChecked]);
+
+  React.useEffect(() => {
+    localStorage.setItem('recordingResolution', recordingPreset);
+  }, [recordingPreset]);
 
   React.useEffect(() => {
     localStorage.setItem('gridRecordingChecked', String(gridRecordingChecked));
@@ -517,6 +536,14 @@ function OptionButton(props: OptionButtonProps) {
                 </Box>
               }
             />
+            {localRecordingChecked && props.applyRecordingResolution && (
+              <RecordingResolutionCheck
+                open={recordingModalOpen}
+                preset={recordingPreset}
+                onPresetChange={setRecordingPreset}
+                applyResolution={props.applyRecordingResolution}
+              />
+            )}
           </Box>
         </DialogContent>
         <DialogActions>

@@ -389,6 +389,7 @@ function Red5(props: Red5Props) {
               isLocalRecordingActive={conference.features.localRecording.isLocalRecordingActive}
               startLocalRecording={conference.features.localRecording.startLocalRecording}
               stopLocalRecording={conference.features.localRecording.stopLocalRecording}
+              applyRecordingResolution={conference.features.localRecording.applyRecordingResolution}
               downloadLocalRecording={conference.features.localRecording.downloadLocalRecording}
               localRecordingStatus={conference.features.localRecording.localRecordingStatus}
               // Chat

@@ -330,7 +330,13 @@ const MeetingPage = React.memo<MeetingPageProps>((props) => {
     };
 
     if (isMobileLayout) {
-      return <LayoutMobile {...commonProps} layout={currentProps.layout} />;
+      return (
+        <LayoutMobile
+          {...commonProps}
+          layout={currentProps.layout}
+          pinnedParticipantId={currentProps.pinnedParticipantId}
+        />
+      );
     }
 
     if (isAutoLayout && !currentProps?.closedCaptions.captionsVisible) {
@@ -467,11 +473,11 @@ const MeetingPage = React.memo<MeetingPageProps>((props) => {
         sx={{
           // Keep gallery space in sync with captions panel + footer heights.
           height: props?.closedCaptions.captionsVisible
-            ? `calc(100vh - ${
+            ? `calc(100dvh - ${
                 FOOTER_HEIGHT +
                 (isSmallScreen ? CAPTIONS_PANEL_HEIGHT_MOBILE : CAPTIONS_PANEL_HEIGHT_DESKTOP)
               }px) !important`
-            : `calc(100vh - ${FOOTER_HEIGHT}px) !important`,
+            : `calc(100dvh - ${FOOTER_HEIGHT}px) !important`,
         }}
       >
         {pipIsOpen ? pipOverlay() : renderLayout()}
@@ -630,6 +636,7 @@ const MeetingPage = React.memo<MeetingPageProps>((props) => {
         isLocalRecordingActive={props?.isLocalRecordingActive}
         startLocalRecording={props?.startLocalRecording}
         stopLocalRecording={props?.stopLocalRecording}
+        applyRecordingResolution={props?.applyRecordingResolution}
         downloadLocalRecording={props?.downloadLocalRecording}
         localRecordingStatus={props?.localRecordingStatus}
         transcriptionDrawerOpen={props?.transcriptionDrawerOpen}

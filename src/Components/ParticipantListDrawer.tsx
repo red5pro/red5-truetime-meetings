@@ -94,13 +94,8 @@ const ParticipantListDrawer = memo<ParticipantListDrawerProps>((props) => {
             }
           />
         </Grid>
-        <Grid
-          container
-          justifyContent="space-between"
-          alignItems="center"
-          style={{ flex: '1 1 auto', overflowY: 'hidden' }}
-        >
-          <TabGrid container sx={{ pb: 0 }} direction="column">
+        <Grid container style={{ flex: '1 1 auto', minHeight: 0, overflowY: 'hidden' }}>
+          <TabGrid container sx={{ pb: 0, width: '100%' }} direction="column">
             <ParticipantTab
               globals={props?.globals}
               participantCount={props?.participantCount ?? 0}

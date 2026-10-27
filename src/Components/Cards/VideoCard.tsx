@@ -12,7 +12,6 @@ import { Typography, useTheme, Box, Tooltip, Theme, Slider } from '@mui/material
 import Grid from '@mui/material/Grid2';
 import VolumeUp from '@mui/icons-material/VolumeUp';
 import { useTranslation } from 'react-i18next';
-import { isMobile, isTablet } from 'react-device-detect';
 
 import DummyCard from './DummyCard';
 import CustomCard from '../CustomCard.tsx';
@@ -335,9 +334,10 @@ const VideoPlayer = React.memo<VideoPlayerProps>(
       return {
         // @ts-expect-error - legacy type mismatch, needs proper typing
         visibility: (isCamTurnedOff ? 'hidden' : 'visible') as const,
-        objectFit: 'contain' as const,
+        // Local camera fills its tile; remote streams keep their full frame.
+        objectFit: (isMine ? 'cover' : 'contain') as 'cover' | 'contain',
       };
-    }, [hidePlayer, isCamTurnedOff]);
+    }, [hidePlayer, isCamTurnedOff, isMine]);
 
     const containerStyle = useMemo(
       () => ({
@@ -393,8 +393,6 @@ const OverlayButtons = React.memo<OverlayButtonsProps>(
     unpinVideo,
     metaData,
   }) => {
-    const shouldShowPinButton = !isMobile && !isTablet;
-
     const isExternalStream = metaData === 'external-stream';
     const [volume, setVolume] = useState<number>(1);
 
@@ -437,15 +435,13 @@ const OverlayButtons = React.memo<OverlayButtonsProps>(
             gap: 0.5,
           }}
         >
-          {shouldShowPinButton && (
-            <PinButton
-              name={name}
-              pinVideo={pinVideo}
-              unpinVideo={unpinVideo}
-              streamId={streamId}
-              pinned={pinned}
-            />
-          )}
+          <PinButton
+            name={name}
+            pinVideo={pinVideo}
+            unpinVideo={unpinVideo}
+            streamId={streamId}
+            pinned={pinned}
+          />
           {!isMine && !isExternalStream && (
             <ModerationButtons
               name={name}
