@@ -335,9 +335,10 @@ const VideoPlayer = React.memo<VideoPlayerProps>(
       return {
         // @ts-expect-error - legacy type mismatch, needs proper typing
         visibility: (isCamTurnedOff ? 'hidden' : 'visible') as const,
-        objectFit: 'contain' as const,
+        // Local camera fills its tile; remote streams keep their full frame.
+        objectFit: (isMine ? 'cover' : 'contain') as 'cover' | 'contain',
       };
-    }, [hidePlayer, isCamTurnedOff]);
+    }, [hidePlayer, isCamTurnedOff, isMine]);
 
     const containerStyle = useMemo(
       () => ({
