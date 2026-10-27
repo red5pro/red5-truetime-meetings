@@ -99,7 +99,6 @@ form {
   font-size: 16px;
 }
 .lobby-page-video {
-  aspect-ratio: 16 / 9;
   width: 100% !important;
   max-width: 100%;
 }
