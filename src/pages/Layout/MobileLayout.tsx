@@ -8,28 +8,34 @@ import {
   isNull,
   isScreenShareParticipant,
 } from '../../utils/utils.tsx';
-import { LayoutTiledProps, ParticipantObject } from './types.ts';
+import { LayoutOptions } from '../../utils/layoutOptions.ts';
+import { LayoutMobileProps, ParticipantObject } from './types.ts';
 
 // Mobile-exclusive layout (see MeetingPage's isMobileLayout gate):
-// - 1 local + 1 remote  -> remote fullscreen, local floats as a PIP bubble
-// - 1 local + 2 remotes -> remotes stacked, local floats inside the 2nd remote's tile
-// - 1 local + 3+ remotes -> everyone in an equal-size grid, 2 tiles per row
-//   (beyond 7 remotes, the grid caps out and the rest collapse into an "Others"
-//   tile bottom-right; those hidden participants stay mounted off-screen so
-//   their audio keeps playing)
-const GRID_OVERFLOW_THRESHOLD = 7;
-// Capped at an even number so, together with the local tile (1), the pre-Others
-// cell count is odd — the Others tile then lands right after it in column 2 of
-// the same row instead of leaving a gap or wrapping into a new row's column 1.
-const VISIBLE_REMOTES_ON_OVERFLOW = 6;
+// - Pinned participant (any layout) -> pinned tile fills the top, everyone else
+//   in a horizontally scrollable strip below it
+// - Tiled -> everyone in an equal-size grid, 2 tiles per row
+// - Auto:
+//   - 1 local + 1 remote  -> remote fullscreen, local floats as a PIP bubble
+//   - 1 local + 2 remotes -> remotes stacked, local floats inside the 2nd remote's tile
+//   - 1 local + 3+ remotes -> same grid as Tiled
+// In the grid, beyond 8 tiles (local + 7 remotes) the grid caps out and the rest
+// collapse into an "Others" tile bottom-right; those hidden participants stay
+// mounted off-screen so their audio keeps playing.
+const GRID_OVERFLOW_THRESHOLD = 8;
+// Capped at an odd number so the Others tile lands right after the last visible
+// tile in column 2 of the same row instead of leaving a gap or wrapping into a
+// new row's column 1.
+const VISIBLE_TILES_ON_OVERFLOW = 7;
 
-const LayoutMobile = React.memo<LayoutTiledProps>((props) => {
+const LayoutMobile = React.memo<LayoutMobileProps>((props) => {
   const {
     allParticipants = [],
     streamName,
     publishStreamId,
     talkers,
     isPlayOnly,
+    pinnedParticipantId,
     pinVideo,
     unpinVideo,
     layout,
@@ -49,6 +55,14 @@ const LayoutMobile = React.memo<LayoutTiledProps>((props) => {
     [allParticipants, streamName],
   );
 
+  const pinnedParticipant = useMemo(
+    () =>
+      pinnedParticipantId
+        ? allParticipants.find((p) => p.participant.uid === pinnedParticipantId)
+        : undefined,
+    [allParticipants, pinnedParticipantId],
+  );
+
   const handleVideoRef = useCallback(
     (videoElement: HTMLVideoElement | null, mediaStream: MediaStream | null) => {
       if (videoElement && !isNull(mediaStream) && videoElement.srcObject !== mediaStream) {
@@ -60,7 +74,7 @@ const LayoutMobile = React.memo<LayoutTiledProps>((props) => {
   );
 
   const renderTile = useCallback(
-    (participantObject: ParticipantObject, hidePlayer = false) => {
+    (participantObject: ParticipantObject, hidePlayer = false, pinned = false) => {
       const { participant } = participantObject;
       const isMine = participant.uid === streamName;
       const isOwnScreenShare =
@@ -79,6 +93,7 @@ const LayoutMobile = React.memo<LayoutTiledProps>((props) => {
           streamId={participant.uid}
           isPending={participant.isPending}
           hidePlayer={hidePlayer}
+          pinned={pinned}
           autoPlay
           playsInline
           ref={(videoElement: any) => handleVideoRef(videoElement, participantObject.mediaStream)}
@@ -118,13 +133,18 @@ const LayoutMobile = React.memo<LayoutTiledProps>((props) => {
   );
 
   const renderTileContainer = useCallback(
-    (participantObject: ParticipantObject, extraClassName = '', overlay?: React.ReactNode) => (
+    (
+      participantObject: ParticipantObject,
+      extraClassName = '',
+      overlay?: React.ReactNode,
+      pinned = false,
+    ) => (
       <Box
-        className={`single-video-container not-pinned ${extraClassName}`.trim()}
+        className={`single-video-container ${pinned ? 'mobile-pinned-tile' : 'not-pinned'} ${extraClassName}`.trim()}
         key={`mobile-video-${participantObject.participant.uid}`}
       >
         <Box sx={{ position: 'relative', width: '100%', height: '100%' }}>
-          {renderTile(participantObject)}
+          {renderTile(participantObject, false, pinned)}
           {overlay}
         </Box>
       </Box>
@@ -132,7 +152,53 @@ const LayoutMobile = React.memo<LayoutTiledProps>((props) => {
     [renderTile],
   );
 
+  // Equal-size grid, 2 tiles per row.
+  const renderGrid = (tiles: ParticipantObject[]) => {
+    const hasGridOverflow = tiles.length > GRID_OVERFLOW_THRESHOLD;
+    const visibleTiles = hasGridOverflow ? tiles.slice(0, VISIBLE_TILES_ON_OVERFLOW) : tiles;
+    const overflowTiles = hasGridOverflow ? tiles.slice(VISIBLE_TILES_ON_OVERFLOW) : [];
+
+    return (
+      <>
+        <Box className="mobile-layout-gallery mobile-grid-layout">
+          {visibleTiles.map((participantObject) => renderTileContainer(participantObject))}
+          {hasGridOverflow && (
+            <Box className="single-video-container not-pinned others-tile-wrapper">
+              <OthersCard otherParticipantCount={overflowTiles.length} />
+            </Box>
+          )}
+        </Box>
+        {/* Mounted off-screen (see .audio-only-participant) so overflowed participants keep playing audio. */}
+        {overflowTiles.map((participantObject) => (
+          <Box
+            className="single-video-container audio-only-participant"
+            key={`mobile-audio-only-${participantObject.participant.uid}`}
+          >
+            {renderTile(participantObject, true)}
+          </Box>
+        ))}
+      </>
+    );
+  };
+
   if (!localParticipant) return null;
+
+  // Pinned — pinned tile fills the top, everyone else in a scrollable strip below.
+  if (pinnedParticipant) {
+    const unpinned = [localParticipant, ...remoteParticipants].filter(
+      (p) => p !== pinnedParticipant,
+    );
+    return (
+      <Box className="mobile-layout-gallery mobile-pinned-layout">
+        {renderTileContainer(pinnedParticipant, '', undefined, true)}
+        {unpinned.length > 0 && (
+          <Box className="mobile-pinned-strip">
+            {unpinned.map((participantObject) => renderTileContainer(participantObject))}
+          </Box>
+        )}
+      </Box>
+    );
+  }
 
   // Solo — only the local participant is present.
   if (remoteParticipants.length === 0) {
@@ -141,6 +207,11 @@ const LayoutMobile = React.memo<LayoutTiledProps>((props) => {
         {renderTileContainer(localParticipant)}
       </Box>
     );
+  }
+
+  // Tiled — always the plain grid, no floating self-view.
+  if (layout === LayoutOptions.Tiled) {
+    return renderGrid([localParticipant, ...remoteParticipants]);
   }
 
   // 1 remote — remote fullscreen, local floats as a PIP bubble.
@@ -171,37 +242,7 @@ const LayoutMobile = React.memo<LayoutTiledProps>((props) => {
   }
 
   // 3+ remotes — everyone (including local) in an equal-size grid, 2 tiles per row.
-  const hasGridOverflow = remoteParticipants.length > GRID_OVERFLOW_THRESHOLD;
-  const visibleRemotes = hasGridOverflow
-    ? remoteParticipants.slice(0, VISIBLE_REMOTES_ON_OVERFLOW)
-    : remoteParticipants;
-  const overflowRemotes = hasGridOverflow
-    ? remoteParticipants.slice(VISIBLE_REMOTES_ON_OVERFLOW)
-    : [];
-
-  return (
-    <>
-      <Box className="mobile-layout-gallery mobile-grid-layout">
-        {[localParticipant, ...visibleRemotes].map((participantObject) =>
-          renderTileContainer(participantObject),
-        )}
-        {hasGridOverflow && (
-          <Box className="single-video-container not-pinned others-tile-wrapper">
-            <OthersCard otherParticipantCount={overflowRemotes.length} />
-          </Box>
-        )}
-      </Box>
-      {/* Mounted off-screen (see .audio-only-participant) so overflowed participants keep playing audio. */}
-      {overflowRemotes.map((participantObject) => (
-        <Box
-          className="single-video-container audio-only-participant"
-          key={`mobile-audio-only-${participantObject.participant.uid}`}
-        >
-          {renderTile(participantObject, true)}
-        </Box>
-      ))}
-    </>
-  );
+  return renderGrid([localParticipant, ...remoteParticipants]);
 });
 
 LayoutMobile.displayName = 'LayoutMobile';
