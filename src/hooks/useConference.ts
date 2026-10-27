@@ -140,6 +140,8 @@ interface LocalRecording {
   uploadLocalRecording: () => Promise<boolean>;
   getLocalRecordingBlob: () => Blob[] | null;
   clearLocalRecording: () => void;
+  getRecordingSources: Recording['getRecordingSources'];
+  applyRecordingResolution: Recording['applyRecordingResolution'];
   isUploading: boolean;
   uploadProgress: number;
   hasS3Config: boolean;

@@ -627,6 +627,7 @@ const MeetingPage = React.memo<MeetingPageProps>((props) => {
         isLocalRecordingActive={props?.isLocalRecordingActive}
         startLocalRecording={props?.startLocalRecording}
         stopLocalRecording={props?.stopLocalRecording}
+        applyRecordingResolution={props?.applyRecordingResolution}
         downloadLocalRecording={props?.downloadLocalRecording}
         localRecordingStatus={props?.localRecordingStatus}
         transcriptionDrawerOpen={props?.transcriptionDrawerOpen}

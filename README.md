@@ -105,18 +105,19 @@ The application supports **runtime configuration** via a JSON file, allowing you
 
 #### Available Configuration Options
 
-| Parameter                     | Type   | Description              | Example                           |
-| ----------------------------- | ------ | ------------------------ | --------------------------------- |
-| `VITE_HOST`                   | string | Red5 Pro host URL        | `"xxx.red5pro.net"`               |
-| `VITE_BACKEND_HOST`           | string | Backend API URL          | `"xxx.red5pro.net"`               |
-| `VITE_NODE_GROUP`             | string | Red5 Pro node group      | `"default"`                       |
-| `VITE_TURN_SERVER_URL`        | string | TURN/STUN server URL     | `"stun:stun2.l.google.com:19302"` |
-| `VITE_TURN_SERVER_USERNAME`   | string | TURN server username     | `""`                              |
-| `VITE_TURN_SERVER_CREDENTIAL` | string | TURN server credential   | `""`                              |
-| `VITE_ENABLE_RECORDING`       | string | Enable recording feature | `"true"` or `"false"`             |
-| `VITE_ENABLE_CLOSED_CAPTION`  | string | Enable closed captions   | `"true"` or `"false"`             |
-| `VITE_DEFAULT_THEME`          | string | Default UI theme         | `"black"` or `"blue"`             |
-| `VITE_LOGO_URL`               | string | Custom logo URL          | `"/path/to/logo.svg"`             |
+| Parameter                     | Type   | Description                                                     | Example                           |
+| ----------------------------- | ------ | --------------------------------------------------------------- | --------------------------------- |
+| `VITE_HOST`                   | string | Red5 Pro host URL                                               | `"xxx.red5pro.net"`               |
+| `VITE_BACKEND_HOST`           | string | Backend API URL                                                 | `"xxx.red5pro.net"`               |
+| `VITE_NODE_GROUP`             | string | Red5 Pro node group                                             | `"default"`                       |
+| `VITE_TURN_SERVER_URL`        | string | TURN/STUN server URL                                            | `"stun:stun2.l.google.com:19302"` |
+| `VITE_TURN_SERVER_USERNAME`   | string | TURN server username                                            | `""`                              |
+| `VITE_TURN_SERVER_CREDENTIAL` | string | TURN server credential                                          | `""`                              |
+| `VITE_ENABLE_RECORDING`       | string | Enable recording feature                                        | `"true"` or `"false"`             |
+| `VITE_ENABLE_CLOSED_CAPTION`  | string | Enable closed captions                                          | `"true"` or `"false"`             |
+| `VITE_CAMERA_RESOLUTION`      | string | Camera capture resolution for all participants (unset: 640×360) | `"360p"`, `"720p"` or `"1080p"`   |
+| `VITE_DEFAULT_THEME`          | string | Default UI theme                                                | `"black"` or `"blue"`             |
+| `VITE_LOGO_URL`               | string | Custom logo URL                                                 | `"/path/to/logo.svg"`             |
 
 ### Environment Variables (Development)
 

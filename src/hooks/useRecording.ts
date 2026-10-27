@@ -10,6 +10,15 @@ import { ConferenceClient } from 'red5pro-conference-sdk';
 import { ConferenceEvents } from 'red5pro-conference-sdk';
 import { MediabunnyRecorder } from '../utils/MediabunnyRecorder';
 import { createCompositeStream } from '../utils/compositeStream';
+import {
+  DEFAULT_RECORDING_PRESET,
+  RESOLUTION_PRESETS,
+  applyCameraResolution,
+  getCameraTrack,
+  getTrackResolution,
+  type ResolutionPreset,
+  type VideoResolution,
+} from '../utils/recordingResolution';
 import { withTimeout, TimeoutError } from '../utils/withTimeout';
 import JSZip from 'jszip';
 import { S3Client } from '@aws-sdk/client-s3';
@@ -51,6 +60,15 @@ interface LocalRecordingStatus {
   state: string | null;
 }
 
+export interface RecordingSources {
+  /** Local camera as captured now; null when the camera is off */
+  camera: VideoResolution | null;
+  /** Remote video as received now; null when unknown or the camera is off */
+  remotes: { id: string; name: string; resolution: VideoResolution | null }[];
+  /** Size of the combined (all participants) file */
+  composite: VideoResolution;
+}
+
 interface UseRecordingReturn {
   // Server Recording State
   isRecordingActive: boolean;
@@ -85,6 +103,13 @@ interface UseRecordingReturn {
   uploadLocalRecording: () => Promise<boolean>;
   getLocalRecordingBlob: () => Blob[] | null;
   clearLocalRecording: () => void;
+
+  // Pre-recording resolution check
+  getRecordingSources: () => RecordingSources;
+  applyRecordingResolution: (
+    preset: ResolutionPreset,
+    options?: { raiseCamera?: boolean },
+  ) => Promise<RecordingSources>;
 }
 
 export const useRecording = (
@@ -527,6 +552,55 @@ export const useRecording = (
   useEffect(() => {
     subscribedParticipantsRef.current = subscribedParticipants ?? {};
   }, [subscribedParticipants]);
+  // Size of the combined file; chosen in the pre-recording dialog
+  const compositeResolutionRef = useRef<VideoResolution>(
+    RESOLUTION_PRESETS[DEFAULT_RECORDING_PRESET],
+  );
+
+  const getRecordingSources = useCallback((): RecordingSources => {
+    const client = conferenceClientRef?.current ?? null;
+    return {
+      camera: isLocalCamOff ? null : getTrackResolution(getCameraTrack(client)),
+      remotes: Object.entries(subscribedParticipantsRef.current).map(
+        ([id, { participant, mediaStream }]) => ({
+          id,
+          name: participant?.name || id,
+          resolution:
+            participant?.videoEnabled === false
+              ? null
+              : getTrackResolution(mediaStream?.getVideoTracks()[0]),
+        }),
+      ),
+      composite: compositeResolutionRef.current,
+    };
+  }, [conferenceClientRef, isLocalCamOff]);
+
+  /**
+   * Set the combined file's size and, optionally, raise the local camera to match.
+   * Resolves with what will actually be recorded.
+   */
+  const applyRecordingResolution = useCallback(
+    async (
+      preset: ResolutionPreset,
+      { raiseCamera = false }: { raiseCamera?: boolean } = {},
+    ): Promise<RecordingSources> => {
+      const { width, height, frameRate } = RESOLUTION_PRESETS[preset];
+      compositeResolutionRef.current = { width, height, frameRate };
+      if (raiseCamera && !isLocalCamOff) {
+        try {
+          await applyCameraResolution(conferenceClientRef?.current ?? null, {
+            width,
+            height,
+            frameRate,
+          });
+        } catch (error) {
+          log.warn('Camera did not accept the requested resolution:', error);
+        }
+      }
+      return getRecordingSources();
+    },
+    [conferenceClientRef, isLocalCamOff, getRecordingSources],
+  );
 
   /**
    * Start local recording using Mediabunny
@@ -570,10 +644,11 @@ export const useRecording = (
             .map((p) => p.mediaStream),
         );
 
+        const { width, height } = compositeResolutionRef.current;
         const handle = createCompositeStream(
           [localStream, ...remoteStreams],
-          1280,
-          720,
+          width,
+          height,
           30,
           screenShareStreams,
         );
@@ -1041,5 +1116,9 @@ export const useRecording = (
     uploadLocalRecording,
     getLocalRecordingBlob,
     clearLocalRecording,
+
+    // Pre-recording resolution check
+    getRecordingSources,
+    applyRecordingResolution,
   };
 };
