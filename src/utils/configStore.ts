@@ -15,6 +15,7 @@ export interface RuntimeConfig {
   VITE_CONFIG_SERVICE_URL?: string;
   VITE_NOISE_SUPPRESSION_ASSETS_URL?: string;
   VITE_NOISE_SUPPRESSION_LEVEL?: string;
+  VITE_CAMERA_RESOLUTION?: string;
   VITE_GOOGLE_CLIENT_ID?: string;
   VITE_ENABLE_GOOGLE_AUTH?: string;
   VITE_ANALYTICS_ENDPOINT?: string;

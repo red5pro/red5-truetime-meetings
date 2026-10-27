@@ -29,6 +29,12 @@ export interface RecordingOptions {
   audioCodec?: 'aac' | 'opus';
 }
 
+// Chrome's AAC encoder only accepts 44.1 and 48 kHz. Audio tracks follow the source's
+// rate (a Web Audio mix follows the output device: 96 kHz interfaces, 16/24 kHz
+// Bluetooth headsets), and an unsupported rate silently drops the whole audio track
+// from the MP4. Resample everything to 48 kHz before encoding.
+const ENCODER_SAMPLE_RATE = 48000;
+
 const DEFAULT_OPTIONS: Required<RecordingOptions> = {
   videoBitrate: QUALITY_MEDIUM,
   audioBitrate: QUALITY_MEDIUM,
@@ -100,6 +106,7 @@ export class MediabunnyRecorder {
         this.audioSource = new MediaStreamAudioTrackSource(audioTrack, {
           codec: this.options.audioCodec,
           bitrate: this.options.audioBitrate,
+          transform: { sampleRate: ENCODER_SAMPLE_RATE },
         });
         this.output.addAudioTrack(this.audioSource);
       }
