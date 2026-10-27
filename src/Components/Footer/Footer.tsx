@@ -225,6 +225,8 @@ function Footer(props: FooterProps) {
                 networkScore={props?.networkScore}
                 connectionStats={props?.connectionStats}
                 currentIssues={props?.currentIssues}
+                noiseSuppressionEnabled={props?.noiseSuppressionEnabled}
+                noiseSuppressionStatus={props?.noiseSuppressionStatus}
                 printStatLogs={props?.printStatLogs}
                 setPrintStatLogs={(printStatLogs: boolean) =>
                   props?.setPrintStatLogs?.(printStatLogs)

@@ -25,8 +25,11 @@ import {
 } from '@mui/material';
 
 import { useTranslation } from 'react-i18next';
+import { Card as TrueTimeCard, Spinner, StatusBadge, Text, type StatusTone } from 'truetime-ui';
 import { SvgIcon } from '../../SvgIcon.js';
 import { getDialogStyle } from '../../../styles/themeUtil.js';
+import type { NoiseSuppressionStatus } from '../../../hooks/useNoiseSuppression';
+import { getNoiseSuppressionPercent } from '../../../utils/conferenceConfig';
 
 interface Red5DialogTitleProps {
   children: React.ReactNode;
@@ -57,8 +60,15 @@ interface DiagnosticDialogProps {
   networkScore?: NetworkScore;
   connectionStats?: Record<string, ConnectionStatData>;
   currentIssues?: Issue[];
+  noiseSuppressionEnabled?: boolean;
+  noiseSuppressionStatus?: NoiseSuppressionStatus;
   printStatLogs: boolean;
   setPrintStatLogs: (value: boolean) => void;
+}
+
+interface NoiseSuppressionIndicatorProps {
+  enabled?: boolean;
+  status?: NoiseSuppressionStatus;
 }
 
 interface NetworkScore {
@@ -362,6 +372,67 @@ const ConnectionStats: React.FC<ConnectionStatsProps> = ({
   );
 };
 
+// Noise suppression model state and whether it's turned on in the microphone menu
+const NoiseSuppressionIndicator: React.FC<NoiseSuppressionIndicatorProps> = ({
+  enabled,
+  status = 'idle',
+}) => {
+  const { t } = useTranslation();
+
+  const states: Record<
+    NoiseSuppressionStatus,
+    { tone: StatusTone; label: string; note: string; busy?: boolean }
+  > = {
+    idle: {
+      tone: 'neutral',
+      label: t('Waiting'),
+      note: t('Starts when your microphone is on'),
+    },
+    downloading: {
+      tone: 'warning',
+      label: t('Downloading'),
+      note: t('Downloading the noise suppression model'),
+      busy: true,
+    },
+    loading: {
+      tone: 'warning',
+      label: t('Loading'),
+      note: t('Starting the noise suppression model'),
+      busy: true,
+    },
+    ready: enabled
+      ? {
+          tone: 'success',
+          label: t('Enabled'),
+          note: t('Removing about {{percent}}% of background noise', {
+            percent: getNoiseSuppressionPercent(),
+          }),
+        }
+      : { tone: 'neutral', label: t('Off'), note: t('Turned off in the microphone menu') },
+    unavailable: {
+      tone: 'error',
+      label: t('Unavailable'),
+      note: t("The model couldn't load; it tries again when the microphone changes"),
+    },
+  };
+  const state = states[status];
+
+  return (
+    <TrueTimeCard padding="sm" sx={{ mb: 2 }}>
+      <Box display="flex" alignItems="center" justifyContent="space-between" gap={1}>
+        <Typography variant="subtitle2">🎙️ {t('Noise suppression')}</Typography>
+        <StatusBadge tone={state.tone}>
+          {state.busy && <Spinner size={10} label={state.label} />}
+          {state.label}
+        </StatusBadge>
+      </Box>
+      <Text tone="muted" variant="body2" sx={{ mt: 0.5 }}>
+        {state.note}
+      </Text>
+    </TrueTimeCard>
+  );
+};
+
 // Issues component
 const IssuesDisplay: React.FC<IssuesDisplayProps> = ({ issues }) => {
   const getIssueIcon = (_type: string, reason: string): string => {
@@ -443,6 +514,8 @@ export function DiagnosticDialog({
   networkScore,
   connectionStats,
   currentIssues,
+  noiseSuppressionEnabled,
+  noiseSuppressionStatus,
   printStatLogs,
   setPrintStatLogs,
 }: DiagnosticDialogProps) {
@@ -496,6 +569,11 @@ export function DiagnosticDialog({
         sx={{ px: { xs: 1.5, sm: 3 }, maxHeight: { xs: '100vh', sm: '70vh' }, overflowY: 'auto' }}
       >
         <Box component="div" sx={{ display: 'flex', flexDirection: 'column' }}>
+          <NoiseSuppressionIndicator
+            enabled={noiseSuppressionEnabled}
+            status={noiseSuppressionStatus}
+          />
+
           {/* Overall Network Quality */}
           <Typography variant="h6" sx={{ mb: 2 }}>
             📡 Network Quality Overview

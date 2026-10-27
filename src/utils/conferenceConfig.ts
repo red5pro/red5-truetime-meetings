@@ -138,16 +138,21 @@ export const getInitialPlayOnlyMode = (): boolean => {
 // Percentage of the background noise removed (0-100)
 const DEFAULT_NOISE_SUPPRESSION_PERCENT = 20;
 
+/** Configured share of the background noise to remove, 0-100 */
+export const getNoiseSuppressionPercent = (): number => {
+  const configured = getRuntimeConfig().VITE_NOISE_SUPPRESSION_LEVEL;
+  const percent = configured ? Number(configured) : NaN;
+  return Number.isFinite(percent)
+    ? Math.max(0, Math.min(100, percent))
+    : DEFAULT_NOISE_SUPPRESSION_PERCENT;
+};
+
 /**
  * The SDK passes its level straight to DeepFilterNet3 as an attenuation limit in dB (100 = no
  * limit), so 20 would remove 90% of the noise. This turns the configured percentage into dB.
  */
 export const getNoiseSuppressionLevel = (): number => {
-  const configured = getRuntimeConfig().VITE_NOISE_SUPPRESSION_LEVEL;
-  const percent = configured ? Number(configured) : NaN;
-  const removed = Number.isFinite(percent)
-    ? Math.max(0, Math.min(100, percent))
-    : DEFAULT_NOISE_SUPPRESSION_PERCENT;
+  const removed = getNoiseSuppressionPercent();
   if (removed >= 100) return 100;
   const db = -20 * Math.log10(1 - removed / 100);
   // DeepFilterNet3 floors the level to whole dB and treats 0 as off, so keep at least 1 dB

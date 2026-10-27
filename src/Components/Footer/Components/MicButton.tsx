@@ -183,7 +183,9 @@ function MicButton(props: MicButtonProps) {
       ? t('Not available')
       : noiseSuppressionReady
         ? null
-        : t('Initializing…');
+        : props.noiseSuppressionStatus === 'downloading'
+          ? t('Downloading…')
+          : t('Initializing…');
 
   const getIconColor = (): string => {
     return theme.palette.themeColor[99];

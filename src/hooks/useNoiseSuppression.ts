@@ -6,11 +6,15 @@ import {
   saveNoiseSuppressionPreference,
 } from '../utils/conferenceConfig';
 
-/** Waiting for a microphone, loading the model, running, or the model couldn't load. */
-export type NoiseSuppressionStatus = 'idle' | 'loading' | 'ready' | 'unavailable';
+/**
+ * Waiting for a microphone, downloading the model files, starting the model, running, or the
+ * model couldn't load.
+ */
+export type NoiseSuppressionStatus = 'idle' | 'downloading' | 'loading' | 'ready' | 'unavailable';
 
 /** The SDK's private DeepFilterNet3 suppressor (MediaStreamManager.noiseSuppressor). */
 interface Suppressor {
+  core?: { isInitialized?: boolean };
   destination?: unknown;
   workletNode?: unknown;
   workletPromise?: Promise<void> | null;
@@ -24,9 +28,9 @@ const POLL_INTERVAL_MS = 500;
 
 /**
  * The SDK has no public signal for when its model is ready, so this reads the suppressor's private
- * fields: destination once a microphone goes through it, workletPromise while the model loads,
- * workletNode once it runs. If they aren't there (another SDK version), it reports ready rather
- * than keep the setting locked.
+ * fields: destination once a microphone goes through it, workletPromise while the model loads
+ * (core.isInitialized stays false until its files are downloaded), workletNode once it runs. If
+ * they aren't there (another SDK version), it reports ready rather than keep the setting locked.
  */
 const readStatus = (client: SuppressorOwner | null): NoiseSuppressionStatus => {
   const manager = client?.mediaStreamManager as { noiseSuppressor?: Suppressor | null } | undefined;
@@ -34,7 +38,9 @@ const readStatus = (client: SuppressorOwner | null): NoiseSuppressionStatus => {
   if (!manager) return 'idle';
   if (!suppressor || !('workletNode' in suppressor)) return 'ready';
   if (suppressor.workletNode) return 'ready';
-  if (suppressor.workletPromise) return 'loading';
+  if (suppressor.workletPromise) {
+    return suppressor.core?.isInitialized === false ? 'downloading' : 'loading';
+  }
   // A microphone went through it but the model didn't load; the SDK tries again on the next one
   return suppressor.destination ? 'unavailable' : 'idle';
 };
