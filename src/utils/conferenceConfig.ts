@@ -141,14 +141,28 @@ export const getInitialPlayOnlyMode = (): boolean => {
 /**
  * Get conference client configuration
  */
-const DEFAULT_NOISE_SUPPRESSION_LEVEL = 20;
+// Percentage of the background noise removed (0-100)
+const DEFAULT_NOISE_SUPPRESSION_PERCENT = 20;
 
-const getNoiseSuppressionLevel = (): number => {
-  const level = Number(getRuntimeConfig().VITE_NOISE_SUPPRESSION_LEVEL);
-  if (!getRuntimeConfig().VITE_NOISE_SUPPRESSION_LEVEL || !Number.isFinite(level)) {
-    return DEFAULT_NOISE_SUPPRESSION_LEVEL;
-  }
-  return Math.max(0, Math.min(100, level));
+/** Configured share of the background noise to remove, 0-100 */
+export const getNoiseSuppressionPercent = (): number => {
+  const configured = getRuntimeConfig().VITE_NOISE_SUPPRESSION_LEVEL;
+  const percent = configured ? Number(configured) : NaN;
+  return Number.isFinite(percent)
+    ? Math.max(0, Math.min(100, percent))
+    : DEFAULT_NOISE_SUPPRESSION_PERCENT;
+};
+
+/**
+ * The SDK passes its level straight to DeepFilterNet3 as an attenuation limit in dB (100 = no
+ * limit), so 20 would remove 90% of the noise. This turns the configured percentage into dB.
+ */
+export const getNoiseSuppressionLevel = (): number => {
+  const removed = getNoiseSuppressionPercent();
+  if (removed >= 100) return 100;
+  const db = -20 * Math.log10(1 - removed / 100);
+  // DeepFilterNet3 floors the level to whole dB and treats 0 as off, so keep at least 1 dB
+  return removed > 0 ? Math.max(1, Math.round(db)) : 0;
 };
 
 // Camera capture resolution for everyone in the room ('360p', '720p' or '1080p').
@@ -185,10 +199,11 @@ export const getConferenceClientConfig = (): ConferenceClientConfig => {
       ? getRuntimeConfig().VITE_CONFIG_SERVICE_URL
       : undefined,
     enableNoiseCancellation: true,
-    // DeepFilterNet3 attenuation limit in dB (0-100). The SDK default (50) suppresses so hard that
-    // speech over loud background noise turns robotic; ~20 dB keeps voices natural.
-    noiseSuppressionLevel: getNoiseSuppressionLevel(),
-    videoResolution: getCameraResolution(),
+    // DeepFilterNet3 attenuation limit in dB (see getNoiseSuppressionLevel). The SDK default (50 dB)
+    // suppresses so hard that speech over loud background noise turns robotic.
+    // Turned off in the microphone menu: level 0 (no attenuation) keeps the suppressor in place so
+    // it can be turned back on mid-meeting
+    noiseSuppressionLevel: getNoiseSuppressionPreference() ? getNoiseSuppressionLevel() : 0,
     // DeepFilterNet3 assets are mirrored into public/ by scripts/fetch-noise-suppression-assets.ts;
     // the SDK's default CDN rejects cross-origin requests. Served under the app's basename (e.g. /meetings)
     noiseSuppressionAssetsUrl:
@@ -198,6 +213,7 @@ export const getConferenceClientConfig = (): ConferenceClientConfig => {
     // Keep the publisher data channel active during idle sessions
     dataChannelHeartbeatEnabled: true,
     dataChannelHeartbeatIntervalMs: 30000,
+    videoResolution: getCameraResolution(),
   };
 };
 
@@ -293,6 +309,20 @@ export const getVirtualBackgroundConfigs = (): VirtualBackgroundConfigs => {
       options: { color: null }, // Color will be provided dynamically
     },
   };
+};
+
+/**
+ * Get noise suppression preference (on unless turned off)
+ */
+export const getNoiseSuppressionPreference = (): boolean => {
+  return localStorage.getItem('noiseSuppressionEnabled') !== 'false';
+};
+
+/**
+ * Save noise suppression preference
+ */
+export const saveNoiseSuppressionPreference = (enabled: boolean): void => {
+  localStorage.setItem('noiseSuppressionEnabled', String(enabled));
 };
 
 /**

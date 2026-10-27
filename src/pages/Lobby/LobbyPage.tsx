@@ -192,7 +192,7 @@ const LobbyPage = React.memo<LobbyPageProps>((props) => {
         <>
           <Grid size={{ md: 7 }} sx={{ alignSelf: 'stretch' }}>
             <Typography variant="h4" align="center" sx={{ mb: 3 }}>
-              {t('TrueTime Meeting by Red5')}
+              {t('TrueTime Meeting™ by Red5')}
             </Typography>
             <Grid size={{ md: 12 }}>
               <JoinForm
@@ -236,7 +236,7 @@ const LobbyPage = React.memo<LobbyPageProps>((props) => {
         }}
       >
         <Typography variant="h4" align="center" sx={{ mb: 3, flexShrink: 0 }}>
-          {t('TrueTime Meeting by Red5')}
+          {t('TrueTime Meeting™ by Red5')}
         </Typography>
         <Grid
           container

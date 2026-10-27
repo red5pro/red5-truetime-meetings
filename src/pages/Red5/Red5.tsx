@@ -355,6 +355,9 @@ function Red5(props: Red5Props) {
               updateDevicesList={conference.media.updateDevicesList}
               selectedCamera={conference.media.selectedCamera}
               selectedMicrophone={conference.media.selectedMicrophone}
+              noiseSuppressionEnabled={conference.media.noiseSuppressionEnabled}
+              noiseSuppressionStatus={conference.media.noiseSuppressionStatus}
+              toggleNoiseSuppression={conference.media.toggleNoiseSuppression}
               selectedSpeaker={conference.media.selectedSpeaker}
               cameraSelected={conference.media.cameraSelected}
               microphoneSelected={conference.media.microphoneSelected}

@@ -6,6 +6,7 @@ import MenuItem from '@mui/material/MenuItem';
 import SettingsDialog from './SettingsDialog.tsx';
 import { LayoutSettingsDialog } from './LayoutSettingsDialog.tsx';
 import { DiagnosticDialog } from './DiagnosticDialog.tsx';
+import type { NoiseSuppressionStatus } from '../../../hooks/useNoiseSuppression';
 import {
   ListItemIcon,
   ListItemText,
@@ -106,6 +107,8 @@ interface OptionButtonProps {
   connectionStats?: Record<string, ConnectionStatData>;
   currentIssues?: Issue[];
   printStatLogs?: boolean;
+  noiseSuppressionEnabled?: boolean;
+  noiseSuppressionStatus?: NoiseSuppressionStatus;
   pushToTalkEnabled?: boolean;
   pipSupported?: boolean;
   pipIsOpen?: boolean;
@@ -397,6 +400,8 @@ function OptionButton(props: OptionButtonProps) {
         networkScore={props?.networkScore}
         connectionStats={props?.connectionStats}
         currentIssues={props?.currentIssues}
+        noiseSuppressionEnabled={props?.noiseSuppressionEnabled}
+        noiseSuppressionStatus={props?.noiseSuppressionStatus}
         printStatLogs={props?.printStatLogs || false}
         setPrintStatLogs={props?.setPrintStatLogs || (() => {})}
       />

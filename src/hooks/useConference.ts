@@ -6,6 +6,7 @@ import { useRoomState } from './useRoomState';
 import { useParticipants } from './useParticipants';
 import { useMediaControls } from './useMediaControls';
 import { useDeviceManagement } from './useDeviceManagement';
+import { useNoiseSuppression, UseNoiseSuppressionReturn } from './useNoiseSuppression';
 import { useConferenceActions } from './useConferenceActions';
 import { useChat } from './useChat';
 import { useDrawerStates } from './useDrawerStates';
@@ -184,7 +185,9 @@ interface EnhancedActions extends ConferenceActions {
 
 interface UseConferenceReturn {
   room: RoomState & EnhancedActions & { roomId: string };
-  media: MediaControls & DeviceManagement & { localVideoCreate: () => Promise<void> };
+  media: MediaControls &
+    DeviceManagement &
+    UseNoiseSuppressionReturn & { localVideoCreate: () => Promise<void> };
   participants: Participants;
   ui: DrawerStates & ConferenceState & { permissions: Permissions };
   features: {
@@ -312,6 +315,8 @@ export const useConference = (roomId: string): UseConferenceReturn => {
     // @ts-expect-error - legacy type mismatch, needs proper typing
     localVideoElement.srcObject = mediaStream;
   }, [client, permissions.isPermissionDialogVisible]);
+
+  const noiseSuppression = useNoiseSuppression(client.conferenceClient);
 
   // Initialize dependent hooks with stable dependencies
   const deviceManagement: DeviceManagement = useDeviceManagement(
@@ -527,6 +532,7 @@ export const useConference = (roomId: string): UseConferenceReturn => {
       media: {
         ...mediaControls,
         ...deviceManagement,
+        ...noiseSuppression,
         localVideoCreate,
       },
 
@@ -568,6 +574,7 @@ export const useConference = (roomId: string): UseConferenceReturn => {
       conferenceState,
       mediaControls,
       deviceManagement,
+      noiseSuppression,
       localVideoCreate,
       participants,
       drawerStates,
