@@ -81,25 +81,37 @@ describe('LayoutMobile', () => {
     expect(galleryTileIds()).toEqual(['me', 'remote1']);
   });
 
-  test('pinned participant gets the first row alone and the rest follow in the grid', () => {
+  test('pinned participant fills the top and the rest go into the scrollable strip', () => {
     render({ allParticipants: participants(3), pinnedParticipantId: 'remote2' });
 
-    expect(gallery().classList.contains('mobile-grid-layout')).toBe(true);
-    const containers = gallery().querySelectorAll('.single-video-container');
-    expect(containers[0].classList.contains('mobile-pinned-tile')).toBe(true);
+    expect(gallery().classList.contains('mobile-pinned-layout')).toBe(true);
+    const pinnedTile = gallery().querySelector(':scope > .mobile-pinned-tile');
+    expect(pinnedTile).not.toBeNull();
     expect(
-      containers[0].querySelector('[data-testid="video-card"]')?.getAttribute('data-pinned'),
+      pinnedTile?.querySelector('[data-testid="video-card"]')?.getAttribute('data-stream-id'),
+    ).toBe('remote2');
+    expect(
+      pinnedTile?.querySelector('[data-testid="video-card"]')?.getAttribute('data-pinned'),
     ).toBe('true');
-    expect(galleryTileIds()).toEqual(['remote2', 'me', 'remote1', 'remote3']);
-    expect(gallery().querySelectorAll('.mobile-pinned-tile')).toHaveLength(1);
+    const stripIds = Array.from(
+      gallery().querySelectorAll('.mobile-pinned-strip [data-testid="video-card"]'),
+    ).map((el) => el.getAttribute('data-stream-id'));
+    expect(stripIds).toEqual(['me', 'remote1', 'remote3']);
   });
 
   test('pinning overrides the auto arrangements', () => {
     render({ allParticipants: participants(1), layout: 'auto', pinnedParticipantId: 'remote1' });
 
-    expect(gallery().classList.contains('mobile-grid-layout')).toBe(true);
+    expect(gallery().classList.contains('mobile-pinned-layout')).toBe(true);
     expect(container.querySelector('.mobile-pip-local')).toBeNull();
     expect(galleryTileIds()).toEqual(['remote1', 'me']);
+  });
+
+  test('pinning yourself while alone shows no empty strip', () => {
+    render({ allParticipants: participants(0), pinnedParticipantId: 'me' });
+
+    expect(gallery().classList.contains('mobile-pinned-layout')).toBe(true);
+    expect(container.querySelector('.mobile-pinned-strip')).toBeNull();
   });
 
   test('a pin for a participant who is not present is ignored', () => {
@@ -108,12 +120,12 @@ describe('LayoutMobile', () => {
     expect(gallery().classList.contains('mobile-single-remote-layout')).toBe(true);
   });
 
-  test('overflowing unpinned tiles collapse into the Others tile and keep playing audio', () => {
-    render({ allParticipants: participants(10), pinnedParticipantId: 'remote1' });
+  test('overflowing grid tiles collapse into the Others tile and keep playing audio', () => {
+    render({ allParticipants: participants(10), layout: 'tiled' });
 
-    // Pinned + 7 visible unpinned tiles, the remaining 3 go into Others.
-    expect(galleryTileIds()).toHaveLength(8);
-    expect(container.querySelector('[data-testid="others-card"]')?.textContent).toBe('3');
-    expect(container.querySelectorAll('.audio-only-participant')).toHaveLength(3);
+    // 7 visible tiles, the remaining 4 go into Others.
+    expect(galleryTileIds()).toHaveLength(7);
+    expect(container.querySelector('[data-testid="others-card"]')?.textContent).toBe('4');
+    expect(container.querySelectorAll('.audio-only-participant')).toHaveLength(4);
   });
 });

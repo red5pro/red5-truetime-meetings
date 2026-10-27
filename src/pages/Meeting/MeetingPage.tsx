@@ -473,11 +473,11 @@ const MeetingPage = React.memo<MeetingPageProps>((props) => {
         sx={{
           // Keep gallery space in sync with captions panel + footer heights.
           height: props?.closedCaptions.captionsVisible
-            ? `calc(100vh - ${
+            ? `calc(100dvh - ${
                 FOOTER_HEIGHT +
                 (isSmallScreen ? CAPTIONS_PANEL_HEIGHT_MOBILE : CAPTIONS_PANEL_HEIGHT_DESKTOP)
               }px) !important`
-            : `calc(100vh - ${FOOTER_HEIGHT}px) !important`,
+            : `calc(100dvh - ${FOOTER_HEIGHT}px) !important`,
         }}
       >
         {pipIsOpen ? pipOverlay() : renderLayout()}

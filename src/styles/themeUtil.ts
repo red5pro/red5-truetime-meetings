@@ -27,7 +27,7 @@ export function getRed5DrawerStyle(
       padding: 12,
       background: 'transparent',
       width: 360,
-      height: 'calc(100vh - 80px)',
+      height: 'calc(100dvh - 80px)',
       [theme.breakpoints.down('sm')]: {
         width: '100%',
         padding: 0,

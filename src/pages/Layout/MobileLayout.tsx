@@ -12,8 +12,8 @@ import { LayoutOptions } from '../../utils/layoutOptions.ts';
 import { LayoutMobileProps, ParticipantObject } from './types.ts';
 
 // Mobile-exclusive layout (see MeetingPage's isMobileLayout gate):
-// - Pinned participant (any layout) -> pinned tile alone on the first row,
-//   everyone else in the 2-per-row grid below it
+// - Pinned participant (any layout) -> pinned tile fills the top, everyone else
+//   in a horizontally scrollable strip below it
 // - Tiled -> everyone in an equal-size grid, 2 tiles per row
 // - Auto:
 //   - 1 local + 1 remote  -> remote fullscreen, local floats as a PIP bubble
@@ -152,8 +152,8 @@ const LayoutMobile = React.memo<LayoutMobileProps>((props) => {
     [renderTile],
   );
 
-  // Equal-size grid, 2 tiles per row; an optional pinned tile spans the whole first row.
-  const renderGrid = (tiles: ParticipantObject[], pinned?: ParticipantObject) => {
+  // Equal-size grid, 2 tiles per row.
+  const renderGrid = (tiles: ParticipantObject[]) => {
     const hasGridOverflow = tiles.length > GRID_OVERFLOW_THRESHOLD;
     const visibleTiles = hasGridOverflow ? tiles.slice(0, VISIBLE_TILES_ON_OVERFLOW) : tiles;
     const overflowTiles = hasGridOverflow ? tiles.slice(VISIBLE_TILES_ON_OVERFLOW) : [];
@@ -161,7 +161,6 @@ const LayoutMobile = React.memo<LayoutMobileProps>((props) => {
     return (
       <>
         <Box className="mobile-layout-gallery mobile-grid-layout">
-          {pinned && renderTileContainer(pinned, '', undefined, true)}
           {visibleTiles.map((participantObject) => renderTileContainer(participantObject))}
           {hasGridOverflow && (
             <Box className="single-video-container not-pinned others-tile-wrapper">
@@ -184,12 +183,21 @@ const LayoutMobile = React.memo<LayoutMobileProps>((props) => {
 
   if (!localParticipant) return null;
 
-  // Pinned — pinned tile alone on the first row, everyone else in the grid below.
+  // Pinned — pinned tile fills the top, everyone else in a scrollable strip below.
   if (pinnedParticipant) {
     const unpinned = [localParticipant, ...remoteParticipants].filter(
       (p) => p !== pinnedParticipant,
     );
-    return renderGrid(unpinned, pinnedParticipant);
+    return (
+      <Box className="mobile-layout-gallery mobile-pinned-layout">
+        {renderTileContainer(pinnedParticipant, '', undefined, true)}
+        {unpinned.length > 0 && (
+          <Box className="mobile-pinned-strip">
+            {unpinned.map((participantObject) => renderTileContainer(participantObject))}
+          </Box>
+        )}
+      </Box>
+    );
   }
 
   // Solo — only the local participant is present.
