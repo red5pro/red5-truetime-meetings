@@ -7,7 +7,7 @@ See [README.md](README.md) for features, configuration and deployment.
 
 The theme, design tokens, brand font and shared components come from the shared library
 [`truetime-ui`](https://github.com/red5pro/truetime-ui), installed from GitHub
-(`"truetime-ui": "github:red5pro/truetime-ui"`). Its exports are listed in
+(`"truetime-ui": "github:red5pro/truetime-ui#epic/BOSTON"`). Its exports are listed in
 [../truetime-ui/README.md](../truetime-ui/README.md).
 
 This app predates the library and still has many local components in `src/Components/`. They are
@@ -63,6 +63,11 @@ npm run ui:sync      # install ../truetime-ui (not saved) and clear Vite's pre-b
 
 A plain `npm install` goes back to the GitHub version. Once the library change is pushed, run
 `npm update truetime-ui` (or bump the tag) so `package-lock.json` points at the new commit.
+
+Each epic has a branch of the same name in truetime-ui, and Studio and Meetings both depend on it
+(`#epic/BOSTON` now), so the apps on one epic use the same library. When an epic starts, create its
+branch in truetime-ui and point both apps at it:
+`npm install "truetime-ui@github:red5pro/truetime-ui#epic/<NAME>"`.
 
 Never edit files under `node_modules/truetime-ui`.
 

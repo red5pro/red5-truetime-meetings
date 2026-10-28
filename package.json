@@ -49,7 +49,7 @@
     "red5pro-conference-sdk": "^1.0.10",
     "red5pro-webrtc-sdk": "^16.0.0",
     "slick-carousel": "^2.0.0",
-    "truetime-ui": "github:red5pro/truetime-ui",
+    "truetime-ui": "github:red5pro/truetime-ui#epic/BOSTON",
     "url": "^0.11.4"
   },
   "devDependencies": {
