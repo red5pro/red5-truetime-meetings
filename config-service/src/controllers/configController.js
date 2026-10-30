@@ -1,5 +1,5 @@
 import configService from '../services/configService.js';
-import { validateConfig } from '../utils/validation.js';
+import { applyDefaultTheme, validateConfig } from '../utils/validation.js';
 
 class ConfigController {
   async getConfig(req, res) {
@@ -20,6 +20,8 @@ class ConfigController {
       if (req.body.VITE_BACKEND_HOST) {
         req.body.VITE_BACKEND_HOST = req.body.VITE_BACKEND_HOST.replace(/^https?:\/\//, '');
       }
+
+      applyDefaultTheme(req.body);
 
       // Validate incoming config
       const validationErrors = validateConfig(req.body);
@@ -54,6 +56,8 @@ class ConfigController {
       if (req.body.VITE_BACKEND_HOST) {
         req.body.VITE_BACKEND_HOST = req.body.VITE_BACKEND_HOST.replace(/^https?:\/\//, '');
       }
+
+      applyDefaultTheme(req.body);
 
       // Validate incoming config
       const validationErrors = validateConfig(req.body);

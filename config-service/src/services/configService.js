@@ -1,16 +1,16 @@
 import fs from 'fs/promises';
 import path from 'path';
+import { resolveTheme } from '../utils/validation.js';
 
 const CONFIG_FILE = process.env.CONFIG_FILE || '/data/config.json';
 
+const MASK = '***';
+
 const SENSITIVE_FIELDS = [
-  'VITE_GOOGLE_CLIENT_ID',
   'VITE_PUBNUB_PUBLISH_KEY',
   'VITE_PUBNUB_SUBSCRIBE_KEY',
   'VITE_AWS_ACCESS_KEY',
   'VITE_AWS_SECRET_ACCESS_KEY',
-  'VITE_AWS_BUCKET_NAME',
-  'VITE_AWS_BUCKET_LOCATION',
 ];
 
 class ConfigService {
@@ -26,7 +26,7 @@ class ConfigService {
         VITE_ENABLE_RECORDING: process.env.VITE_ENABLE_RECORDING || 'false',
         VITE_ENABLE_CLOSED_CAPTION: process.env.VITE_ENABLE_CLOSED_CAPTION || 'false',
         VITE_ENABLE_EXTERNAL_STREAMS: process.env.VITE_ENABLE_EXTERNAL_STREAMS || 'false',
-        VITE_DEFAULT_THEME: process.env.VITE_DEFAULT_THEME || 'black',
+        VITE_DEFAULT_THEME: resolveTheme(process.env.VITE_DEFAULT_THEME),
         VITE_TURN_SERVER_URL: process.env.VITE_TURN_SERVER_URL || 'stun:stun2.l.google.com:19302',
         VITE_TURN_SERVER_USERNAME: process.env.VITE_TURN_SERVER_USERNAME || '',
         VITE_TURN_SERVER_CREDENTIAL: process.env.VITE_TURN_SERVER_CREDENTIAL || '',
@@ -54,7 +54,8 @@ class ConfigService {
   async read() {
     try {
       const data = await fs.readFile(CONFIG_FILE, 'utf8');
-      return JSON.parse(data);
+      const config = JSON.parse(data);
+      return { ...config, VITE_DEFAULT_THEME: resolveTheme(config.VITE_DEFAULT_THEME) };
     } catch (error) {
       console.error('Error reading config:', error);
       throw new Error('Failed to read configuration', { cause: error });
@@ -71,7 +72,7 @@ class ConfigService {
 
     const updatedConfig = {
       ...currentConfig,
-      ...updates,
+      ...this.restoreMaskedFields(updates, currentConfig),
     };
 
     await fs.writeFile(CONFIG_FILE, JSON.stringify(updatedConfig, null, 2));
@@ -79,15 +80,39 @@ class ConfigService {
   }
 
   async replace(newConfig) {
-    await fs.writeFile(CONFIG_FILE, JSON.stringify(newConfig, null, 2));
-    return newConfig;
+    let currentConfig = {};
+    try {
+      currentConfig = await this.read();
+    } catch {
+      console.log('No existing config found, nothing to carry over during replace');
+    }
+
+    const replacement = this.restoreMaskedFields(newConfig, currentConfig);
+    await fs.writeFile(CONFIG_FILE, JSON.stringify(replacement, null, 2));
+    return replacement;
+  }
+
+  // Clients only ever see the mask, so sending it back means "keep the stored value". Without this,
+  // a client saving what it read would overwrite the real secret with the mask.
+  restoreMaskedFields(incoming, currentConfig) {
+    const restored = { ...incoming };
+    for (const field of SENSITIVE_FIELDS) {
+      if (restored[field] === MASK) {
+        if (currentConfig[field] === undefined) {
+          delete restored[field];
+        } else {
+          restored[field] = currentConfig[field];
+        }
+      }
+    }
+    return restored;
   }
 
   maskSensitiveFields(config) {
     const masked = { ...config };
     for (const field of SENSITIVE_FIELDS) {
       if (masked[field]) {
-        masked[field] = '***';
+        masked[field] = MASK;
       }
     }
     return masked;

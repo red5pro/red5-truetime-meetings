@@ -22,8 +22,33 @@ export const ALLOWED_KEYS = new Set([
   'VITE_AWS_BUCKET_LOCATION',
 ]);
 
-export const validThemes = ['blue', 'black'];
+// The palette names in truetime-ui (src/tokens/palettes.ts). The app silently falls back to black
+// for any other name, so a theme added there has to be added here before it can be saved.
+export const validThemes = [
+  'black',
+  'blue',
+  'purple',
+  'emerald',
+  'aurora',
+  'sunset',
+  'ocean',
+  'broadcast',
+];
 export const validBooleans = ['true', 'false'];
+
+export const DEFAULT_THEME = 'black';
+
+// For values that arrive without validation: the environment and a stored config file. The compose
+// files pass `default` when VITE_DEFAULT_THEME is unset, and older deployments have saved it.
+export const resolveTheme = (theme) => (validThemes.includes(theme) ? theme : DEFAULT_THEME);
+
+// API requests may ask for `default` by name. Any other unknown theme is left for validateConfig to
+// reject, so a typo is reported rather than silently saved as black.
+export const applyDefaultTheme = (config) => {
+  if (config.VITE_DEFAULT_THEME === 'default') {
+    config.VITE_DEFAULT_THEME = DEFAULT_THEME;
+  }
+};
 
 export const validateConfig = (config) => {
   const errors = [];
@@ -62,6 +87,13 @@ export const validateConfig = (config) => {
     !validBooleans.includes(config.VITE_ENABLE_EXTERNAL_STREAMS)
   ) {
     errors.push('VITE_ENABLE_EXTERNAL_STREAMS must be "true" or "false"');
+  }
+
+  if (
+    config.VITE_ENABLE_GOOGLE_AUTH !== undefined &&
+    !validBooleans.includes(config.VITE_ENABLE_GOOGLE_AUTH)
+  ) {
+    errors.push('VITE_ENABLE_GOOGLE_AUTH must be "true" or "false"');
   }
 
   // Validate theme
