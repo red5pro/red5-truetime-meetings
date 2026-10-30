@@ -80,6 +80,13 @@ curl -X PUT http://localhost:3000/api/config \
   }'
 ```
 
+## Masked Fields
+
+`VITE_PUBNUB_PUBLISH_KEY`, `VITE_PUBNUB_SUBSCRIBE_KEY`, `VITE_AWS_ACCESS_KEY` and
+`VITE_AWS_SECRET_ACCESS_KEY` are returned as `***` once they have a value.
+
+When saving, `***` keeps the stored value, a new value replaces it, and an empty string clears it.
+
 ## Validation Rules
 
 The service validates all configuration values:
@@ -96,6 +103,7 @@ The service validates all configuration values:
 - `VITE_ENABLE_RECORDING` - Must be `"true"` or `"false"`
 - `VITE_ENABLE_CLOSED_CAPTION` - Must be `"true"` or `"false"`
 - `VITE_ENABLE_EXTERNAL_STREAMS` - Must be `"true"` or `"false"`
+- `VITE_ENABLE_GOOGLE_AUTH` - Must be `"true"` or `"false"`
 
 ### Theme Field
 

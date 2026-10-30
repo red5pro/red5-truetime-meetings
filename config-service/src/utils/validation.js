@@ -89,6 +89,13 @@ export const validateConfig = (config) => {
     errors.push('VITE_ENABLE_EXTERNAL_STREAMS must be "true" or "false"');
   }
 
+  if (
+    config.VITE_ENABLE_GOOGLE_AUTH !== undefined &&
+    !validBooleans.includes(config.VITE_ENABLE_GOOGLE_AUTH)
+  ) {
+    errors.push('VITE_ENABLE_GOOGLE_AUTH must be "true" or "false"');
+  }
+
   // Validate theme
   if (config.VITE_DEFAULT_THEME !== undefined && !validThemes.includes(config.VITE_DEFAULT_THEME)) {
     errors.push(`VITE_DEFAULT_THEME must be one of: ${validThemes.join(', ')}`);

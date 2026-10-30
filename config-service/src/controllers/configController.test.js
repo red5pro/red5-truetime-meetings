@@ -88,3 +88,94 @@ describe('default theme fallback', () => {
     },
   );
 });
+
+describe('masked fields', () => {
+  let dir;
+  let file;
+  let controller;
+
+  const stored = async () => JSON.parse(await fs.readFile(file, 'utf8'));
+  const SECRETS = {
+    VITE_PUBNUB_PUBLISH_KEY: 'real-pub',
+    VITE_PUBNUB_SUBSCRIBE_KEY: 'real-sub',
+    VITE_AWS_ACCESS_KEY: 'real-access',
+    VITE_AWS_SECRET_ACCESS_KEY: 'real-secret',
+  };
+  const MASKED = Object.fromEntries(Object.keys(SECRETS).map((key) => [key, '***']));
+
+  beforeEach(async () => {
+    dir = await fs.mkdtemp(path.join(os.tmpdir(), 'config-service-'));
+    file = path.join(dir, 'config.json');
+    vi.stubEnv('CONFIG_FILE', file);
+    vi.resetModules();
+    controller = (await import('./configController.js')).default;
+    await fs.writeFile(
+      file,
+      JSON.stringify({
+        ...SECRETS,
+        VITE_GOOGLE_CLIENT_ID: 'client-id',
+        VITE_AWS_BUCKET_NAME: 'bucket',
+        VITE_AWS_BUCKET_LOCATION: 'us-east-1',
+        VITE_DEFAULT_THEME: 'ocean',
+      }),
+    );
+  });
+
+  afterEach(async () => {
+    vi.unstubAllEnvs();
+    await fs.rm(dir, { recursive: true, force: true });
+  });
+
+  it('masks only the four secrets on read', async () => {
+    const res = respond();
+    await controller.getConfig({}, res);
+    expect(res.body).toMatchObject({
+      ...MASKED,
+      VITE_GOOGLE_CLIENT_ID: 'client-id',
+      VITE_AWS_BUCKET_NAME: 'bucket',
+      VITE_AWS_BUCKET_LOCATION: 'us-east-1',
+    });
+  });
+
+  it('leaves an empty secret empty on read', async () => {
+    await fs.writeFile(file, JSON.stringify({ VITE_PUBNUB_PUBLISH_KEY: '' }));
+    const res = respond();
+    await controller.getConfig({}, res);
+    expect(res.body.VITE_PUBNUB_PUBLISH_KEY).toBe('');
+  });
+
+  it.each(['updateConfig', 'replaceConfig'])('%s keeps stored secrets sent as ***', async (m) => {
+    const res = respond();
+    await controller[m]({ body: { ...MASKED, VITE_DEFAULT_THEME: 'blue' } }, res);
+    expect(res.statusCode).toBe(200);
+    expect(await stored()).toMatchObject({ ...SECRETS, VITE_DEFAULT_THEME: 'blue' });
+    expect(res.body.config).toMatchObject(MASKED);
+  });
+
+  it.each(['updateConfig', 'replaceConfig'])('%s replaces a secret and masks it', async (m) => {
+    const res = respond();
+    await controller[m]({ body: { ...MASKED, VITE_AWS_ACCESS_KEY: 'new-access' } }, res);
+    expect((await stored()).VITE_AWS_ACCESS_KEY).toBe('new-access');
+    expect(res.body.config.VITE_AWS_ACCESS_KEY).toBe('***');
+  });
+
+  it('clears a secret sent as an empty string', async () => {
+    const res = respond();
+    await controller.updateConfig({ body: { VITE_PUBNUB_SUBSCRIBE_KEY: '' } }, res);
+    expect((await stored()).VITE_PUBNUB_SUBSCRIBE_KEY).toBe('');
+    expect((await stored()).VITE_PUBNUB_PUBLISH_KEY).toBe('real-pub');
+  });
+
+  it('does not store the mask when there is nothing to keep', async () => {
+    await fs.writeFile(file, JSON.stringify({ VITE_DEFAULT_THEME: 'ocean' }));
+    const res = respond();
+    await controller.updateConfig({ body: { VITE_AWS_ACCESS_KEY: '***' } }, res);
+    expect(await stored()).not.toHaveProperty('VITE_AWS_ACCESS_KEY');
+  });
+
+  it('rejects a non-boolean VITE_ENABLE_GOOGLE_AUTH', async () => {
+    const res = respond();
+    await controller.updateConfig({ body: { VITE_ENABLE_GOOGLE_AUTH: 'yes' } }, res);
+    expect(res.statusCode).toBe(400);
+  });
+});
