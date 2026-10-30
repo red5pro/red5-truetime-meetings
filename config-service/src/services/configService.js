@@ -1,5 +1,6 @@
 import fs from 'fs/promises';
 import path from 'path';
+import { resolveTheme } from '../utils/validation.js';
 
 const CONFIG_FILE = process.env.CONFIG_FILE || '/data/config.json';
 
@@ -26,7 +27,7 @@ class ConfigService {
         VITE_ENABLE_RECORDING: process.env.VITE_ENABLE_RECORDING || 'false',
         VITE_ENABLE_CLOSED_CAPTION: process.env.VITE_ENABLE_CLOSED_CAPTION || 'false',
         VITE_ENABLE_EXTERNAL_STREAMS: process.env.VITE_ENABLE_EXTERNAL_STREAMS || 'false',
-        VITE_DEFAULT_THEME: process.env.VITE_DEFAULT_THEME || 'black',
+        VITE_DEFAULT_THEME: resolveTheme(process.env.VITE_DEFAULT_THEME),
         VITE_TURN_SERVER_URL: process.env.VITE_TURN_SERVER_URL || 'stun:stun2.l.google.com:19302',
         VITE_TURN_SERVER_USERNAME: process.env.VITE_TURN_SERVER_USERNAME || '',
         VITE_TURN_SERVER_CREDENTIAL: process.env.VITE_TURN_SERVER_CREDENTIAL || '',
@@ -54,7 +55,8 @@ class ConfigService {
   async read() {
     try {
       const data = await fs.readFile(CONFIG_FILE, 'utf8');
-      return JSON.parse(data);
+      const config = JSON.parse(data);
+      return { ...config, VITE_DEFAULT_THEME: resolveTheme(config.VITE_DEFAULT_THEME) };
     } catch (error) {
       console.error('Error reading config:', error);
       throw new Error('Failed to read configuration', { cause: error });

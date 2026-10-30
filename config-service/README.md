@@ -61,7 +61,7 @@ curl -X POST http://localhost:3000/api/config \
   -H "Authorization: Bearer your-admin-token" \
   -d '{
     "VITE_ENABLE_RECORDING": "true",
-    "VITE_DEFAULT_THEME": "dark"
+    "VITE_DEFAULT_THEME": "purple"
   }'
 ```
 
@@ -76,7 +76,7 @@ curl -X PUT http://localhost:3000/api/config \
     "VITE_BACKEND_HOST": "",
     "VITE_ENABLE_RECORDING": "false",
     "VITE_ENABLE_CLOSED_CAPTION": "true",
-    "VITE_DEFAULT_THEME": "default"
+    "VITE_DEFAULT_THEME": "black"
   }'
 ```
 
@@ -99,7 +99,9 @@ The service validates all configuration values:
 
 ### Theme Field
 
-- `VITE_DEFAULT_THEME` - Must be one of: `default`, `dark`, `blue`, `black`
+- `VITE_DEFAULT_THEME` - Must be one of: `black`, `blue`, `purple`, `emerald`, `aurora`, `sunset`, `ocean`, `broadcast`.
+  `default` is saved as `black`. An unset or unknown value in the environment or a stored config
+  file also resolves to `black`.
 
 ### Example Validation Error Response
 
@@ -109,7 +111,7 @@ The service validates all configuration values:
   "errors": [
     "VITE_HOST must be a valid URL or empty string",
     "VITE_ENABLE_RECORDING must be \"true\" or \"false\"",
-    "VITE_DEFAULT_THEME must be one of: blue, black"
+    "VITE_DEFAULT_THEME must be one of: black, blue, purple, emerald, aurora, sunset, ocean, broadcast"
   ]
 }
 ```
