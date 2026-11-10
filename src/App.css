@@ -99,10 +99,6 @@ form {
 .name-indicator .name {
   font-size: 16px;
 }
-.lobby-page-video {
-  width: 100% !important;
-  max-width: 100%;
-}
 /*-------- end attendee video style --------*/
 
 /*-------- start meeting video gallery style --------*/
