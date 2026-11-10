@@ -18,15 +18,28 @@ import { LayoutMobileProps, ParticipantObject } from './types.ts';
 // - Auto:
 //   - 1 local + 1 remote  -> remote fullscreen, local floats as a PIP bubble
 //   - 1 local + 2 remotes -> remotes stacked, local floats inside the 2nd remote's tile
-//   - 1 local + 3+ remotes -> same grid as Tiled
+//   - 1 local + 3+ remotes -> remotes in the grid, local floats as a PIP bubble
+//     over it (Tiled puts local in the grid as a normal tile instead)
 // In the grid, beyond 8 tiles (local + 7 remotes) the grid caps out and the rest
 // collapse into an "Others" tile bottom-right; those hidden participants stay
 // mounted off-screen so their audio keeps playing.
+// Landscape (phone turned sideways): the layout root is a size container, and App.css
+// re-arranges via container queries: the grid uses more columns (see landscapeGridColumns),
+// stacked tiles sit side by side, and the pinned strip moves to the right.
 const GRID_OVERFLOW_THRESHOLD = 8;
 // Capped at an odd number so the Others tile lands right after the last visible
 // tile in column 2 of the same row instead of leaving a gap or wrapping into a
 // new row's column 1.
 const VISIBLE_TILES_ON_OVERFLOW = 7;
+
+// Columns for the grid in landscape, picked so cells stay close to 16:9 on a phone held
+// sideways (e.g. 5–6 tiles -> 3×2, 7–8 tiles -> 4×2).
+const landscapeGridColumns = (cellCount: number): number => {
+  if (cellCount <= 3) return Math.max(cellCount, 1);
+  if (cellCount === 4) return 2;
+  if (cellCount <= 6) return 3;
+  return 4;
+};
 
 const LayoutMobile = React.memo<LayoutMobileProps>((props) => {
   const {
@@ -152,15 +165,25 @@ const LayoutMobile = React.memo<LayoutMobileProps>((props) => {
     [renderTile],
   );
 
-  // Equal-size grid, 2 tiles per row.
-  const renderGrid = (tiles: ParticipantObject[]) => {
+  // Equal-size grid, 2 tiles per row. An overlay (the floating self-view) sits outside the
+  // grid so it doesn't count as a grid item and break the odd-last-tile rule.
+  const renderGrid = (tiles: ParticipantObject[], overlay?: React.ReactNode) => {
     const hasGridOverflow = tiles.length > GRID_OVERFLOW_THRESHOLD;
     const visibleTiles = hasGridOverflow ? tiles.slice(0, VISIBLE_TILES_ON_OVERFLOW) : tiles;
     const overflowTiles = hasGridOverflow ? tiles.slice(VISIBLE_TILES_ON_OVERFLOW) : [];
 
-    return (
+    const cellCount = visibleTiles.length + (hasGridOverflow ? 1 : 0);
+
+    const content = (
       <>
-        <Box className="mobile-layout-gallery mobile-grid-layout">
+        <Box
+          className="mobile-layout-gallery mobile-grid-layout"
+          style={
+            {
+              '--mobile-grid-landscape-columns': landscapeGridColumns(cellCount),
+            } as React.CSSProperties
+          }
+        >
           {visibleTiles.map((participantObject) => renderTileContainer(participantObject))}
           {hasGridOverflow && (
             <Box className="single-video-container not-pinned others-tile-wrapper">
@@ -179,70 +202,82 @@ const LayoutMobile = React.memo<LayoutMobileProps>((props) => {
         ))}
       </>
     );
+
+    if (!overlay) return content;
+
+    return (
+      <Box className="mobile-layout-gallery mobile-grid-with-pip-layout">
+        {content}
+        {overlay}
+      </Box>
+    );
+  };
+
+  const renderArrangement = (localParticipant: ParticipantObject) => {
+    // Pinned — pinned tile fills the top, everyone else in a scrollable strip below.
+    if (pinnedParticipant) {
+      const unpinned = [localParticipant, ...remoteParticipants].filter(
+        (p) => p !== pinnedParticipant,
+      );
+      return (
+        <Box className="mobile-layout-gallery mobile-pinned-layout">
+          {renderTileContainer(pinnedParticipant, '', undefined, true)}
+          {unpinned.length > 0 && (
+            <Box className="mobile-pinned-strip">
+              {unpinned.map((participantObject) => renderTileContainer(participantObject))}
+            </Box>
+          )}
+        </Box>
+      );
+    }
+
+    // Solo — only the local participant is present.
+    if (remoteParticipants.length === 0) {
+      return (
+        <Box className="mobile-layout-gallery mobile-solo-layout">
+          {renderTileContainer(localParticipant)}
+        </Box>
+      );
+    }
+
+    // Tiled — always the plain grid, no floating self-view.
+    if (layout === LayoutOptions.Tiled) {
+      return renderGrid([localParticipant, ...remoteParticipants]);
+    }
+
+    const localPip = <Box className="mobile-pip-local">{renderTile(localParticipant)}</Box>;
+
+    // 1 remote — remote fullscreen, local floats as a PIP bubble.
+    if (remoteParticipants.length === 1) {
+      return (
+        <Box className="mobile-layout-gallery mobile-single-remote-layout">
+          {renderTileContainer(remoteParticipants[0], 'mobile-fullscreen-tile', localPip)}
+        </Box>
+      );
+    }
+
+    // 2 remotes — remotes stacked top/bottom, local floats inside the bottom tile.
+    if (remoteParticipants.length === 2) {
+      return (
+        <Box className="mobile-layout-gallery mobile-two-remote-layout">
+          {renderTileContainer(remoteParticipants[0], 'mobile-stack-tile')}
+          {renderTileContainer(
+            remoteParticipants[1],
+            'mobile-stack-tile mobile-stack-tile-nested',
+            localPip,
+          )}
+        </Box>
+      );
+    }
+
+    // 3+ remotes — remotes in the grid, local floats as a PIP bubble over it.
+    return renderGrid(remoteParticipants, localPip);
   };
 
   if (!localParticipant) return null;
 
-  // Pinned — pinned tile fills the top, everyone else in a scrollable strip below.
-  if (pinnedParticipant) {
-    const unpinned = [localParticipant, ...remoteParticipants].filter(
-      (p) => p !== pinnedParticipant,
-    );
-    return (
-      <Box className="mobile-layout-gallery mobile-pinned-layout">
-        {renderTileContainer(pinnedParticipant, '', undefined, true)}
-        {unpinned.length > 0 && (
-          <Box className="mobile-pinned-strip">
-            {unpinned.map((participantObject) => renderTileContainer(participantObject))}
-          </Box>
-        )}
-      </Box>
-    );
-  }
-
-  // Solo — only the local participant is present.
-  if (remoteParticipants.length === 0) {
-    return (
-      <Box className="mobile-layout-gallery mobile-solo-layout">
-        {renderTileContainer(localParticipant)}
-      </Box>
-    );
-  }
-
-  // Tiled — always the plain grid, no floating self-view.
-  if (layout === LayoutOptions.Tiled) {
-    return renderGrid([localParticipant, ...remoteParticipants]);
-  }
-
-  // 1 remote — remote fullscreen, local floats as a PIP bubble.
-  if (remoteParticipants.length === 1) {
-    const localPip = <Box className="mobile-pip-local">{renderTile(localParticipant)}</Box>;
-
-    return (
-      <Box className="mobile-layout-gallery mobile-single-remote-layout">
-        {renderTileContainer(remoteParticipants[0], 'mobile-fullscreen-tile', localPip)}
-      </Box>
-    );
-  }
-
-  // 2 remotes — remotes stacked top/bottom, local floats inside the bottom tile.
-  if (remoteParticipants.length === 2) {
-    const localPip = <Box className="mobile-pip-local">{renderTile(localParticipant)}</Box>;
-
-    return (
-      <Box className="mobile-layout-gallery mobile-two-remote-layout">
-        {renderTileContainer(remoteParticipants[0], 'mobile-stack-tile')}
-        {renderTileContainer(
-          remoteParticipants[1],
-          'mobile-stack-tile mobile-stack-tile-nested',
-          localPip,
-        )}
-      </Box>
-    );
-  }
-
-  // 3+ remotes — everyone (including local) in an equal-size grid, 2 tiles per row.
-  return renderGrid([localParticipant, ...remoteParticipants]);
+  // Size container for the landscape container queries in App.css.
+  return <Box className="mobile-layout-root">{renderArrangement(localParticipant)}</Box>;
 });
 
 LayoutMobile.displayName = 'LayoutMobile';
