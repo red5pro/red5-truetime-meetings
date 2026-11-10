@@ -12,6 +12,13 @@ services:
       - CONFIG_FILE=/data/config.json
       # IMPORTANT: Set a strong admin token in production!
       - MEETINGS_CONFIG_ADMIN_TOKEN=${MEETINGS_CONFIG_ADMIN_TOKEN:-default-admin-token-change-me}
+      # Optional: keep the config in MySQL (e.g. TrueTime Studio's server, in its own schema)
+      # instead of /data/config.json. Leave MEETINGS_DB_HOST empty to use the file.
+      - MEETINGS_DB_HOST=${MEETINGS_DB_HOST:-}
+      - MEETINGS_DB_PORT=${MEETINGS_DB_PORT:-3306}
+      - MEETINGS_DB_USER=${MEETINGS_DB_USER:-}
+      - MEETINGS_DB_PASSWORD=${MEETINGS_DB_PASSWORD:-}
+      - MEETINGS_DB_NAME=${MEETINGS_DB_NAME:-truetime_meetings}
       # Initialize with these values (can be overridden via .env file)
       - VITE_HOST=${VITE_HOST:-}
       - VITE_BASENAME=${VITE_BASENAME:-}
