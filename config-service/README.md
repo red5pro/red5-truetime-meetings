@@ -13,15 +13,51 @@ A lightweight Express.js service for managing runtime configuration via REST API
 
 ## Configuration
 
-The service stores configuration in a JSON file at `/data/config.json` (configurable via `CONFIG_FILE` environment variable).
+The service stores configuration in one of two places:
 
-On first startup, it initializes the config file with values from environment variables.
+- **A JSON file** (default) at `/data/config.json` (configurable via `CONFIG_FILE`). On first startup
+  it is created from the environment variables below.
+- **MySQL**, when `MEETINGS_DB_HOST` and `MEETINGS_DB_USER` are set. It is meant to share TrueTime
+  Studio's MySQL server, in its own schema (`truetime_meetings` by default), so it never touches
+  Studio's `truetime_studio` schema or its migrations. Several config-service containers can then
+  share one config.
+
+### Database storage
+
+On startup the service connects (retrying while the database is still starting), creates the
+schema and its `meetings_config` table if they don't exist, and fills an empty table once:
+
+1. from the existing config file at `CONFIG_FILE`, if there is one (moving an existing deployment
+   to the database keeps its settings; the file is left as it is and no longer used), or
+2. from the environment variables, as for a new file.
+
+If the database settings are present but it can't connect, or can't create the schema, the
+service stops with an error rather than falling back to the file (two different configs would
+otherwise be in use).
+
+The user needs rights on its schema only. Studio's user can be given them with:
+
+```sql
+CREATE DATABASE IF NOT EXISTS truetime_meetings;
+GRANT ALL ON truetime_meetings.* TO 'truetime_studio'@'%';
+```
+
+(or the service creates the schema itself when the user is allowed to). Each setting is one row
+(`name`, `value` as JSON, `updated_at`); masked fields are stored as given, as in the file.
 
 ### Environment Variables
 
 - `PORT` - Service port (default: 3001)
 - `CONFIG_FILE` - Path to config file (default: /data/config.json)
 - `MEETINGS_CONFIG_ADMIN_TOKEN` - Authentication token for write operations (default: "default-admin-token-change-me")
+- `MEETINGS_DB_HOST` - MySQL host; with `MEETINGS_DB_USER`, stores the config in the database
+- `MEETINGS_DB_USER` - MySQL user
+- `MEETINGS_DB_PASSWORD` - MySQL password
+- `MEETINGS_DB_PORT` - MySQL port (default: 3306)
+- `MEETINGS_DB_NAME` - Schema for the config (default: `truetime_meetings`; letters, digits and `_`)
+- `MEETINGS_DB_SSL` - `true` to connect over TLS (default: off)
+- `MEETINGS_DB_CONNECT_RETRIES` - Connection attempts on startup (default: 10)
+- `MEETINGS_DB_CONNECT_RETRY_DELAY_MS` - Wait between attempts (default: 3000)
 
 **IMPORTANT:** Always set a custom `MEETINGS_CONFIG_ADMIN_TOKEN` in production!
 
