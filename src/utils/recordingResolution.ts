@@ -72,3 +72,35 @@ export const applyCameraResolution = async (
   }
   return getTrackResolution(getCameraTrack(client));
 };
+
+/**
+ * Raise a camera track to the largest size it reports it can capture, keeping the frame
+ * rate at or below `maxFrameRate`. Use on a clone so the published camera is unaffected
+ * (browsers scale each clone of a camera independently). Resolves with what the track
+ * actually delivers afterwards; leaves the track as it was if the camera refuses.
+ */
+export const applyMaxCameraResolution = async (
+  track: MediaStreamTrack | null | undefined,
+  maxFrameRate = 30,
+): Promise<VideoResolution | null> => {
+  if (!track || track.readyState === 'ended' || typeof track.getCapabilities !== 'function') {
+    return getTrackResolution(track);
+  }
+  const { width, height, frameRate } = track.getCapabilities();
+  if (!width?.max || !height?.max) {
+    return getTrackResolution(track);
+  }
+  const targetFrameRate = Math.min(frameRate?.max ?? maxFrameRate, maxFrameRate);
+  // H.264 needs even dimensions; capability maxima are normally even already
+  const even = (n: number) => n - (n % 2);
+  try {
+    await track.applyConstraints({
+      width: { ideal: even(width.max) },
+      height: { ideal: even(height.max) },
+      frameRate: { ideal: targetFrameRate, max: targetFrameRate },
+    });
+  } catch {
+    // Keep whatever the camera was already delivering
+  }
+  return getTrackResolution(track);
+};

@@ -39,6 +39,8 @@ const AUTO_LAYOUT_PARTICIPANT_LIMIT = 8;
 const FOOTER_HEIGHT = 80;
 const CAPTIONS_PANEL_HEIGHT_DESKTOP = 240;
 const CAPTIONS_PANEL_HEIGHT_MOBILE = 180;
+const PHONE_LANDSCAPE_QUERY =
+  '(orientation: landscape) and (max-height: 500px) and (pointer: coarse)';
 
 const MeetingPage = React.memo<MeetingPageProps>((props) => {
   const [pushToTalkEnabled, setPushToTalkEnabled] = useState<boolean>(
@@ -56,7 +58,11 @@ const MeetingPage = React.memo<MeetingPageProps>((props) => {
   });
   const theme = useTheme();
   const isSmallScreen = useMediaQuery(theme.breakpoints.down('sm'));
-  const isMobileLayout = isSmallScreen || props.isMobile;
+  // A phone turned to landscape is wider than the `sm` breakpoint, but its short height can't
+  // fit the desktop layouts (they crop and #stream-gallery doesn't scroll), so keep it on the
+  // mobile layout, which has its own landscape arrangements.
+  const isPhoneLandscape = useMediaQuery(PHONE_LANDSCAPE_QUERY);
+  const isMobileLayout = isSmallScreen || isPhoneLandscape || props.isMobile;
 
   // Ref for props, kept fresh via effect so callbacks invoked later (event handlers, PiP
   // controls) always see the latest values without needing `props` in their dependency arrays.

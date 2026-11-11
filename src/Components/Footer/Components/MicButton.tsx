@@ -77,16 +77,39 @@ function MicButton(props: MicButtonProps) {
     }
   }, [props.audioInputs, props.selectedMicrophone, props.onMicrophoneChange]);
 
+  // Bumped on every start/stop so a getUserMedia that resolves after a stop is discarded
+  const monitoringRunRef = useRef(0);
+
+  const releaseAudioLevelResources = useCallback((): void => {
+    if (animationFrameRef.current) {
+      cancelAnimationFrame(animationFrameRef.current);
+      animationFrameRef.current = null;
+    }
+    micStreamRef.current?.getTracks().forEach((track) => track.stop());
+    micStreamRef.current = null;
+    analyserRef.current = null;
+    const context = audioContextRef.current;
+    audioContextRef.current = null;
+    // Clear the ref first: closing an already-closed context rejects with InvalidStateError
+    if (context && context.state !== 'closed') {
+      context.close().catch(() => {});
+    }
+  }, []);
+
   // Audio level monitoring
   const startAudioLevelMonitoring = useCallback(async (): Promise<void> => {
+    const run = ++monitoringRunRef.current;
+    releaseAudioLevelResources();
     try {
-      if (micStreamRef.current) {
-        micStreamRef.current.getTracks().forEach((track) => track.stop());
-      }
-
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: props.selectedMicrophone ? { deviceId: props.selectedMicrophone } : true,
       });
+
+      if (run !== monitoringRunRef.current) {
+        // Stopped or restarted while waiting for the microphone
+        stream.getTracks().forEach((track) => track.stop());
+        return;
+      }
 
       micStreamRef.current = stream;
       audioContextRef.current = new (window.AudioContext || window.webkitAudioContext!)();
@@ -112,20 +135,13 @@ function MicButton(props: MicButtonProps) {
       console.error('Error accessing microphone:', error);
       queueMicrotask(() => setAudioLevel(0));
     }
-  }, [props.selectedMicrophone]);
+  }, [props.selectedMicrophone, releaseAudioLevelResources]);
 
   const stopAudioLevelMonitoring = useCallback((): void => {
-    if (animationFrameRef.current) {
-      cancelAnimationFrame(animationFrameRef.current);
-    }
-    if (micStreamRef.current) {
-      micStreamRef.current.getTracks().forEach((track) => track.stop());
-    }
-    if (audioContextRef.current) {
-      audioContextRef.current.close();
-    }
+    monitoringRunRef.current++;
+    releaseAudioLevelResources();
     queueMicrotask(() => setAudioLevel(0));
-  }, []);
+  }, [releaseAudioLevelResources]);
 
   // Start/stop audio monitoring when menu opens/closes
   useEffect(() => {
