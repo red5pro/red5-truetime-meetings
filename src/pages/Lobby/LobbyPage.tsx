@@ -1,5 +1,5 @@
-import React, { useState, useCallback, useMemo, ChangeEvent, FormEvent } from 'react';
-import { Container, Typography, SelectChangeEvent } from '@mui/material';
+import React, { useState, useCallback, useMemo, useRef, ChangeEvent, FormEvent } from 'react';
+import { Box, Container, Typography, SelectChangeEvent } from '@mui/material';
 import Grid from '@mui/material/Grid2';
 import { useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -10,6 +10,7 @@ import SettingsDialog from '../../Components/Footer/Components/SettingsDialog.ts
 import { SvgIcon } from '../../Components/SvgIcon.tsx';
 import { getUrlParameter, makeId } from '../../utils/utils.tsx';
 import { useRoomInfo } from '../../hooks/useRoomInfo.ts';
+import { useAspectFitWidth } from '../../hooks/useAspectFitWidth.ts';
 import { isMobile } from 'react-device-detect';
 import { DeviceSelector } from 'truetime-ui';
 import EffectsDrawer from '../../Components/EffectsDrawer.tsx';
@@ -28,6 +29,9 @@ const getPublishStreamId = (): string | boolean | undefined => {
 const generateStreamId = (streamName: string): string => {
   return streamName.replace(/[\W_]/g, '') + '_' + makeId(6);
 };
+
+// The SDK captures the camera at 16:9, so the preview keeps that shape instead of stretching
+const PREVIEW_ASPECT_RATIO = 16 / 9;
 
 const LobbyPage = React.memo<LobbyPageProps>((props) => {
   const {
@@ -88,6 +92,12 @@ const LobbyPage = React.memo<LobbyPageProps>((props) => {
   const currentPublishStreamId = useMemo(() => getPublishStreamId(), []);
 
   const { roomInfo } = useRoomInfo(roomName ?? '', 5000);
+
+  // The preview is the largest 16:9 box that fits the space left over; the controls below match
+  // its width so everything lines up
+  const previewAreaRef = useRef<HTMLDivElement>(null);
+  const previewWidth = useAspectFitWidth(previewAreaRef, PREVIEW_ASPECT_RATIO);
+  const previewWidthSx = previewWidth ? `${previewWidth}px` : '100%';
 
   // Permission check
   const hasRequiredPermissions = useMemo(() => {
@@ -227,51 +237,70 @@ const LobbyPage = React.memo<LobbyPageProps>((props) => {
     // the device selectors and join button always stay on screen without scrolling.
     return (
       <Grid
-        size={{ md: 7 }}
+        size={{ xs: 12, md: 7 }}
         sx={{
           alignSelf: 'stretch',
           display: 'flex',
           flexDirection: 'column',
+          alignItems: 'center',
           height: { xs: 'calc(100dvh - 32px)', md: 'calc(100dvh - 48px)' },
         }}
       >
         <Typography variant="h4" align="center" sx={{ mb: 3, flexShrink: 0 }}>
           {t('TrueTime Meeting™ by Red5')}
         </Typography>
-        <Grid
-          container
-          className="lobby-page-video"
-          sx={{ position: 'relative', flex: '1 1 0', minHeight: 120 }}
+        <Box
+          ref={previewAreaRef}
+          sx={{
+            flex: '1 1 0',
+            minHeight: 120,
+            width: '100%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
         >
-          <VideoPreview
-            publishStreamId={publishStreamId}
-            talkers={talkers}
-            streamName={streamName}
-            isPublished={isPublished}
-            isPlayOnly={isPlayOnly}
-            isMyMicMuted={isMyMicMuted}
-            isMyCamTurnedOff={isMyCamTurnedOff}
-            pinVideo={pinVideo}
-            unpinVideo={unpinVideo}
-            layout={layout}
-          />
-          <ControlButtons
-            glass={glass}
-            isMyCamTurnedOff={isMyCamTurnedOff}
-            cameraButtonDisabled={cameraButtonDisabled}
-            handleMuteVideoLobby={handleMuteVideoLobby}
-            isMyMicMuted={isMyMicMuted}
-            toggleMic={toggleMic}
-            microphoneButtonDisabled={microphoneButtonDisabled}
-            onSettingsClick={() => handleSettingsOpen()}
-            onVirtualEffectsClick={() => handleEffectsOpen(!effectsDrawerOpen)}
-          />
-        </Grid>
-        <Grid size={{ md: 12 }} sx={{ flexShrink: 0 }}>
+          <Box
+            className="lobby-page-video"
+            sx={{
+              position: 'relative',
+              width: previewWidthSx,
+              maxWidth: '100%',
+              maxHeight: '100%',
+              aspectRatio: `${PREVIEW_ASPECT_RATIO}`,
+            }}
+          >
+            <VideoPreview
+              publishStreamId={publishStreamId}
+              talkers={talkers}
+              streamName={streamName}
+              isPublished={isPublished}
+              isPlayOnly={isPlayOnly}
+              isMyMicMuted={isMyMicMuted}
+              isMyCamTurnedOff={isMyCamTurnedOff}
+              pinVideo={pinVideo}
+              unpinVideo={unpinVideo}
+              layout={layout}
+            />
+            <ControlButtons
+              glass={glass}
+              isMyCamTurnedOff={isMyCamTurnedOff}
+              cameraButtonDisabled={cameraButtonDisabled}
+              handleMuteVideoLobby={handleMuteVideoLobby}
+              isMyMicMuted={isMyMicMuted}
+              toggleMic={toggleMic}
+              microphoneButtonDisabled={microphoneButtonDisabled}
+              onSettingsClick={() => handleSettingsOpen()}
+              onVirtualEffectsClick={() => handleEffectsOpen(!effectsDrawerOpen)}
+            />
+          </Box>
+        </Box>
+        <Box sx={{ width: previewWidthSx, maxWidth: '100%', flexShrink: 0, mt: 2 }}>
           <DeviceSelector
             //@ts-expect-error - prop type mismatch with legacy component props
             devices={devices}
             isMobile={isMobile}
+            fullWidth
             selectedCamera={selectedCamera}
             selectedMicrophone={selectedMicrophone}
             selectedSpeaker={selectedSpeaker}
@@ -281,8 +310,8 @@ const LobbyPage = React.memo<LobbyPageProps>((props) => {
             isCameraOn={!isMyCamTurnedOff}
             isMicOn={!isMyMicMuted}
           />
-        </Grid>
-        <Grid size={{ md: 12 }} sx={{ flexShrink: 0 }}>
+        </Box>
+        <Box sx={{ width: previewWidthSx, maxWidth: '100%', flexShrink: 0 }}>
           <JoinForm
             streamName={streamName}
             onStreamNameChange={handleStreamNameChange}
@@ -294,7 +323,7 @@ const LobbyPage = React.memo<LobbyPageProps>((props) => {
             // @ts-expect-error - prop type mismatch with legacy component props
             roomInfo={roomInfo}
           />
-        </Grid>
+        </Box>
       </Grid>
     );
   };

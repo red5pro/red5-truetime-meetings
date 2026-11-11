@@ -27,6 +27,12 @@ export interface RecordingOptions {
   audioBitrate?: number | Quality;
   videoCodec?: 'avc' | 'vp9' | 'vp8';
   audioCodec?: 'aac' | 'opus';
+  /**
+   * What to do when the video track changes size mid-recording (camera switch, a new
+   * resolution applied to the camera). mediabunny's own default, 'deny', fails the video
+   * track; 'contain' keeps the first frame's size and letterboxes later frames into it.
+   */
+  sizeChangeBehavior?: 'deny' | 'passThrough' | 'fill' | 'contain' | 'cover';
 }
 
 // Chrome's AAC encoder only accepts 44.1 and 48 kHz. Audio tracks follow the source's
@@ -40,6 +46,7 @@ const DEFAULT_OPTIONS: Required<RecordingOptions> = {
   audioBitrate: QUALITY_MEDIUM,
   videoCodec: 'avc',
   audioCodec: 'aac',
+  sizeChangeBehavior: 'contain',
 };
 
 /**
@@ -55,6 +62,9 @@ export class MediabunnyRecorder {
   private _isRecording = false;
   private _isPaused = false;
   private recordedBlob: Blob | null = null;
+  // Shared by concurrent stop() calls so the output is finalized once and every caller
+  // gets the same result
+  private stopPromise: Promise<Blob | null> | null = null;
   private startTime: number | null = null;
   private options: Required<RecordingOptions>;
 
@@ -96,6 +106,7 @@ export class MediabunnyRecorder {
         this.videoSource = new MediaStreamVideoTrackSource(videoTrack, {
           codec: this.options.videoCodec,
           bitrate: this.options.videoBitrate,
+          sizeChangeBehavior: this.options.sizeChangeBehavior,
         });
         this.output.addVideoTrack(this.videoSource);
       }
@@ -141,9 +152,23 @@ export class MediabunnyRecorder {
    * Stop recording and finalize the output
    * @returns The recorded Blob or null if no recording
    */
-  async stop(): Promise<Blob | null> {
+  stop(): Promise<Blob | null> {
+    if (this.stopPromise) {
+      return this.stopPromise;
+    }
     if (!this._isRecording || !this.output) {
       console.warn('No recording in progress');
+      return Promise.resolve(null);
+    }
+
+    this.stopPromise = this.finalize().finally(() => {
+      this.stopPromise = null;
+    });
+    return this.stopPromise;
+  }
+
+  private async finalize(): Promise<Blob | null> {
+    if (!this.output) {
       return null;
     }
 
