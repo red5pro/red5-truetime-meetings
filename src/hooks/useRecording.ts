@@ -14,6 +14,8 @@ import {
   DEFAULT_RECORDING_PRESET,
   RESOLUTION_PRESETS,
   applyCameraResolution,
+  applyMaxCameraResolution,
+  formatResolution,
   getCameraTrack,
   getTrackResolution,
   type ResolutionPreset,
@@ -701,6 +703,13 @@ export const useRecording = (
         try {
           const localOnlyStream = new MediaStream(localStream.getTracks().map((t) => t.clone()));
           localOnlyStreamRef.current = localOnlyStream;
+          // Record the standalone camera file at the highest resolution the camera offers.
+          // Only the clone is raised, so the published camera and the composite tile keep
+          // their current size. Must happen before start(): the file keeps its first size.
+          const localOnlyResolution = await applyMaxCameraResolution(
+            localOnlyStream.getVideoTracks()[0],
+          );
+          log.log('Local-only recording resolution:', formatResolution(localOnlyResolution));
           await localOnlyRecorder.start(localOnlyStream);
         } catch (error) {
           log.error('Failed to start local-only recording:', error);
@@ -823,8 +832,44 @@ export const useRecording = (
   /**
    * Stop local recording (Mediabunny)
    */
-  const stopLocalRecording = useCallback(async (): Promise<Blob | null> => {
-    if (!mediabunnyRecorderRef.current) {
+  /**
+   * Stop the standalone local camera recorder and release its cloned tracks. The refs are
+   * claimed before awaiting so overlapping calls can't save the same file twice.
+   */
+  const stopLocalOnlyRecorder = useCallback(async (): Promise<void> => {
+    const recorder = localOnlyRecorderRef.current;
+    const stream = localOnlyStreamRef.current;
+    localOnlyRecorderRef.current = null;
+    localOnlyStreamRef.current = null;
+    if (recorder) {
+      try {
+        const localOnlyBlob = await withTimeout(
+          recorder.stop(),
+          RECORDER_STOP_TIMEOUT_MS,
+          'Timed out stopping local-only recording',
+        );
+        if (localOnlyBlob) {
+          localOnlyRecordedSegmentsRef.current.push(localOnlyBlob);
+        }
+      } catch (error) {
+        log.error('Failed to stop local-only recording:', error);
+      }
+    }
+    // Stopping the clones releases the camera if nothing else is using it
+    stream?.getTracks().forEach((track) => track.stop());
+  }, []);
+
+  // Set while a stop is running. Stop can be triggered from several places at once (the
+  // stop button, the room's recording-stopped event, leaving the room); later callers
+  // share the first one's result instead of stopping a second time.
+  const stopInFlightRef = useRef<Promise<Blob | null> | null>(null);
+
+  /**
+   * Stop local recording (Mediabunny)
+   */
+  const runStopLocalRecording = useCallback(async (): Promise<Blob | null> => {
+    const recorder = mediabunnyRecorderRef.current;
+    if (!recorder) {
       log.warn('No local recording in progress');
       return null;
     }
@@ -834,31 +879,15 @@ export const useRecording = (
       return null;
     }
 
+    // Claim the recorder so a later call can't stop (and save) it again
+    mediabunnyRecorderRef.current = null;
+
     try {
       const blob = await withTimeout(
-        mediabunnyRecorderRef.current.stop(),
+        recorder.stop(),
         RECORDER_STOP_TIMEOUT_MS,
         'Timed out stopping local recording',
-      );
-
-      // Stop the local-only recorder alongside the composite one
-      if (localOnlyRecorderRef.current) {
-        try {
-          const localOnlyBlob = await withTimeout(
-            localOnlyRecorderRef.current.stop(),
-            RECORDER_STOP_TIMEOUT_MS,
-            'Timed out stopping local-only recording',
-          );
-          if (localOnlyBlob) {
-            localOnlyRecordedSegmentsRef.current.push(localOnlyBlob);
-          }
-        } catch (error) {
-          log.error('Failed to stop local-only recording:', error);
-        }
-        localOnlyStreamRef.current?.getTracks().forEach((track) => track.stop());
-        localOnlyStreamRef.current = null;
-        localOnlyRecorderRef.current = null;
-      }
+      ).finally(stopLocalOnlyRecorder);
 
       if (blob) {
         // Add to segments
@@ -919,7 +948,22 @@ export const useRecording = (
       }
       return null;
     }
-  }, [isLocalRecordingActive, hasS3Config, uploadLocalRecording, onRecordingStop]);
+  }, [
+    isLocalRecordingActive,
+    hasS3Config,
+    uploadLocalRecording,
+    onRecordingStop,
+    stopLocalOnlyRecorder,
+  ]);
+
+  const stopLocalRecording = useCallback((): Promise<Blob | null> => {
+    if (!stopInFlightRef.current) {
+      stopInFlightRef.current = runStopLocalRecording().finally(() => {
+        stopInFlightRef.current = null;
+      });
+    }
+    return stopInFlightRef.current;
+  }, [runStopLocalRecording]);
 
   /**
    * Pause local recording (Mediabunny)
