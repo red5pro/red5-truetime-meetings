@@ -8,7 +8,7 @@ import Footer from '../../Components/Footer/Footer.tsx';
 import { LayoutOptions } from '../../utils/layoutOptions.ts';
 
 // Dev-only route (see CustomRoutes.tsx) for eyeballing LayoutMobile's scenarios
-// (Auto / Tiled / pinned, any participant count, several phone sizes) without a
+// (Auto / Tiled / pinned, any participant count, several phone sizes, portrait and landscape) without a
 // live meeting. The fit check below flags any tile that is cut off vertically.
 const MAX_REMOTES = 15;
 const LOCAL_UID = 'preview-local';
@@ -38,6 +38,9 @@ const PHONE_SIZES = [
   { value: '430x932', label: 'iPhone 15 Pro Max (430×932)' },
   { value: '360x640', label: 'Small Android (360×640)' },
   { value: '412x915', label: 'Pixel 7 (412×915)' },
+  { value: '667x375', label: 'iPhone SE landscape (667×375)' },
+  { value: '844x390', label: 'iPhone 14 landscape (844×390)' },
+  { value: '915x412', label: 'Pixel 7 landscape (915×412)' },
 ];
 const FOOTER_HEIGHT = 80;
 const NO_PIN = 'none';
@@ -101,7 +104,10 @@ const MobileLayoutPreview: React.FC = () => {
     const gallery = galleryRef.current;
     if (!gallery) return;
     const { top, bottom } = gallery.getBoundingClientRect();
-    const tiles = gallery.querySelectorAll('.single-video-container:not(.audio-only-participant)');
+    // Tiles in the pinned strip are reached by scrolling the strip, so they don't count.
+    const tiles = gallery.querySelectorAll(
+      '.single-video-container:not(.audio-only-participant):not(.mobile-pinned-strip *)',
+    );
     const cutOff = Array.from(tiles).filter((tile) => {
       const rect = tile.getBoundingClientRect();
       return rect.top < top - 1 || rect.bottom > bottom + 1;
@@ -110,7 +116,7 @@ const MobileLayoutPreview: React.FC = () => {
   }, [allParticipants, layout, pinnedParticipantId, phoneSize]);
 
   const scenarioLabel = pinnedParticipantId
-    ? 'pinned — pinned tile on top, the rest in a horizontal strip'
+    ? 'pinned — pinned tile on top (left in landscape), the rest in a scrollable strip'
     : layout === LayoutOptions.Tiled
       ? remoteCount === 0
         ? SCENARIO_LABEL[0]

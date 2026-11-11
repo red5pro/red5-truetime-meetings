@@ -81,6 +81,62 @@ describe('LayoutMobile', () => {
     expect(galleryTileIds()).toEqual(['me', 'remote1']);
   });
 
+  test('auto layout with 3+ remotes puts remotes in the grid and floats the local tile', () => {
+    render({ allParticipants: participants(4), layout: 'auto' });
+
+    expect(gallery().classList.contains('mobile-grid-with-pip-layout')).toBe(true);
+    const gridIds = Array.from(
+      container.querySelectorAll('.mobile-grid-layout [data-testid="video-card"]'),
+    ).map((el) => el.getAttribute('data-stream-id'));
+    expect(gridIds).toEqual(['remote1', 'remote2', 'remote3', 'remote4']);
+    expect(
+      container
+        .querySelector('.mobile-pip-local [data-testid="video-card"]')
+        ?.getAttribute('data-stream-id'),
+    ).toBe('me');
+    // The PIP sits outside the grid so it doesn't take a grid cell.
+    expect(container.querySelector('.mobile-grid-layout .mobile-pip-local')).toBeNull();
+  });
+
+  test('tiled layout with 3+ remotes puts everyone, including local, in the grid', () => {
+    render({ allParticipants: participants(4), layout: 'tiled' });
+
+    expect(gallery().classList.contains('mobile-grid-layout')).toBe(true);
+    expect(container.querySelector('.mobile-pip-local')).toBeNull();
+    expect(galleryTileIds()).toEqual(['me', 'remote1', 'remote2', 'remote3', 'remote4']);
+  });
+
+  test('auto layout overflow counts only remotes, since local floats', () => {
+    render({ allParticipants: participants(10), layout: 'auto' });
+
+    const gridIds = Array.from(
+      container.querySelectorAll('.mobile-grid-layout [data-testid="video-card"]'),
+    ).map((el) => el.getAttribute('data-stream-id'));
+    expect(gridIds).toHaveLength(7);
+    expect(gridIds).not.toContain('me');
+    expect(container.querySelector('[data-testid="others-card"]')?.textContent).toBe('3');
+    expect(container.querySelector('.mobile-pip-local')).not.toBeNull();
+  });
+
+  test('wraps every arrangement in the size container used by the landscape rules', () => {
+    render({ allParticipants: participants(1), layout: 'auto' });
+
+    expect(container.firstElementChild?.classList.contains('mobile-layout-root')).toBe(true);
+  });
+
+  test.each([
+    [2, '2'], // tiled, 1 remote
+    [4, '2'], // 2×2
+    [5, '3'], // 3 + 2
+    [6, '3'], // 3×2
+    [11, '4'], // 7 visible + Others -> 4×2
+  ])('landscape grid with %i participants uses %s columns', (count, columns) => {
+    render({ allParticipants: participants(count - 1), layout: 'tiled' });
+
+    const grid = container.querySelector<HTMLElement>('.mobile-grid-layout')!;
+    expect(grid.style.getPropertyValue('--mobile-grid-landscape-columns')).toBe(columns);
+  });
+
   test('pinned participant fills the top and the rest go into the scrollable strip', () => {
     render({ allParticipants: participants(3), pinnedParticipantId: 'remote2' });
 
