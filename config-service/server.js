@@ -22,7 +22,7 @@ configService
   .then(() => {
     app.listen(PORT, () => {
       console.log(`Config service running on port ${PORT}`);
-      console.log(`Config file location: ${configService.getConfigFilePath()}`);
+      console.log(`Config stored in: ${configService.describeStorage()}`);
     });
   })
   .catch((error) => {

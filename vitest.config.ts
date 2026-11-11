@@ -7,6 +7,8 @@ export default defineConfig({
     globals: true,
     environment: 'jsdom',
     setupFiles: './src/setupTests.ts',
+    // config-service has its own package, deps and test run (see its CI job)
+    exclude: ['**/node_modules/**', '**/dist/**', 'config-service/**'],
     // truetime-ui is ESM that imports MUI subpaths Node can't resolve; let Vite transform it
     server: { deps: { inline: ['truetime-ui'] } },
     coverage: {
