@@ -509,6 +509,15 @@ const MeetingPage = React.memo<MeetingPageProps>((props) => {
         isLiveCaptions={props?.closedCaptions?.isLiveCaptions}
         // @ts-expect-error - prop type mismatch with legacy component props
         subscribedParticipants={props?.subscribedParticipants}
+        drawerOpen={Boolean(
+          props.messageDrawerOpen ||
+          props.participantListDrawerOpen ||
+          props.effectsDrawerOpen ||
+          props.infoDrawerOpen ||
+          props.localRecordingDrawerOpen ||
+          props.transcriptionDrawerOpen ||
+          props.externalStreamsDrawerOpen,
+        )}
       />
 
       {/* Footer */}

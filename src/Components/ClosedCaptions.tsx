@@ -23,7 +23,8 @@ import {
   ClosedCaption,
   Translate,
 } from '@mui/icons-material';
-import { useTheme, styled, Theme } from '@mui/material/styles';
+import { alpha, useTheme, styled, Theme } from '@mui/material/styles';
+import { radii, themeColors } from 'truetime-ui';
 
 // Interfaces
 interface Caption {
@@ -52,28 +53,48 @@ interface ClosedCaptionsProps {
   selectedLanguage?: string;
   isLiveCaptions?: boolean;
   subscribedParticipants?: Dictionary<string>;
+  /** A side drawer (chat, participants, …) is open: leave room for it like the video gallery. */
+  drawerOpen?: boolean;
 }
+
+/** Room left for an open drawer; matches `#stream-gallery.drawer-open` in App.css. */
+const DRAWER_SPACE = 350;
 
 interface CaptionTextProps {
   fontsize: number;
   fontcolor: string;
 }
 
+// The gallery leaves FOOTER_HEIGHT + PANEL_SPACE for the panel (see MeetingPage); it floats inside
+// that space with the same inset as the video tiles (8px), so its edges line up with theirs
+const FOOTER_HEIGHT = 80;
+const PANEL_SPACE = 240;
+const PANEL_SPACE_MOBILE = 180;
+const INSET = 8;
+
 // Styled components
-const CaptionsContainer = styled(Box)(({ theme }: { theme: Theme }) => ({
+const CaptionsContainer = styled(Box, {
+  shouldForwardProp: (prop) => prop !== 'drawerOpen',
+})<{ drawerOpen?: boolean }>(({ theme, drawerOpen }) => ({
   position: 'fixed',
-  bottom: 80, // Footer height
-  left: 0,
-  width: '100%',
-  height: 240, // 3x footer height (80px * 3)
-  backgroundColor: theme.palette.themeColor?.[80] || 'rgba(0, 0, 0, 0.8)',
-  borderTop: `1px solid ${theme.palette.divider}`,
+  bottom: FOOTER_HEIGHT + INSET,
+  left: INSET,
+  width: drawerOpen
+    ? `calc(100% - ${DRAWER_SPACE}px - ${INSET * 2}px)`
+    : `calc(100% - ${INSET * 2}px)`,
+  // Same timing as the gallery's .single-video-container, so both resize together
+  transition: 'width 0.4s linear',
+  height: PANEL_SPACE - INSET * 2,
+  backgroundColor: themeColors(theme).surfaceRaised,
+  borderRadius: `${radii.pill}px`,
+  overflow: 'hidden',
   zIndex: 100,
   display: 'flex',
   flexDirection: 'column',
   [theme.breakpoints.down('sm')]: {
-    bottom: 72,
-    height: 180,
+    height: PANEL_SPACE_MOBILE - INSET * 2,
+    // Drawers cover the whole screen on phones, so there's nothing to make room for
+    width: `calc(100% - ${INSET * 2}px)`,
   },
 }));
 
@@ -81,10 +102,9 @@ const CaptionsHeader = styled(Box)(({ theme }: { theme: Theme }) => ({
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'space-between',
-  padding: '8px 16px',
-  backgroundColor: theme.palette.themeColor?.[70] || 'rgba(0, 0, 0, 0.9)',
-  borderBottom: `1px solid ${theme.palette.divider}`,
-  minHeight: 48,
+  padding: '8px 12px 8px 20px',
+  borderBottom: `1px solid ${alpha(themeColors(theme).text, 0.08)}`,
+  minHeight: 52,
   [theme.breakpoints.down('sm')]: {
     flexDirection: 'column',
     alignItems: 'stretch',
@@ -93,23 +113,21 @@ const CaptionsHeader = styled(Box)(({ theme }: { theme: Theme }) => ({
   },
 }));
 
-const CaptionsContent = styled(Box)({
-  flex: 1,
-  overflowY: 'auto',
-  padding: '16px',
-  '&::-webkit-scrollbar': {
-    width: '8px',
-  },
-  '&::-webkit-scrollbar-track': {
-    background: 'rgba(255, 255, 255, 0.1)',
-  },
-  '&::-webkit-scrollbar-thumb': {
-    background: 'rgba(255, 255, 255, 0.3)',
-    borderRadius: '4px',
-  },
-  '&::-webkit-scrollbar-thumb:hover': {
-    background: 'rgba(255, 255, 255, 0.5)',
-  },
+const CaptionsContent = styled(Box)(({ theme }: { theme: Theme }) => {
+  const text = themeColors(theme).text;
+  return {
+    flex: 1,
+    overflowY: 'auto',
+    padding: '12px 20px',
+    scrollbarColor: `${alpha(text, 0.3)} transparent`,
+    '&::-webkit-scrollbar': { width: 8 },
+    '&::-webkit-scrollbar-track': { background: 'transparent' },
+    '&::-webkit-scrollbar-thumb': {
+      background: alpha(text, 0.3),
+      borderRadius: radii.control,
+    },
+    '&::-webkit-scrollbar-thumb:hover': { background: alpha(text, 0.5) },
+  };
 });
 
 const CaptionText = styled(Typography)<CaptionTextProps>(({ fontsize, fontcolor }) => ({
@@ -163,6 +181,7 @@ const ClosedCaptions: React.FC<ClosedCaptionsProps> = ({
   selectedLanguage = 'en',
   isLiveCaptions = true,
   subscribedParticipants = {},
+  drawerOpen = false,
 }) => {
   const theme = useTheme();
   const contentRef = useRef<HTMLDivElement>(null);
@@ -224,7 +243,7 @@ const ClosedCaptions: React.FC<ClosedCaptionsProps> = ({
   if (!isVisible) return null;
 
   return (
-    <CaptionsContainer>
+    <CaptionsContainer drawerOpen={drawerOpen}>
       <CaptionsHeader>
         <Box display="flex" alignItems="center" gap={2}>
           <ClosedCaption sx={{ color: theme.palette.text.primary }} />
