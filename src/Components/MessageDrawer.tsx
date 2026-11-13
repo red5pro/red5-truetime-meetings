@@ -1,22 +1,12 @@
 import * as React from 'react';
 import Drawer from '@mui/material/Drawer';
 import { styled, Theme } from '@mui/material/styles';
-import { Typography } from '@mui/material';
+import { Box, Typography } from '@mui/material';
 import Grid from '@mui/material/Grid2';
-import MessageInput from './MessageInput';
 import { useTranslation } from 'react-i18next';
-import MessagesTab from './MessagesTab';
+import MessagesTab, { type Message, type SentMessage } from './MessagesTab';
 import CloseDrawerButton from './DrawerButton';
 import { getRed5DrawerStyle } from '../styles/themeUtil';
-import { Box } from '@mui/system';
-
-interface Message {
-  id?: string;
-  text: string;
-  sender: string;
-  timestamp: number;
-  // Add other message properties as needed
-}
 
 interface MessageDrawerProps {
   messageDrawerOpen?: boolean;
@@ -24,17 +14,12 @@ interface MessageDrawerProps {
   handleMessageDrawerOpen?: (open: boolean) => void;
   handleParticipantListOpen?: (open: boolean) => void;
   handleEffectsOpen?: (open: boolean) => void;
-  sendMessage?: (message: string) => void;
-  handleSetMessages?: (messages: Message[]) => void;
+  sendMessage?: (message: string, files?: File[]) => void;
+  /** Adds your own message to the list once it's sent */
+  handleSetMessages?: (message: SentMessage) => void;
   messages?: Message[];
   handleLocalRecordingDrawerOpen?: (open: boolean) => void;
   handleTranscriptionDrawerOpen?: (open: boolean) => void;
-}
-
-interface TabPanelProps {
-  children?: React.ReactNode;
-  value: number;
-  index: number;
 }
 
 // @ts-expect-error - styled() theme callback param type mismatch
@@ -49,28 +34,7 @@ const MessageGrid = styled(Grid)(({ theme }: { theme: Theme }) => ({
   borderRadius: 10,
 }));
 
-const TabGrid = styled(Grid)(({}: { theme: Theme }) => ({
-  position: 'relative',
-  height: '100%',
-  paddingBottom: 16,
-  paddingTop: 16,
-  flexWrap: 'nowrap',
-}));
-
-const TabPanel = ({ children, value, index }: TabPanelProps) => (
-  <Box
-    role="tabpanel"
-    hidden={value !== index}
-    id={`drawer-tabpanel-${index}`}
-    aria-labelledby={`drawer-tab-${index}`}
-    style={{ height: '100%', width: '100%', overflowY: 'auto' }}
-  >
-    {value === index && children}
-  </Box>
-);
-
 const MessageDrawer = React.memo<MessageDrawerProps>((props) => {
-  const [value] = React.useState<number>(0);
   const { t } = useTranslation();
 
   return (
@@ -104,26 +68,13 @@ const MessageDrawer = React.memo<MessageDrawerProps>((props) => {
             }
           />
         </Grid>
-        <Grid
-          container
-          justifyContent="space-between"
-          alignItems="center"
-          style={{ flex: '1 1 auto', overflowY: 'hidden' }}
-        >
-          <TabPanel value={value} index={0}>
-            <TabGrid container sx={{ pb: 0 }} direction="column">
-              <MessagesTab messages={props?.messages} />
-            </TabGrid>
-          </TabPanel>
-        </Grid>
-
-        <MessageInput
-          handleSendMessage={(message: string, files?: File[]) =>
-            props?.sendMessage?.(message, files)
-          }
-          //@ts-expect-error - callback param type mismatch with legacy types
-          handleSetMessages={(messages: Message[]) => props?.handleSetMessages?.(messages)}
-        />
+        <Box sx={{ flex: '1 1 auto', minHeight: 0, mt: 1 }}>
+          <MessagesTab
+            messages={props?.messages}
+            onSend={(message, files) => props?.sendMessage?.(message, files)}
+            onMessageSent={(message) => props?.handleSetMessages?.(message)}
+          />
+        </Box>
       </MessageGrid>
     </Red5Drawer>
   );

@@ -1,27 +1,25 @@
 import * as React from 'react';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import Drawer from '@mui/material/Drawer';
-import { styled, useTheme, Theme } from '@mui/material/styles';
-import Grid from '@mui/material/Grid2';
-import {
-  Typography,
-  Button,
-  Divider,
-  Box,
-  List,
-  ListItem,
-  ListItemText,
-  ListItemSecondaryAction,
-  CircularProgress,
-  Tooltip,
-} from '@mui/material';
+import { styled, Theme } from '@mui/material/styles';
+import { Box, IconButton, Tooltip, Typography } from '@mui/material';
+import { alpha } from '@mui/material/styles';
+import { Refresh, SensorsOff, Videocam } from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
+import {
+  Alert,
+  Button,
+  Spinner,
+  StatusBadge,
+  Text,
+  TruncatedText,
+  radii,
+  themeColors,
+} from 'truetime-ui';
 import CloseDrawerButton from './DrawerButton';
 import { getRed5DrawerStyle } from '../styles/themeUtil';
-import { SvgIcon } from './SvgIcon';
 import { ExternalStream } from '../hooks/useExternalStreams';
-
-import { parseMetaData, truncateText } from '../utils/utils';
+import { parseMetaData } from '../utils/utils';
 import { MetaDataKeys } from '../constants/metaDataKeys';
 
 interface ExternalStreamsDrawerProps {
@@ -42,15 +40,17 @@ interface StreamItem {
   key: string;
   streamName: string;
   isJoined: boolean;
+  durationMs?: number;
+  viewers?: number;
 }
 
 const Red5Drawer = styled(Drawer)(({ theme }: { theme: Theme }) => ({
   ...getRed5DrawerStyle(theme, theme.palette.themeColor?.[60], false),
 }));
 
-const ContentGrid = styled(Grid)(({ theme }: { theme: Theme }) => ({
+const Panel = styled(Box)(({ theme }: { theme: Theme }) => ({
   position: 'relative',
-  padding: 24,
+  padding: 16,
   background: theme.palette.themeColor?.[60],
   borderRadius: 10,
   height: '100%',
@@ -59,9 +59,16 @@ const ContentGrid = styled(Grid)(({ theme }: { theme: Theme }) => ({
   overflow: 'hidden',
 }));
 
+/** How long a stream has been live: "45s", "12m", "1h 05m" */
+const formatDuration = (ms: number): string => {
+  const minutes = Math.floor(ms / 60000);
+  if (minutes < 1) return `${Math.max(0, Math.floor(ms / 1000))}s`;
+  if (minutes < 60) return `${minutes}m`;
+  return `${Math.floor(minutes / 60)}h ${String(minutes % 60).padStart(2, '0')}m`;
+};
+
 const ExternalStreamsDrawer = React.memo<ExternalStreamsDrawerProps>((props) => {
   const { t } = useTranslation();
-  const theme = useTheme();
   const {
     open,
     onClose,
@@ -73,6 +80,8 @@ const ExternalStreamsDrawer = React.memo<ExternalStreamsDrawerProps>((props) => 
     loading,
     error,
   } = props;
+  // The stream being added or removed, so only its row shows progress
+  const [busyStream, setBusyStream] = useState<string | null>(null);
 
   useEffect(() => {
     if (open) {
@@ -80,21 +89,16 @@ const ExternalStreamsDrawer = React.memo<ExternalStreamsDrawerProps>((props) => 
     }
   }, [open, fetchStreams]);
 
-  const handleAdd = async (streamName: string) => {
+  const toggle = async (stream: StreamItem) => {
+    setBusyStream(stream.streamName);
     try {
-      await addToRoom(streamName);
+      if (stream.isJoined) await removeFromRoom(stream.streamName);
+      else await addToRoom(stream.streamName);
       await fetchStreams();
     } catch {
-      // Error handled by hook
-    }
-  };
-
-  const handleRemove = async (streamName: string) => {
-    try {
-      await removeFromRoom(streamName);
-      await fetchStreams();
-    } catch {
-      // Error handled by hook
+      // The hook reports the error
+    } finally {
+      setBusyStream(null);
     }
   };
 
@@ -115,6 +119,8 @@ const ExternalStreamsDrawer = React.memo<ExternalStreamsDrawerProps>((props) => 
       key: stream.streamGuid,
       streamName: stream.streamName,
       isJoined: isJoined(stream.streamName),
+      durationMs: stream.durationMs,
+      viewers: stream.subscribers,
     }));
 
     // Joined external streams that the external streams API did not return
@@ -126,8 +132,12 @@ const ExternalStreamsDrawer = React.memo<ExternalStreamsDrawerProps>((props) => 
       items.push({ key: `participant-${streamName}`, streamName, isJoined: true });
     });
 
-    return items.sort((a, b) => Number(b.isJoined) - Number(a.isJoined));
+    return items.sort(
+      (a, b) => Number(b.isJoined) - Number(a.isJoined) || a.streamName.localeCompare(b.streamName),
+    );
   }, [streams, participants]);
+
+  const joinedCount = sortedStreams.filter((stream) => stream.isJoined).length;
 
   return (
     <Red5Drawer
@@ -138,101 +148,170 @@ const ExternalStreamsDrawer = React.memo<ExternalStreamsDrawerProps>((props) => 
       variant="persistent"
       PaperProps={{ style: { pointerEvents: open ? 'auto' : 'none' } }}
     >
-      <ContentGrid
-        container
-        direction="column"
-        style={{
-          flexWrap: 'nowrap',
-          background: theme.palette.themeColor?.[60],
-        }}
-      >
-        <Grid container justifyContent="space-between" alignItems="center" sx={{ mb: 4 }}>
-          <Typography variant="h6" component="div">
+      <Panel>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+          <Typography variant="h6" component="div" sx={{ flex: 1 }}>
             {t('External Streams')}
           </Typography>
-          <CloseDrawerButton handleExternalStreamsDrawerOpen={(open: boolean) => onClose?.(open)} />
-        </Grid>
+          <Tooltip title={t('Refresh')}>
+            <span>
+              <IconButton
+                id="external-streams-refresh"
+                aria-label={t('Refresh')}
+                onClick={() => fetchStreams()}
+                disabled={loading}
+                size="small"
+              >
+                {loading ? <Spinner size={18} label={t('Refreshing')} /> : <Refresh />}
+              </IconButton>
+            </span>
+          </Tooltip>
+          <CloseDrawerButton handleExternalStreamsDrawerOpen={(next: boolean) => onClose?.(next)} />
+        </Box>
+        <Text variant="body2" tone="muted" sx={{ mb: 2 }}>
+          {t('Bring a live stream from outside into the meeting as a participant.')}
+        </Text>
 
-        <Box sx={{ flex: 1, overflowY: 'auto', pr: 1 }}>
+        {error && (
+          <Alert severity="error" sx={{ mb: 2 }}>
+            {error}
+          </Alert>
+        )}
+
+        <Box sx={{ flex: 1, minHeight: 0, overflowY: 'auto' }}>
           {loading && sortedStreams.length === 0 ? (
-            <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
-              <CircularProgress size={32} color="inherit" />
+            <Box sx={{ display: 'flex', justifyContent: 'center', mt: 6 }}>
+              <Spinner size={28} label={t('Loading streams')} />
             </Box>
-          ) : error ? (
-            <Typography color="error" variant="body2" sx={{ textAlign: 'center', mt: 2 }}>
-              {error}
-            </Typography>
           ) : sortedStreams.length === 0 ? (
-            <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', mt: 4 }}>
-              {t('No external streams available.')}
-            </Typography>
+            <Box
+              sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: 1,
+                mt: 6,
+                textAlign: 'center',
+                color: 'text.secondary',
+              }}
+            >
+              <SensorsOff />
+              <Text variant="body2">{t('No external streams are live right now')}</Text>
+              <Text variant="caption" tone="muted">
+                {t('Start a stream, then refresh this list.')}
+              </Text>
+            </Box>
           ) : (
-            <List sx={{ background: theme.palette.themeColor?.[60] }}>
-              {sortedStreams.map((stream) => {
-                const { isJoined } = stream;
+            <>
+              <Text
+                variant="caption"
+                tone="muted"
+                component="div"
+                sx={{ px: 0.5, mb: 1 }}
+                id="external-streams-summary"
+              >
+                {t('{{joined}} of {{total}} in the meeting', {
+                  joined: joinedCount,
+                  total: sortedStreams.length,
+                })}
+              </Text>
+              <Box
+                component="ul"
+                sx={{
+                  listStyle: 'none',
+                  m: 0,
+                  p: 0,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 1,
+                }}
+              >
+                {sortedStreams.map((stream) => {
+                  const busy = busyStream === stream.streamName;
+                  const details = [
+                    stream.durationMs !== undefined
+                      ? t('Live {{duration}}', { duration: formatDuration(stream.durationMs) })
+                      : null,
+                    stream.viewers !== undefined
+                      ? t('{{count}} watching', { count: stream.viewers })
+                      : null,
+                  ].filter(Boolean);
 
-                return (
-                  <ListItem
-                    key={stream.key}
-                    sx={{
-                      mb: 2,
-                      background: isJoined ? 'rgba(36, 255, 0, 0.05)' : 'rgba(255, 255, 255, 0.03)',
-                      borderRadius: 2,
-                      '&:hover': {
-                        background: isJoined
-                          ? 'rgba(36, 255, 0, 0.08)'
-                          : 'rgba(255, 255, 255, 0.05)',
-                      },
-                    }}
-                  >
-                    <Tooltip title={stream.streamName} placement="top">
-                      <ListItemText
-                        primary={truncateText(stream.streamName, 8)}
-                        secondary={isJoined ? t('Joined') : null}
-                      />
-                    </Tooltip>
-                    <ListItemSecondaryAction>
-                      <Button
-                        variant={isJoined ? 'outlined' : 'contained'}
-                        color={isJoined ? 'error' : 'primary'}
-                        size="small"
-                        onClick={() =>
-                          isJoined ? handleRemove(stream.streamName) : handleAdd(stream.streamName)
-                        }
-                        sx={{
-                          borderRadius: 4,
-                          textTransform: 'none',
-                          fontSize: '0.75rem',
-                          py: 0.5,
-                        }}
+                  return (
+                    <Box
+                      component="li"
+                      key={stream.key}
+                      id={`external-stream-${stream.streamName}`}
+                      sx={(theme) => ({
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 1.5,
+                        p: 1.5,
+                        borderRadius: `${radii.container}px`,
+                        backgroundColor: themeColors(theme).surface,
+                        outline: stream.isJoined
+                          ? `1px solid ${alpha(themeColors(theme).success, 0.4)}`
+                          : 'none',
+                      })}
+                    >
+                      <Box
+                        aria-hidden
+                        sx={(theme) => ({
+                          width: 36,
+                          height: 36,
+                          flexShrink: 0,
+                          borderRadius: radii.round,
+                          display: 'grid',
+                          placeItems: 'center',
+                          color: stream.isJoined
+                            ? themeColors(theme).success
+                            : themeColors(theme).mutedText,
+                          backgroundColor: alpha(
+                            stream.isJoined ? themeColors(theme).success : themeColors(theme).text,
+                            0.1,
+                          ),
+                        })}
                       >
-                        {isJoined ? t('Remove from Room') : t('Add to Room')}
+                        <Videocam fontSize="small" />
+                      </Box>
+
+                      <Box sx={{ flex: 1, minWidth: 0 }}>
+                        <Text variant="body2" component="div" sx={{ fontWeight: 500 }}>
+                          <TruncatedText>{stream.streamName}</TruncatedText>
+                        </Text>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mt: 0.25 }}>
+                          {stream.isJoined && (
+                            <StatusBadge tone="success">{t('In the meeting')}</StatusBadge>
+                          )}
+                          {details.length > 0 && (
+                            <Text variant="caption" tone="muted" component="span" mono>
+                              {details.join(' · ')}
+                            </Text>
+                          )}
+                        </Box>
+                      </Box>
+
+                      <Button
+                        size="small"
+                        shape="pill"
+                        variant={stream.isJoined ? 'text' : 'contained'}
+                        color={stream.isJoined ? 'inherit' : 'secondary'}
+                        loading={busy}
+                        disabled={busyStream !== null && !busy}
+                        onClick={() => toggle(stream)}
+                        aria-label={`${stream.isJoined ? t('Remove') : t('Add')} ${stream.streamName}`}
+                        sx={{ flexShrink: 0 }}
+                      >
+                        {stream.isJoined ? t('Remove') : t('Add')}
                       </Button>
-                    </ListItemSecondaryAction>
-                  </ListItem>
-                );
-              })}
-            </List>
+                    </Box>
+                  );
+                })}
+              </Box>
+            </>
           )}
         </Box>
-
-        <Divider sx={{ my: 3, opacity: 0.1 }} />
-
-        <Grid container spacing={2}>
-          <Grid size={12}>
-            <Button
-              fullWidth
-              variant="outlined"
-              color="inherit"
-              onClick={() => fetchStreams()}
-              startIcon={<SvgIcon size={18} name="refresh" color="#FFF" />}
-              sx={{ borderRadius: 6, py: 1, opacity: 0.7 }}
-            >
-              {t('Refresh List')}
-            </Button>
-          </Grid>
-        </Grid>
-      </ContentGrid>
+      </Panel>
     </Red5Drawer>
   );
 });

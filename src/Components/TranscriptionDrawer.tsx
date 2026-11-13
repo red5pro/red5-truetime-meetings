@@ -1,14 +1,24 @@
 import * as React from 'react';
-import { useState, useCallback } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import Drawer from '@mui/material/Drawer';
-import { styled, useTheme, Theme } from '@mui/material/styles';
-import Grid from '@mui/material/Grid2';
-import { Typography, TextField, Button, Box, CircularProgress, IconButton } from '@mui/material';
+import { styled, Theme } from '@mui/material/styles';
+import { Box, Typography } from '@mui/material';
+import { ContentCopy, DataObject, Subject } from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
+import { enqueueSnackbar } from 'notistack';
+import { Alert, Button, FormField, Heading, Input, Text, radii, themeColors } from 'truetime-ui';
 import CloseDrawerButton from './DrawerButton';
 import { getRed5DrawerStyle } from '../styles/themeUtil';
-import ContentCopyIcon from '@mui/icons-material/ContentCopy';
-import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh';
+
+interface TranscriptionEntry {
+  text: string;
+  timestamp: number;
+}
+
+interface TranscriptionData {
+  totalTranscriptionCount?: number;
+  transcriptionsByUser?: Record<string, TranscriptionEntry[]>;
+}
 
 interface TranscriptionDrawerProps {
   open?: boolean;
@@ -16,95 +26,101 @@ interface TranscriptionDrawerProps {
   fetchTranscriptions: (startTime: number, endTime: number) => Promise<any>;
   loading: boolean;
   error: string | null;
-  data: any | null;
+  data: TranscriptionData | null;
+}
+
+interface TranscriptLine extends TranscriptionEntry {
+  speaker: string;
 }
 
 const Red5Drawer = styled(Drawer)(({ theme }: { theme: Theme }) => {
   return getRed5DrawerStyle(theme, theme.palette.themeColor?.[60], false) as any;
 });
 
-const InfoGrid = styled(Grid)(({ theme }: { theme: Theme }) => ({
+const Panel = styled(Box)(({ theme }: { theme: Theme }) => ({
   position: 'relative',
   padding: 16,
   background: theme.palette.themeColor?.[60],
   borderRadius: 10,
   width: '100%',
   height: '100%',
+  display: 'flex',
+  flexDirection: 'column',
+  overflow: 'hidden',
   [theme.breakpoints.down('sm')]: {
     width: '100vw',
   },
 }));
 
-const JsonContainer = styled(Box)(({ theme }: { theme: Theme }) => ({
-  background: 'rgba(0, 0, 0, 0.2)',
-  padding: 12,
-  borderRadius: 8,
-  overflow: 'auto',
-  maxHeight: 'calc(100vh - 300px)',
-  marginTop: 16,
-  '& pre': {
-    margin: 0,
-    fontSize: '0.8rem',
-    color: theme.palette.text.primary,
-  },
-}));
+/** Ranges offered as one click, in minutes before now */
+const PRESETS = [15, 30, 60] as const;
+type Range = (typeof PRESETS)[number] | 'custom';
+
+/** A Date as the value of a datetime-local input (local time, to the minute) */
+const toLocalInput = (date: Date) => {
+  const offset = date.getTimezoneOffset() * 60000;
+  return new Date(date.getTime() - offset).toISOString().slice(0, 16);
+};
+
+const timeFormat = new Intl.DateTimeFormat(undefined, { hour: '2-digit', minute: '2-digit' });
+
+/** Every speaker's lines in one list, in the order they were said */
+const toTranscript = (data: TranscriptionData | null): TranscriptLine[] =>
+  Object.entries(data?.transcriptionsByUser ?? {})
+    .flatMap(([speaker, entries]) => entries.map((entry) => ({ ...entry, speaker })))
+    .sort((a, b) => a.timestamp - b.timestamp);
 
 const TranscriptionDrawer = React.memo<TranscriptionDrawerProps>((props) => {
-  const { fetchTranscriptions } = props;
+  const { fetchTranscriptions, data, loading, error } = props;
   const { t } = useTranslation();
-  const theme = useTheme();
 
-  // Default to last 30 minutes
-  const now = new Date();
-  const thirtyMinutesAgo = new Date(now.getTime() - 30 * 60 * 1000);
+  const [range, setRange] = useState<Range>(30);
+  const [customStart, setCustomStart] = useState(() =>
+    toLocalInput(new Date(Date.now() - 30 * 60 * 1000)),
+  );
+  const [customEnd, setCustomEnd] = useState(() => toLocalInput(new Date()));
 
-  const formatToLocalDatetime = (date: Date) => {
-    const tzOffset = date.getTimezoneOffset() * 60000;
-    return new Date(date.getTime() - tzOffset).toISOString().slice(0, 16);
-  };
-
-  const [startTime, setStartTime] = useState(formatToLocalDatetime(thirtyMinutesAgo));
-  const [endTime, setEndTime] = useState(formatToLocalDatetime(now));
+  const customInvalid =
+    range === 'custom' && new Date(customStart).getTime() >= new Date(customEnd).getTime();
 
   const handleFetch = useCallback(() => {
-    const startTs = new Date(startTime).getTime();
-    const endTs = new Date(endTime).getTime();
-    fetchTranscriptions(startTs, endTs);
-  }, [startTime, endTime, fetchTranscriptions]);
-
-  const handleCopy = useCallback(() => {
-    if (props.data) {
-      navigator.clipboard.writeText(JSON.stringify(props.data, null, 2));
+    if (range === 'custom') {
+      fetchTranscriptions(new Date(customStart).getTime(), new Date(customEnd).getTime());
+    } else {
+      const end = Date.now();
+      fetchTranscriptions(end - range * 60 * 1000, end);
     }
-  }, [props.data]);
+  }, [range, customStart, customEnd, fetchTranscriptions]);
 
-  const handleCopyForLLM = useCallback(() => {
-    if (props.data?.transcriptionsByUser) {
-      let output = '';
-      const allTranscriptions: any[] = [];
+  const transcript = useMemo(() => toTranscript(data), [data]);
 
-      Object.entries(props.data.transcriptionsByUser).forEach(
-        ([user, userCaptions]: [string, any]) => {
-          userCaptions.forEach((cap: any) => {
-            allTranscriptions.push({
-              ...cap,
-              user,
-            });
-          });
-        },
-      );
+  const copy = useCallback(
+    async (text: string, done: string) => {
+      try {
+        await navigator.clipboard.writeText(text);
+        enqueueSnackbar(done, { variant: 'info', autoHideDuration: 1500 });
+      } catch {
+        enqueueSnackbar(t("Couldn't copy to the clipboard"), {
+          variant: 'error',
+          autoHideDuration: 2500,
+        });
+      }
+    },
+    [t],
+  );
 
-      // Sort by timestamp
-      allTranscriptions.sort((a, b) => a.timestamp - b.timestamp);
+  const copyTranscript = () =>
+    copy(
+      transcript
+        .map(
+          (line) =>
+            `[${new Date(line.timestamp).toLocaleTimeString()}] ${line.speaker}: ${line.text}`,
+        )
+        .join('\n'),
+      t('Transcript copied'),
+    );
 
-      allTranscriptions.forEach((cap) => {
-        const time = new Date(cap.timestamp).toLocaleTimeString();
-        output += `[${time}] ${cap.user}: ${cap.text}\n`;
-      });
-
-      navigator.clipboard.writeText(output);
-    }
-  }, [props.data]);
+  const copyJson = () => copy(JSON.stringify(data, null, 2), t('JSON copied'));
 
   return (
     <Red5Drawer
@@ -115,79 +131,195 @@ const TranscriptionDrawer = React.memo<TranscriptionDrawerProps>((props) => {
       variant="persistent"
       PaperProps={{ style: { pointerEvents: props?.open ? 'auto' : 'none' } }}
     >
-      <InfoGrid
-        container
-        direction="column"
-        style={{
-          flexWrap: 'nowrap',
-          height: '100%',
-          overflow: 'hidden',
-          background: theme.palette.themeColor?.[60],
-        }}
-      >
-        <Grid container justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
+      <Panel>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
           <Typography variant="h6" component="div">
             {t('Transcriptions')}
           </Typography>
           <CloseDrawerButton handleInfoDrawerOpen={() => props?.onClose?.(false)} />
-        </Grid>
+        </Box>
 
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-          <TextField
-            label={t('Start Time')}
-            type="datetime-local"
-            value={startTime}
-            onChange={(e) => setStartTime(e.target.value)}
-            slotProps={{ inputLabel: { shrink: true } }}
+        {/* Which part of the meeting to fetch */}
+        <Box component="section" aria-labelledby="transcription-range" sx={{ mb: 2 }}>
+          <Heading
+            id="transcription-range"
+            level={3}
+            variant="subtitle2"
+            sx={(theme) => ({ color: themeColors(theme).mutedText, mb: 1 })}
+          >
+            {t('Time range')}
+          </Heading>
+          <Box
+            role="group"
+            aria-labelledby="transcription-range"
+            sx={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 0.75 }}
+          >
+            {[...PRESETS, 'custom' as const].map((option) => {
+              const selected = range === option;
+              return (
+                <Button
+                  key={option}
+                  id={`transcription-range-${option}`}
+                  size="small"
+                  shape="pill"
+                  color={selected ? 'primary' : 'secondary'}
+                  aria-pressed={selected}
+                  onClick={() => setRange(option)}
+                  sx={{ minWidth: 0, px: 1 }}
+                >
+                  {option === 'custom'
+                    ? t('Custom')
+                    : option === 60
+                      ? t('1 hour')
+                      : t('{{minutes}} min', { minutes: option })}
+                </Button>
+              );
+            })}
+          </Box>
+
+          {range === 'custom' && (
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, mt: 1.5 }}>
+              <FormField label={t('From')} id="transcription-start">
+                <Input
+                  type="datetime-local"
+                  size="small"
+                  value={customStart}
+                  onChange={(event) => setCustomStart(event.target.value)}
+                />
+              </FormField>
+              <FormField
+                label={t('To')}
+                id="transcription-end"
+                error={customInvalid}
+                helperText={customInvalid ? t('Must be after the start') : undefined}
+              >
+                <Input
+                  type="datetime-local"
+                  size="small"
+                  value={customEnd}
+                  onChange={(event) => setCustomEnd(event.target.value)}
+                />
+              </FormField>
+            </Box>
+          )}
+
+          <Button
+            id="transcription-fetch-button"
             fullWidth
-          />
-          <TextField
-            label={t('End Time')}
-            type="datetime-local"
-            value={endTime}
-            onChange={(e) => setEndTime(e.target.value)}
-            slotProps={{ inputLabel: { shrink: true } }}
-            fullWidth
-          />
-          <Button variant="contained" onClick={handleFetch} disabled={props.loading} fullWidth>
-            {props.loading ? <CircularProgress size={24} /> : t('Fetch Transcriptions')}
+            shape="pill"
+            loading={loading}
+            disabled={customInvalid}
+            onClick={handleFetch}
+            sx={{ mt: 2 }}
+          >
+            {t('Get transcript')}
           </Button>
         </Box>
 
-        {props.error && (
-          <Typography color="error" sx={{ mt: 2 }}>
-            {props.error}
-          </Typography>
+        {error && (
+          <Alert severity="error" sx={{ mb: 2 }}>
+            {error}
+          </Alert>
         )}
 
-        {props.data && (
-          <>
-            <Box
-              sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 2 }}
-            >
-              <Typography variant="subtitle2">
-                {t('Results')} ({props.data.totalTranscriptionCount || 0})
-              </Typography>
-              <Box>
-                <IconButton
-                  onClick={handleCopyForLLM}
+        {data && (
+          <Box
+            component="section"
+            aria-labelledby="transcription-results"
+            sx={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}
+          >
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <Heading
+                id="transcription-results"
+                level={3}
+                variant="subtitle2"
+                sx={(theme) => ({ color: themeColors(theme).mutedText })}
+              >
+                {t('Transcript')} · {transcript.length}
+              </Heading>
+              <Box sx={{ display: 'flex', gap: 0.5 }}>
+                <Button
+                  id="transcription-copy-text"
                   size="small"
-                  title={t('Copy for LLM')}
-                  sx={{ mr: 1 }}
+                  variant="text"
+                  color="inherit"
+                  startIcon={<ContentCopy fontSize="small" />}
+                  disabled={transcript.length === 0}
+                  onClick={copyTranscript}
                 >
-                  <AutoFixHighIcon fontSize="small" color="primary" />
-                </IconButton>
-                <IconButton onClick={handleCopy} size="small" title={t('Copy JSON')}>
-                  <ContentCopyIcon fontSize="small" color="primary" />
-                </IconButton>
+                  {t('Copy transcript')}
+                </Button>
+                <Button
+                  id="transcription-copy-json"
+                  size="small"
+                  variant="text"
+                  color="inherit"
+                  startIcon={<DataObject fontSize="small" />}
+                  onClick={copyJson}
+                >
+                  {t('JSON')}
+                </Button>
               </Box>
             </Box>
-            <JsonContainer>
-              <pre>{JSON.stringify(props.data, null, 2)}</pre>
-            </JsonContainer>
-          </>
+
+            {transcript.length === 0 ? (
+              <Box
+                sx={{
+                  flex: 1,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 1,
+                  textAlign: 'center',
+                  color: 'text.secondary',
+                  py: 4,
+                }}
+              >
+                <Subject />
+                <Text variant="body2" tone="muted">
+                  {t('Nothing was transcribed in this time range')}
+                </Text>
+              </Box>
+            ) : (
+              <Box
+                component="ol"
+                id="transcription-lines"
+                sx={(theme) => ({
+                  listStyle: 'none',
+                  m: 0,
+                  mt: 1,
+                  p: 1.5,
+                  flex: 1,
+                  minHeight: 0,
+                  overflowY: 'auto',
+                  borderRadius: `${radii.container}px`,
+                  backgroundColor: themeColors(theme).surface,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 1.5,
+                })}
+              >
+                {transcript.map((line, index) => (
+                  <Box component="li" key={`${line.speaker}-${line.timestamp}-${index}`}>
+                    <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1 }}>
+                      <Text variant="body2" component="span" sx={{ fontWeight: 600 }}>
+                        {line.speaker}
+                      </Text>
+                      <Text variant="caption" component="span" tone="muted" mono>
+                        {timeFormat.format(new Date(line.timestamp))}
+                      </Text>
+                    </Box>
+                    <Text variant="body2" sx={{ mt: 0.25, overflowWrap: 'anywhere' }}>
+                      {line.text}
+                    </Text>
+                  </Box>
+                ))}
+              </Box>
+            )}
+          </Box>
         )}
-      </InfoGrid>
+      </Panel>
     </Red5Drawer>
   );
 });
