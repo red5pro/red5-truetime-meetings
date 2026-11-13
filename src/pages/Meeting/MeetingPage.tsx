@@ -46,6 +46,17 @@ const MeetingPage = React.memo<MeetingPageProps>((props) => {
   });
   const theme = useTheme();
   const isSmallScreen = useMediaQuery(theme.breakpoints.down('sm'));
+  // A side drawer takes the right of the window; the gallery and the captions panel make room
+  const hasOpenDrawer = Boolean(
+    props.messageDrawerOpen ||
+    props.participantListDrawerOpen ||
+    props.effectsDrawerOpen ||
+    props.infoDrawerOpen ||
+    props.localRecordingDrawerOpen ||
+    props.transcriptionDrawerOpen ||
+    props.externalStreamsDrawerOpen,
+  );
+  const captionsVisible = Boolean(props?.closedCaptions.captionsVisible);
   // A phone turned to landscape is wider than the `sm` breakpoint, but its short height can't
   // fit the desktop layouts (they crop and #stream-gallery doesn't scroll), so keep it on the
   // mobile layout, which has its own landscape arrangements.
@@ -259,25 +270,13 @@ const MeetingPage = React.memo<MeetingPageProps>((props) => {
     return () => document.removeEventListener('visibilitychange', onVisibility);
   }, [autoOpenPiP, autoClosePiP, pipOptions]);
 
-  // Gallery resize handler
-  const handleGalleryResize = useCallback((calcDrawer = false) => {
+  // Gallery resize handler. The `drawer-open` class that narrows the gallery is rendered by React
+  // (see #stream-gallery below): set by hand on the element, React dropped it whenever the
+  // gallery's other classes changed, e.g. when the captions panel closed.
+  const handleGalleryResize = useCallback(() => {
     const gallery = document.getElementById('stream-gallery');
 
     if (!gallery) return;
-
-    if (calcDrawer) {
-      const currentProps = propsRef.current;
-      const hasOpenDrawer =
-        currentProps.messageDrawerOpen ||
-        currentProps.participantListDrawerOpen ||
-        currentProps.effectsDrawerOpen ||
-        currentProps.infoDrawerOpen ||
-        currentProps.localRecordingDrawerOpen ||
-        currentProps.transcriptionDrawerOpen ||
-        currentProps.externalStreamsDrawerOpen;
-
-      gallery.classList.toggle('drawer-open', hasOpenDrawer);
-    }
 
     const { width: screenWidth, height: screenHeight } = gallery.getBoundingClientRect();
     setGallerySize({ w: screenWidth, h: screenHeight });
@@ -376,7 +375,7 @@ const MeetingPage = React.memo<MeetingPageProps>((props) => {
     // Deferred via rAF: gallery measurement reads the DOM, and this indirection keeps the
     // setState call out of the effect's own synchronous body (see the resize-listener effect
     // below, which uses the same debounce-based indirection).
-    requestAnimationFrame(() => handleGalleryResize(false));
+    requestAnimationFrame(() => handleGalleryResize());
   }, [
     props.participants,
     props.subscribedParticipants,
@@ -384,21 +383,13 @@ const MeetingPage = React.memo<MeetingPageProps>((props) => {
     handleGalleryResize,
   ]);
 
+  // Measure again once a drawer or the captions panel changes the gallery's size
   useEffect(() => {
-    requestAnimationFrame(() => handleGalleryResize(true));
-  }, [
-    props.infoDrawerOpen,
-    props.messageDrawerOpen,
-    props.participantListDrawerOpen,
-    props.effectsDrawerOpen,
-    props.localRecordingDrawerOpen,
-    props.transcriptionDrawerOpen,
-    props.externalStreamsDrawerOpen,
-    handleGalleryResize,
-  ]);
+    requestAnimationFrame(() => handleGalleryResize());
+  }, [hasOpenDrawer, captionsVisible, handleGalleryResize]);
 
   useEffect(() => {
-    const debouncedResize = debounce(() => handleGalleryResize(false), 500);
+    const debouncedResize = debounce(() => handleGalleryResize(), 500);
     window.addEventListener('resize', debouncedResize);
 
     return () => window.removeEventListener('resize', debouncedResize);
@@ -443,9 +434,10 @@ const MeetingPage = React.memo<MeetingPageProps>((props) => {
     <Container id="meeting-page" maxWidth={false} sx={{ width: '100%', maxWidth: '100%', px: 0 }}>
       <Box
         id="stream-gallery"
+        className={hasOpenDrawer ? 'drawer-open' : undefined}
         sx={{
           // Keep gallery space in sync with captions panel + footer heights.
-          height: props?.closedCaptions.captionsVisible
+          height: captionsVisible
             ? `calc(100dvh - ${
                 FOOTER_HEIGHT +
                 (isSmallScreen ? CAPTIONS_PANEL_HEIGHT_MOBILE : CAPTIONS_PANEL_HEIGHT_DESKTOP)
@@ -509,15 +501,7 @@ const MeetingPage = React.memo<MeetingPageProps>((props) => {
         isLiveCaptions={props?.closedCaptions?.isLiveCaptions}
         // @ts-expect-error - prop type mismatch with legacy component props
         subscribedParticipants={props?.subscribedParticipants}
-        drawerOpen={Boolean(
-          props.messageDrawerOpen ||
-          props.participantListDrawerOpen ||
-          props.effectsDrawerOpen ||
-          props.infoDrawerOpen ||
-          props.localRecordingDrawerOpen ||
-          props.transcriptionDrawerOpen ||
-          props.externalStreamsDrawerOpen,
-        )}
+        drawerOpen={hasOpenDrawer}
       />
 
       {/* Footer */}
