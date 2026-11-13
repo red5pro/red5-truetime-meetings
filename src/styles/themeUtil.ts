@@ -25,6 +25,8 @@ export function getRed5DrawerStyle(
       backgroundColor: 'transparent',
     },
     '& .MuiPaper-root': {
+      // .App centres its text (App.css); panels read left to right
+      textAlign: 'left',
       padding: 12,
       background: 'transparent',
       width: 360,

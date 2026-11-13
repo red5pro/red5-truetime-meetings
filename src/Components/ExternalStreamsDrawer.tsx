@@ -161,6 +161,7 @@ const ExternalStreamsDrawer = React.memo<ExternalStreamsDrawerProps>((props) => 
                 onClick={() => fetchStreams()}
                 disabled={loading}
                 size="small"
+                sx={(theme) => ({ color: themeColors(theme).text })}
               >
                 {loading ? <Spinner size={18} label={t('Refreshing')} /> : <Refresh />}
               </IconButton>
@@ -279,12 +280,35 @@ const ExternalStreamsDrawer = React.memo<ExternalStreamsDrawerProps>((props) => 
                         <Text variant="body2" component="div" sx={{ fontWeight: 500 }}>
                           <TruncatedText>{stream.streamName}</TruncatedText>
                         </Text>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mt: 0.25 }}>
+                        {/* Badge and details wrap under the name rather than squeezing it */}
+                        <Box
+                          sx={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            flexWrap: 'wrap',
+                            columnGap: 0.75,
+                            rowGap: 0.5,
+                            mt: 0.5,
+                            minWidth: 0,
+                          }}
+                        >
                           {stream.isJoined && (
                             <StatusBadge tone="success">{t('In the meeting')}</StatusBadge>
                           )}
                           {details.length > 0 && (
-                            <Text variant="caption" tone="muted" component="span" mono>
+                            <Text
+                              variant="caption"
+                              tone="muted"
+                              component="span"
+                              mono
+                              sx={{
+                                minWidth: 0,
+                                maxWidth: '100%',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap',
+                              }}
+                            >
                               {details.join(' · ')}
                             </Text>
                           )}
@@ -294,7 +318,7 @@ const ExternalStreamsDrawer = React.memo<ExternalStreamsDrawerProps>((props) => 
                       <Button
                         size="small"
                         shape="pill"
-                        variant={stream.isJoined ? 'text' : 'contained'}
+                        variant={stream.isJoined ? 'outlined' : 'contained'}
                         color={stream.isJoined ? 'inherit' : 'secondary'}
                         loading={busy}
                         disabled={busyStream !== null && !busy}
