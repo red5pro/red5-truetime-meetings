@@ -32,10 +32,25 @@ export const setRuntimeConfig = (config: RuntimeConfig) => {
   runtimeConfig = { ...runtimeConfig, ...config };
 };
 
+/** The VITE_* values actually set in .env (empty ones don't count) */
+const localEnv = (): RuntimeConfig =>
+  Object.fromEntries(
+    Object.entries(import.meta.env).filter(
+      ([key, value]) => key.startsWith('VITE_') && value !== undefined && value !== '',
+    ),
+  ) as RuntimeConfig;
+
+/**
+ * Settings for the app: the config service's values over the build-time env vars. In development
+ * (`npm run dev`) what you set in .env wins over the config service, so pointing a local build at a
+ * deployment's config service doesn't take its base path or feature flags; anything you leave
+ * unset still comes from the service.
+ */
 export const getRuntimeConfig = (): RuntimeConfig => {
   return {
     ...import.meta.env, // Fallback to build-time env vars
     ...runtimeConfig, // Override with runtime config
+    ...(import.meta.env.DEV ? localEnv() : {}),
   };
 };
 
