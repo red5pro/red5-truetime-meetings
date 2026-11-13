@@ -24,6 +24,8 @@ interface MicButtonProps {
   /** The microphone tray is open. */
   optionsOpen?: boolean;
   onOptionsClick?: () => void;
+  /** The mouse rested on the options segment (opens the tray without a click). */
+  onOptionsHover?: () => void;
   /** id of the tray the options segment opens. */
   optionsControls?: string;
   /** You are talking: the options segment's dots bounce. */
@@ -100,6 +102,7 @@ function MicButton(props: MicButtonProps) {
       optionsOpen={props.optionsOpen}
       optionsControls={props.optionsControls}
       onOptionsClick={() => props.onOptionsClick?.()}
+      onOptionsHover={props.onOptionsHover}
       idleIndicator={
         props.isMicMuted ? undefined : <AudioLevelDots active={Boolean(props.isTalking)} />
       }

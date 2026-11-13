@@ -179,6 +179,8 @@ function Footer(props: FooterProps) {
   // Which tray shows above the call controls: a device tray (local state) or the reactions, which
   // follow `showEmojis` so the mobile menu and shortcuts can open them too.
   const [trayOpen, setTrayOpen] = React.useState(false);
+  // Opened (or used) with a click: it stays open when the mouse leaves. Hovering opens it unpinned.
+  const [trayPinned, setTrayPinned] = React.useState(false);
   const [deviceKind, setDeviceKind] = React.useState<DeviceTrayKind>('camera');
   const shownTray: TrayKind | null = props.showEmojis ? 'reactions' : trayOpen ? deviceKind : null;
   // The last tray shown keeps its content while the tray collapses
@@ -205,12 +207,31 @@ function Footer(props: FooterProps) {
 
   const toggleTray = (kind: DeviceTrayKind) => {
     if (shownTray === kind) {
-      setTrayOpen(false);
+      // A click on a tray that hovering opened keeps it open; a second click closes it
+      if (trayPinned) {
+        setTrayOpen(false);
+      } else {
+        setTrayPinned(true);
+      }
       return;
     }
     if (props.showEmojis) props.setShowEmojis?.(false);
     setDeviceKind(kind);
     setTrayOpen(true);
+    setTrayPinned(true);
+  };
+
+  // Resting the mouse on the mic or camera options opens their tray, unless the reactions or a tray
+  // opened with a click are showing
+  const hoverTray = (kind: DeviceTrayKind) => {
+    if (shownTray === kind || props.showEmojis || (trayOpen && trayPinned)) return;
+    setDeviceKind(kind);
+    setTrayOpen(true);
+    setTrayPinned(false);
+  };
+
+  const handleHoverEnd = () => {
+    if (trayOpen && !trayPinned && !props.showEmojis) setTrayOpen(false);
   };
 
   const toggleReactions = () => {
@@ -342,11 +363,17 @@ function Footer(props: FooterProps) {
         >
           <ControlBar
             label={t('Call controls')}
-            tray={tray}
+            tray={
+              // display: contents keeps the tray's own layout; a click inside pins a hovered tray
+              <Box sx={{ display: 'contents' }} onClickCapture={() => setTrayPinned(true)}>
+                {tray}
+              </Box>
+            }
             trayOpen={shownTray !== null}
             trayId={TRAY_ID}
             trayLabel={trayLabels[trayKind]}
             onTrayClose={closeTray}
+            onHoverEnd={handleHoverEnd}
           >
             <MicButton
               isMicMuted={props?.isMyMicMuted}
@@ -358,6 +385,7 @@ function Footer(props: FooterProps) {
               optionsOpen={shownTray === 'mic'}
               optionsControls={TRAY_ID}
               onOptionsClick={() => toggleTray('mic')}
+              onOptionsHover={() => hoverTray('mic')}
               isTalking={isTalking}
             />
             <CameraButton
@@ -371,6 +399,7 @@ function Footer(props: FooterProps) {
               optionsOpen={shownTray === 'camera'}
               optionsControls={TRAY_ID}
               onOptionsClick={() => toggleTray('camera')}
+              onOptionsHover={() => hoverTray('camera')}
             />
 
             {!isMobile && !isTablet && wide ? (

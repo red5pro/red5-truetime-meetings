@@ -25,6 +25,8 @@ interface CameraButtonProps {
   /** The camera tray is open. */
   optionsOpen?: boolean;
   onOptionsClick?: () => void;
+  /** The mouse rested on the options segment (opens the tray without a click). */
+  onOptionsHover?: () => void;
   /** id of the tray the options segment opens. */
   optionsControls?: string;
 }
@@ -103,6 +105,7 @@ function CameraButton(props: CameraButtonProps) {
       optionsOpen={props.optionsOpen}
       optionsControls={props.optionsControls}
       onOptionsClick={() => props.onOptionsClick?.()}
+      onOptionsHover={props.onOptionsHover}
     />
   );
 }
