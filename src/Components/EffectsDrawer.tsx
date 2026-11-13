@@ -25,8 +25,13 @@ interface EffectsDrawerProps {
   handleMessageDrawerOpen?: (open: boolean) => void;
   handleParticipantListOpen?: (open: boolean) => void;
   handleEffectsOpen?: (open: boolean) => void;
-  setVirtualBackgroundImage?: (image: VirtualBackgroundImage) => void;
-  handleBackgroundReplacement?: (replacement: BackgroundReplacement) => void;
+  setVirtualBackgroundImage?: (image: VirtualBackgroundImage) => Promise<boolean> | void;
+  handleBackgroundReplacement?: (replacement: BackgroundReplacement) => Promise<boolean> | void;
+  /** The active virtual background mode, to highlight it ('' when none). */
+  selectedBackgroundMode?: string;
+  isCameraOff?: boolean;
+  /** Show a live preview of your video in the panel (off in the lobby, which has one already). */
+  showPreview?: boolean;
   handleLocalRecordingDrawerOpen?: (open: boolean) => void;
   handleTranscriptionDrawerOpen?: (open: boolean) => void;
 }
@@ -83,12 +88,12 @@ const EffectsDrawer = React.memo<EffectsDrawerProps>((props) => {
   const { t } = useTranslation();
 
   const setVirtualBg = React.useCallback(
-    (img: VirtualBackgroundImage) => setVirtualBackgroundImage?.(img),
+    (img: VirtualBackgroundImage) => setVirtualBackgroundImage?.(img) ?? false,
     [setVirtualBackgroundImage],
   );
 
   const handleBgReplacement = React.useCallback(
-    (mode: BackgroundReplacement) => handleBackgroundReplacement?.(mode),
+    (mode: BackgroundReplacement) => handleBackgroundReplacement?.(mode) ?? false,
     [handleBackgroundReplacement],
   );
 
@@ -123,7 +128,7 @@ const EffectsDrawer = React.memo<EffectsDrawerProps>((props) => {
       >
         <Grid container justifyContent="space-between" alignItems="center">
           <Typography variant="h6" component="div">
-            {t('Effects')}
+            {t('Backgrounds and effects')}
           </Typography>
           <CloseDrawerButton
             handleInfoDrawerOpen={handleInfoDrawerOpen}
@@ -145,7 +150,9 @@ const EffectsDrawer = React.memo<EffectsDrawerProps>((props) => {
               <EffectsTab
                 setVirtualBackgroundImage={setVirtualBg}
                 handleBackgroundReplacement={handleBgReplacement}
-                handleEffectsOpen={props.handleEffectsOpen}
+                selectedBackgroundMode={props.selectedBackgroundMode}
+                isCameraOff={props.isCameraOff}
+                showPreview={props.showPreview !== false && Boolean(props.effectsDrawerOpen)}
               />
             </TabGrid>
           </TabPanel>

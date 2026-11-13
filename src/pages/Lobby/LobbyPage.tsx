@@ -362,6 +362,9 @@ const LobbyPage = React.memo<LobbyPageProps>((props) => {
       </Grid>
       <EffectsDrawer
         effectsDrawerOpen={effectsDrawerOpen}
+        selectedBackgroundMode={selectedBackgroundMode}
+        isCameraOff={isMyCamTurnedOff}
+        showPreview={false}
         setVirtualBackgroundImage={setVirtualBackgroundImage}
         //@ts-expect-error - prop type mismatch with legacy component props
         handleBackgroundReplacement={handleBackgroundReplacement}

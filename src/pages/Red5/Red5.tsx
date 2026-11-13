@@ -534,6 +534,8 @@ function Red5(props: Red5Props) {
               handleBackgroundReplacement={
                 conference.features.virtualBackground.handleBackgroundReplacement
               }
+              selectedBackgroundMode={conference.features.virtualBackground.selectedBackgroundMode}
+              isCameraOff={conference.media.isMyCamTurnedOff}
               handleInfoDrawerOpen={conference.ui.handleInfoDrawerOpen}
               handleMessageDrawerOpen={conference.ui.handleMessageDrawerOpen}
               handleParticipantListOpen={conference.ui.handleParticipantListOpen}
