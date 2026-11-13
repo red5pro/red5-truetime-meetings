@@ -2,7 +2,6 @@ import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { Container, Box, IconButton } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
-import { ReactionBarSelector } from '@charkour/react-reactions';
 import { Close } from '@mui/icons-material';
 
 import Footer from '../../Components/Footer/Footer.tsx';
@@ -18,22 +17,11 @@ import MuteParticipantDialog from '../../Components/MuteParticipantDialog.tsx';
 import { usePictureInPicture } from '../../utils/PiPManager.tsx';
 import ClosedCaptions from '../../Components/ClosedCaptions.tsx';
 import { useKeyboardShortcuts } from '../../hooks/useKeyboardShortcuts.ts';
-import { GallerySize, MeetingPageProps, Reaction, SubscribedParticipant } from './types.ts';
+import { GallerySize, MeetingPageProps, SubscribedParticipant } from './types.ts';
 import { debounce } from 'lodash';
 import { getRuntimeConfig } from '../../utils/configStore';
 
 // Constants
-const REACTION_LIST: Reaction[] = [
-  { label: 'Love It', node: <div>💖</div>, key: 'sparkling_heart' },
-  { label: 'Like', node: <div>👍🏼</div>, key: 'thumbs_up' },
-  { label: 'Tada', node: <div>🎉</div>, key: 'party_popper' },
-  { label: 'Applause', node: <div>👏🏼</div>, key: 'clapping_hands' },
-  { label: 'Haha', node: <div>😂</div>, key: 'face_with_tears_of_joy' },
-  { label: 'Surprised', node: <div>😮</div>, key: 'open_mouth' },
-  { label: 'Sad', node: <div>😢</div>, key: 'sad_face' },
-  { label: 'Thinking', node: <div>🤔</div>, key: 'thinking_face' },
-  { label: 'Dislike', node: <div>👎🏼</div>, key: 'thumbs_down' },
-];
 
 const AUTO_LAYOUT_PARTICIPANT_LIMIT = 8;
 const FOOTER_HEIGHT = 80;
@@ -416,27 +404,6 @@ const MeetingPage = React.memo<MeetingPageProps>((props) => {
     return () => window.removeEventListener('resize', debouncedResize);
   }, [handleGalleryResize]);
 
-  // Reaction bar styles
-  const reactionBarStyle: React.CSSProperties = {
-    position: 'fixed',
-    bottom: 105,
-    left: '50%',
-    transform: 'translate(-50%, 50%)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 16,
-    zIndex: 666,
-    height: 46,
-  };
-
-  const reactionSelectorStyle: React.CSSProperties = {
-    backgroundColor: theme.palette.themeColor?.[60],
-    paddingTop: '7px',
-    paddingLeft: '7px',
-    paddingRight: '7px',
-  };
-
   const pipOverlay = () => {
     return (
       <Box
@@ -506,18 +473,6 @@ const MeetingPage = React.memo<MeetingPageProps>((props) => {
         turnOffYourMicNotification={(streamId) => props?.turnOffYourMicNotification?.(streamId)}
       />
 
-      {/* Emoji Reactions */}
-      {props.showEmojis && (
-        <Box id="reactions-bar" style={reactionBarStyle}>
-          <ReactionBarSelector
-            reactions={REACTION_LIST}
-            iconSize={28}
-            style={reactionSelectorStyle}
-            onSelect={handleEmojiSend}
-          />
-        </Box>
-      )}
-
       {/* Screen Share Video Element */}
       <VideoCard
         id="red5pro-publisher-screenshare"
@@ -573,6 +528,7 @@ const MeetingPage = React.memo<MeetingPageProps>((props) => {
         isRaiseHand={props.isRaiseHand}
         setIsRaiseHand={props.setIsRaiseHand}
         showEmojis={props.showEmojis}
+        onSendReaction={handleEmojiSend}
         setShowEmojis={props.setShowEmojis}
         numberOfUnReadMessages={props.numberOfUnReadMessages}
         toggleSetNumberOfUnreadMessages={props.toggleSetNumberOfUnreadMessages}

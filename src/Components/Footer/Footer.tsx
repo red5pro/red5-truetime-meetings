@@ -26,6 +26,7 @@ import CaptionsButton from './Components/CaptionsButton.tsx';
 import LocalRecordingButton from './Components/LocalRecordingButton.tsx';
 import SettingsDialog from './Components/SettingsDialog.tsx';
 import { CameraTray, MicTray } from './Components/DeviceTrays.tsx';
+import { ReactionsTray } from './Components/ReactionsTray.tsx';
 import { getRuntimeConfig } from '../../utils/configStore';
 import type { NoiseSuppressionStatus } from '../../hooks/useNoiseSuppression';
 import type { RecordingSources } from '../../hooks/useRecording';
@@ -96,6 +97,8 @@ interface FooterProps {
   handleStopScreenShare?: () => void;
   showEmojis?: boolean;
   setShowEmojis?: (showEmojis: boolean) => void;
+  /** Sends a reaction by its key (see REACTIONS in ReactionsTray). */
+  onSendReaction?: (reactionKey: string) => void;
   showRaiseHand?: boolean;
   isRaiseHand?: boolean;
   setIsRaiseHand?: (isRaiseHand: boolean) => void;
@@ -157,7 +160,8 @@ const FooterBar = styled('footer')(({ theme }: { theme: Theme }) => ({
   },
 }));
 
-type TrayKind = 'camera' | 'mic';
+type DeviceTrayKind = 'camera' | 'mic';
+type TrayKind = DeviceTrayKind | 'reactions';
 
 const TRAY_ID = 'call-controls-tray';
 
@@ -170,10 +174,16 @@ function Footer(props: FooterProps) {
   const isExternalStreamsEnabled = getRuntimeConfig().VITE_ENABLE_EXTERNAL_STREAMS === 'true';
   const wide = windowWidth > mobileBreakpoint;
 
-  // Which device tray shows above the call controls. `trayKind` outlives `trayOpen` so the tray
-  // keeps its content while it collapses.
+  // Which tray shows above the call controls: a device tray (local state) or the reactions, which
+  // follow `showEmojis` so the mobile menu and shortcuts can open them too.
   const [trayOpen, setTrayOpen] = React.useState(false);
+  const [deviceKind, setDeviceKind] = React.useState<DeviceTrayKind>('camera');
+  const shownTray: TrayKind | null = props.showEmojis ? 'reactions' : trayOpen ? deviceKind : null;
+  // The last tray shown keeps its content while the tray collapses
   const [trayKind, setTrayKind] = React.useState<TrayKind>('camera');
+  if (shownTray && shownTray !== trayKind) {
+    setTrayKind(shownTray);
+  }
   const [settingsDialog, setSettingsDialog] = React.useState<{ open: boolean; focus: string }>({
     open: false,
     focus: 'camera',
@@ -191,29 +201,36 @@ function Footer(props: FooterProps) {
     };
   }, []);
 
-  const toggleTray = (kind: TrayKind) => {
-    if (trayOpen && trayKind === kind) {
+  const toggleTray = (kind: DeviceTrayKind) => {
+    if (shownTray === kind) {
       setTrayOpen(false);
-    } else {
-      setTrayKind(kind);
-      setTrayOpen(true);
+      return;
     }
+    if (props.showEmojis) props.setShowEmojis?.(false);
+    setDeviceKind(kind);
+    setTrayOpen(true);
+  };
+
+  const toggleReactions = () => {
+    setTrayOpen(false);
+    props.setShowEmojis?.(!props.showEmojis);
   };
 
   const closeTray = () => {
+    if (shownTray === 'reactions') {
+      props.setShowEmojis?.(false);
+      document.getElementById('reactions-button')?.focus();
+      return;
+    }
     setTrayOpen(false);
-    document.getElementById(`${trayKind === 'camera' ? 'camera' : 'mic'}-button-options`)?.focus();
+    document
+      .getElementById(`${deviceKind === 'camera' ? 'camera' : 'mic'}-button-options`)
+      ?.focus();
   };
 
   const openSettings = (focus: string) => {
     setTrayOpen(false);
     setSettingsDialog({ open: true, focus });
-  };
-
-  const toggleBlur = () => {
-    const blurOn =
-      props.selectedBackgroundMode === 'blur' || props.selectedBackgroundMode === 'slight-blur';
-    props.handleBackgroundReplacement?.({ type: blurOn ? 'none' : 'blur' });
   };
 
   const openEffects = () => {
@@ -230,15 +247,20 @@ function Footer(props: FooterProps) {
 
   const isTalking = Boolean(props.streamName && props.talkers?.includes(props.streamName));
 
+  const trayLabels: Record<TrayKind, string> = {
+    camera: t('Camera options'),
+    mic: t('Microphone options'),
+    reactions: t('Emoji reactions'),
+  };
+
   const tray =
-    trayKind === 'camera' ? (
+    trayKind === 'reactions' ? (
+      <ReactionsTray onSend={(reactionKey) => props.onSendReaction?.(reactionKey)} />
+    ) : trayKind === 'camera' ? (
       <CameraTray
         videoInputs={props.devices?.videoInputs}
         selectedCamera={props.selectedCamera}
         onCameraChange={(camera: string) => props.cameraSelected?.(camera)}
-        isCamTurnedOff={props.isMyCamTurnedOff}
-        backgroundMode={props.selectedBackgroundMode}
-        onToggleBlur={toggleBlur}
         onOpenEffects={openEffects}
         onOpenSettings={() => openSettings('camera')}
       />
@@ -314,9 +336,9 @@ function Footer(props: FooterProps) {
           <ControlBar
             label={t('Call controls')}
             tray={tray}
-            trayOpen={trayOpen}
+            trayOpen={shownTray !== null}
             trayId={TRAY_ID}
-            trayLabel={trayKind === 'camera' ? t('Camera options') : t('Microphone options')}
+            trayLabel={trayLabels[trayKind]}
             onTrayClose={closeTray}
           >
             <MicButton
@@ -326,7 +348,7 @@ function Footer(props: FooterProps) {
               audioInputs={props?.devices?.audioInputs}
               selectedMicrophone={props?.selectedMicrophone}
               onMicrophoneChange={(mic: string) => props?.microphoneSelected?.(mic)}
-              optionsOpen={trayOpen && trayKind === 'mic'}
+              optionsOpen={shownTray === 'mic'}
               optionsControls={TRAY_ID}
               onOptionsClick={() => toggleTray('mic')}
               isTalking={isTalking}
@@ -339,7 +361,7 @@ function Footer(props: FooterProps) {
               videoInputs={props?.devices?.videoInputs}
               selectedCamera={props?.selectedCamera}
               onCameraChange={(cam: string) => props?.cameraSelected?.(cam)}
-              optionsOpen={trayOpen && trayKind === 'camera'}
+              optionsOpen={shownTray === 'camera'}
               optionsControls={TRAY_ID}
               onOptionsClick={() => toggleTray('camera')}
             />
@@ -355,7 +377,8 @@ function Footer(props: FooterProps) {
             {wide ? (
               <ReactionsButton
                 showEmojis={props?.showEmojis}
-                setShowEmojis={(showEmojis: boolean) => props?.setShowEmojis?.(showEmojis)}
+                setShowEmojis={toggleReactions}
+                controls={TRAY_ID}
               />
             ) : null}
 

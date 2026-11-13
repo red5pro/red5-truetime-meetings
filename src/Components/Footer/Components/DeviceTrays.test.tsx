@@ -34,27 +34,13 @@ const cameras = [
 ];
 
 describe('CameraTray', () => {
-  it('shows the selected camera and toggles blur', () => {
-    const onToggleBlur = vi.fn();
-    render(
-      <CameraTray
-        videoInputs={cameras}
-        selectedCamera="mac"
-        backgroundMode="blur"
-        onToggleBlur={onToggleBlur}
-      />,
-    );
+  it('shows the selected camera and opens effects, with no separate blur option', () => {
+    const onOpenEffects = vi.fn();
+    render(<CameraTray videoInputs={cameras} selectedCamera="mac" onOpenEffects={onOpenEffects} />);
     expect(button('camera-device-select').textContent).toContain('MacBook Air Camera');
-    const blur = button('blur-background-button');
-    expect(blur.getAttribute('aria-pressed')).toBe('true');
-    act(() => blur.click());
-    expect(onToggleBlur).toHaveBeenCalled();
-  });
-
-  it('disables blur while the camera is off', () => {
-    render(<CameraTray videoInputs={cameras} selectedCamera="mac" isCamTurnedOff />);
-    expect(button('blur-background-button').disabled).toBe(true);
-    expect(button('backgrounds-and-effects-button').disabled).toBe(false);
+    expect(container.querySelector('#blur-background-button')).toBeNull();
+    act(() => button('backgrounds-and-effects-button').click());
+    expect(onOpenEffects).toHaveBeenCalled();
   });
 });
 

@@ -1,4 +1,3 @@
-import React from 'react';
 import type { NoiseSuppressionStatus } from '../../hooks/useNoiseSuppression';
 import type { RecordingSources } from '../../hooks/useRecording';
 import type { ResolutionPreset } from '../../utils/recordingResolution';
@@ -137,10 +136,4 @@ export interface MeetingPageProps {
 export interface GallerySize {
   w: number;
   h: number;
-}
-
-export interface Reaction {
-  label: string;
-  node: React.ReactNode;
-  key: string;
 }

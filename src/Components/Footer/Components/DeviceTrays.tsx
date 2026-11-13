@@ -6,7 +6,6 @@ import {
   SettingsOutlined,
   VideocamOutlined,
   VolumeUp,
-  BlurOn,
   AutoAwesome,
 } from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
@@ -65,15 +64,11 @@ interface CameraTrayProps {
   videoInputs?: Device[];
   selectedCamera?: string;
   onCameraChange?: (deviceId: string) => void;
-  isCamTurnedOff?: boolean;
-  /** The active virtual background mode ('blur', 'slight-blur', 'color', 'image' or ''). */
-  backgroundMode?: string;
-  onToggleBlur?: () => void;
   onOpenEffects?: () => void;
   onOpenSettings?: () => void;
 }
 
-/** Camera options shown above the call controls: device, blur, effects and settings. */
+/** Camera options shown above the call controls: device, effects and settings. */
 export function CameraTray(props: CameraTrayProps) {
   const { t } = useTranslation();
   const [facingMode, setFacingMode] = useState<string | undefined>();
@@ -90,10 +85,6 @@ export function CameraTray(props: CameraTrayProps) {
     props.onCameraChange?.(value);
   };
 
-  const blurOn = props.backgroundMode === 'blur' || props.backgroundMode === 'slight-blur';
-  // Effects run on the camera's frames, so they wait until it's on (and aren't offered on phones)
-  const effectsDisabled = Boolean(props.isCamTurnedOff);
-
   return (
     <>
       <DeviceMenuButton
@@ -107,29 +98,15 @@ export function CameraTray(props: CameraTrayProps) {
         sx={{ flex: '1 1 160px', maxWidth: 240 }}
       />
       {!isMobile && (
-        <>
-          <ToolbarButton
-            id="blur-background-button"
-            size="chip"
-            icon={<BlurOn />}
-            label={t('Blur background')}
-            pressed={blurOn}
-            tone={blurOn ? 'active' : 'default'}
-            disabled={effectsDisabled}
-            onClick={props.onToggleBlur}
-          >
-            {t('Blur background')}
-          </ToolbarButton>
-          <ToolbarButton
-            id="backgrounds-and-effects-button"
-            size="chip"
-            icon={<AutoAwesome />}
-            label={t('Backgrounds and effects')}
-            onClick={props.onOpenEffects}
-          >
-            {t('Backgrounds and effects')}
-          </ToolbarButton>
-        </>
+        <ToolbarButton
+          id="backgrounds-and-effects-button"
+          size="chip"
+          icon={<AutoAwesome />}
+          label={t('Backgrounds and effects')}
+          onClick={props.onOpenEffects}
+        >
+          {t('Backgrounds and effects')}
+        </ToolbarButton>
       )}
       <ToolbarButton
         size="chip"
