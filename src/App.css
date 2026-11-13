@@ -108,9 +108,10 @@ form {
   overflow: hidden;
   left: 0;
   width: 100%;
-  height: calc(100vh - 80px);
+  /* 92px = FOOTER_HEIGHT in src/constants/layout.ts (MeetingPage sets the height from it too) */
+  height: calc(100vh - 92px);
   /* Mobile browsers count the hidden address bar in 100vh; dvh is the visible height */
-  height: calc(100dvh - 80px);
+  height: calc(100dvh - 92px);
   display: flex;
   flex-wrap: wrap;
   justify-content: center;

@@ -1,5 +1,6 @@
 import { Theme, SxProps } from '@mui/material/styles';
 import { radii, shadows, themeColors } from 'truetime-ui';
+import { FOOTER_HEIGHT } from '../constants/layout';
 
 // Type for drawer style return object
 interface DrawerStyleObject {
@@ -27,7 +28,7 @@ export function getRed5DrawerStyle(
       padding: 12,
       background: 'transparent',
       width: 360,
-      height: 'calc(100dvh - 80px)',
+      height: `calc(100dvh - ${FOOTER_HEIGHT}px)`,
       [theme.breakpoints.down('sm')]: {
         width: '100%',
         padding: 0,

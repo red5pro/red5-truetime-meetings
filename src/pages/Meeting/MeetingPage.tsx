@@ -20,11 +20,11 @@ import { useKeyboardShortcuts } from '../../hooks/useKeyboardShortcuts.ts';
 import { GallerySize, MeetingPageProps, SubscribedParticipant } from './types.ts';
 import { debounce } from 'lodash';
 import { getRuntimeConfig } from '../../utils/configStore';
+import { FOOTER_HEIGHT } from '../../constants/layout';
 
 // Constants
 
 const AUTO_LAYOUT_PARTICIPANT_LIMIT = 8;
-const FOOTER_HEIGHT = 80;
 const CAPTIONS_PANEL_HEIGHT_DESKTOP = 240;
 const CAPTIONS_PANEL_HEIGHT_MOBILE = 180;
 const PHONE_LANDSCAPE_QUERY =

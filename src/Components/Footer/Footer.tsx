@@ -6,7 +6,13 @@ import { useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { isMobile, isTablet } from 'react-device-detect';
 import { isNull } from 'lodash';
-import { ControlBar, controlBar, type Devices } from 'truetime-ui';
+import { ControlBar, type Devices } from 'truetime-ui';
+import {
+  CONTROL_BAR_HEIGHT,
+  FOOTER_HEIGHT,
+  FOOTER_PADDING_BOTTOM,
+  FOOTER_PADDING_TOP,
+} from '../../constants/layout';
 import InfoButton from './Components/InfoButton.tsx';
 import MicButton from './Components/MicButton.tsx';
 import CameraButton from './Components/CameraButton.tsx';
@@ -129,17 +135,13 @@ interface FooterProps {
   streamName?: string;
 }
 
-/** Height the meeting layout leaves free for the footer (see FOOTER_HEIGHT in MeetingPage). */
-const FOOTER_HEIGHT = 80;
-const BAR_HEIGHT = controlBar.buttonHeight + 2 * controlBar.padding;
-
 const FooterBar = styled('footer')(({ theme }: { theme: Theme }) => ({
   position: 'fixed',
   bottom: 0,
   left: 0,
   width: '100%',
   zIndex: 101,
-  padding: theme.spacing(0.5, 2),
+  padding: `${FOOTER_PADDING_TOP}px ${theme.spacing(2)} ${FOOTER_PADDING_BOTTOM}px`,
   display: 'flex',
   // The tray grows the call controls upwards; keep the side groups on the controls' bottom edge
   alignItems: 'flex-end',
@@ -336,7 +338,7 @@ function Footer(props: FooterProps) {
           minWidth: 0,
           display: wide ? 'flex' : 'none',
           alignItems: 'center',
-          height: BAR_HEIGHT,
+          height: CONTROL_BAR_HEIGHT,
         }}
       >
         <TimeZone />

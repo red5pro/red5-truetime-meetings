@@ -25,6 +25,7 @@ import {
 } from '@mui/icons-material';
 import { alpha, useTheme, styled, Theme } from '@mui/material/styles';
 import { radii, themeColors } from 'truetime-ui';
+import { FOOTER_HEIGHT } from '../constants/layout';
 
 // Interfaces
 interface Caption {
@@ -67,7 +68,6 @@ interface CaptionTextProps {
 
 // The gallery leaves FOOTER_HEIGHT + PANEL_SPACE for the panel (see MeetingPage); it floats inside
 // that space with the same inset as the video tiles (8px), so its edges line up with theirs
-const FOOTER_HEIGHT = 80;
 const PANEL_SPACE = 240;
 const PANEL_SPACE_MOBILE = 180;
 const INSET = 8;
