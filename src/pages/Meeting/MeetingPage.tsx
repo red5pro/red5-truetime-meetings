@@ -625,7 +625,6 @@ const MeetingPage = React.memo<MeetingPageProps>((props) => {
         openAllParticipantsPiP={openAllParticipantsPiP}
         closePiP={closePiP}
         allParticipants={allParticipants}
-        // @ts-expect-error - prop type mismatch with legacy component props
         talkers={props.talkers}
         streamName={props.streamName}
         captionsVisible={props?.closedCaptions.captionsVisible}

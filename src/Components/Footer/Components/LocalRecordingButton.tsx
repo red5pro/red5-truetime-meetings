@@ -1,8 +1,8 @@
-import React from 'react';
-import Button from '@mui/material/Button';
-import { SvgIcon } from '../../SvgIcon';
-import { Tooltip, Box } from '@mui/material';
+import { Box } from '@mui/material';
+import { keyframes } from '@mui/material/styles';
 import { useTranslation } from 'react-i18next';
+import { ToolbarButton, themeColors } from 'truetime-ui';
+import { SvgIcon } from '../../SvgIcon';
 
 interface LocalRecordingButtonProps {
   open?: boolean;
@@ -10,54 +10,43 @@ interface LocalRecordingButtonProps {
   isActive?: boolean;
 }
 
+const pulse = keyframes`
+  0%, 100% { transform: scale(0.95); opacity: 0.8; }
+  50% { transform: scale(1.1); opacity: 1; }
+`;
+
 function LocalRecordingButton(props: LocalRecordingButtonProps) {
   const { t } = useTranslation();
-  const [_, setHovered] = React.useState<boolean>(false);
 
   return (
-    <Tooltip title={t('Local Recording Status')} placement="top">
-      <Box sx={{ position: 'relative' }}>
-        <Button
-          id="local-recording-button"
-          variant="text"
-          onClick={() => props?.onClick?.(!props?.open)}
-          sx={{ ml: 0.5, px: 1, py: 1.5, minWidth: 'unset' }}
-          onMouseEnter={() => setHovered(true)}
-          onMouseLeave={() => setHovered(false)}
-        >
-          <SvgIcon
-            size={24}
-            viewBox="0 0 500 500"
-            name="camera"
-            color={props.isActive ? '#FF4D4D' : '#FFF'}
-          />
-        </Button>
-        {props.isActive && (
-          <Box
-            sx={{
-              position: 'absolute',
-              top: 10,
-              right: 5,
-              width: 8,
-              height: 8,
-              borderRadius: '50%',
-              backgroundColor: '#FF4D4D',
-              border: '2px solid #000',
-              animation: 'pulse 1.5s infinite',
-            }}
-          />
-        )}
-        <style>
-          {`
-                        @keyframes pulse {
-                            0% { transform: scale(0.95); opacity: 0.8; }
-                            50% { transform: scale(1.1); opacity: 1; }
-                            100% { transform: scale(0.95); opacity: 0.8; }
-                        }
-                    `}
-        </style>
-      </Box>
-    </Tooltip>
+    <Box sx={{ position: 'relative', display: 'inline-flex' }}>
+      <ToolbarButton
+        id="local-recording-button"
+        icon={<SvgIcon size={24} viewBox="0 0 500 500" name="camera" color="currentColor" />}
+        label={t('Local Recording Status')}
+        pressed={Boolean(props.open)}
+        tone={props.open ? 'active' : 'ghost'}
+        onClick={() => props.onClick?.(!props.open)}
+      />
+      {props.isActive && (
+        <Box
+          aria-hidden
+          sx={(theme) => ({
+            position: 'absolute',
+            top: 10,
+            right: 10,
+            width: 10,
+            height: 10,
+            borderRadius: '50%',
+            backgroundColor: themeColors(theme).error,
+            border: `2px solid ${themeColors(theme).surfaceRaised}`,
+            pointerEvents: 'none',
+            animation: `${pulse} 1.5s infinite`,
+            '@media (prefers-reduced-motion: reduce)': { animation: 'none' },
+          })}
+        />
+      )}
+    </Box>
   );
 }
 

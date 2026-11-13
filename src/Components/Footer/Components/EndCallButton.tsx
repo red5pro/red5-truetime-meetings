@@ -1,9 +1,6 @@
-import { SvgIcon } from '../../SvgIcon';
-import { Tooltip } from '@mui/material';
 import { useTranslation } from 'react-i18next';
-import { useTheme } from '@mui/material/styles';
-// @ts-expect-error - legacy component has no proper type exports
-import { CustomizedBtn, rectangularStyle } from '../../CustomizedBtn.tsx';
+import { ToolbarButton } from 'truetime-ui';
+import { SvgIcon } from '../../SvgIcon';
 
 interface EndCallButtonProps {
   onLeaveRoom?: () => void;
@@ -13,27 +10,15 @@ interface EndCallButtonProps {
 
 function EndCallButton(props: EndCallButtonProps) {
   const { t } = useTranslation();
-  const theme = useTheme();
-
   return (
-    <Tooltip title={t('Leave call')} placement="top">
-      <CustomizedBtn
-        id="leave-room-button"
-        sx={rectangularStyle}
-        onClick={props?.onLeaveRoom}
-        glass={props?.glass}
-        className={props?.footer ? 'footer-icon-button' : ''}
-        variant="contained"
-        color="error"
-      >
-        <SvgIcon
-          size={24}
-          viewBox="0 0 500 500"
-          name="end-call"
-          color={theme.palette.themeColor[99]} // Pure white from theme
-        />
-      </CustomizedBtn>
-    </Tooltip>
+    <ToolbarButton
+      id="leave-room-button"
+      icon={<SvgIcon size={24} viewBox="0 0 500 500" name="end-call" color="currentColor" />}
+      label={t('Leave call')}
+      tone="danger"
+      size="wide"
+      onClick={props.onLeaveRoom}
+    />
   );
 }
 

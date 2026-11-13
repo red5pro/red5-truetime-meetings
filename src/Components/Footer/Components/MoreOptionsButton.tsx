@@ -5,16 +5,16 @@ import { useTheme } from '@mui/material/styles';
 import MenuItem from '@mui/material/MenuItem';
 import SettingsDialog from './SettingsDialog.tsx';
 import { LayoutSettingsDialog } from './LayoutSettingsDialog.tsx';
-import { ListItemIcon, ListItemText, Tooltip } from '@mui/material';
+import { ListItemIcon, ListItemText } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 import GeneralSettingsDialog from './GeneralSettingsDialog.tsx';
 import { isMobile, isTablet } from 'react-device-detect';
 import i18n from 'i18next';
 import { ThemeList } from '../../../constants/themeList.js';
 import { ThemeContext } from '../../../contexts/ThemeContext';
-import { CustomizedBtn, rectangularStyle } from '../../CustomizedBtn.tsx';
+import { ToolbarButton } from 'truetime-ui';
 import log from 'loglevel';
-import { ClosedCaption, ClosedCaptionDisabled } from '@mui/icons-material';
+import { ClosedCaption, ClosedCaptionDisabled, MoreVert } from '@mui/icons-material';
 import type { Devices } from 'truetime-ui';
 import { getRuntimeConfig } from '../../../utils/configStore';
 
@@ -125,9 +125,6 @@ function MoreOptionsButton(props: MoreOptionsButtonProps) {
   };
 
   // Determine icon color based on button state
-  const getMainIconColor = (): string => {
-    return theme.palette.themeColor[99]; // Pure white for both states
-  };
 
   // Get menu icon color
   const getMenuIconColor = (): string => {
@@ -222,22 +219,17 @@ function MoreOptionsButton(props: MoreOptionsButtonProps) {
         currentTheme={currentTheme}
         switchTheme={switchTheme}
       />
-      <Tooltip title={t('More options')} placement="top">
-        <CustomizedBtn
-          className={props?.footer ? 'footer-icon-button' : ''}
-          id="more-button"
-          glass={props?.glass}
-          sx={rectangularStyle}
-          variant="contained"
-          color={open ? 'primary' : 'secondary'}
-          aria-controls={open ? 'demo-positioned-menu' : undefined}
-          aria-haspopup="true"
-          aria-expanded={open ? 'true' : undefined}
-          onClick={handleClick}
-        >
-          <SvgIcon size={24} viewBox="0 0 500 500" name={'option'} color={getMainIconColor()} />
-        </CustomizedBtn>
-      </Tooltip>
+      <ToolbarButton
+        id="more-button"
+        size="narrow"
+        icon={<MoreVert />}
+        label={t('More options')}
+        tone={open ? 'active' : 'default'}
+        aria-controls={open ? 'basic-menu' : undefined}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        onClick={handleClick}
+      />
       <Menu
         id="basic-menu"
         anchorEl={anchorEl}

@@ -309,6 +309,7 @@ const LobbyPage = React.memo<LobbyPageProps>((props) => {
             onSpeakerChange={speakerSelected}
             isCameraOn={!isMyCamTurnedOff}
             isMicOn={!isMyMicMuted}
+            openOnHover
           />
         </Box>
         <Box sx={{ width: previewWidthSx, maxWidth: '100%', flexShrink: 0 }}>

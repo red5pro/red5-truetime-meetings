@@ -1,11 +1,14 @@
 import React from 'react';
-import Grid from '@mui/material/Grid2';
 import Typography from '@mui/material/Typography';
-import { styled, Theme } from '@mui/material';
-import { Tooltip } from '@mui/material';
-import Button from '@mui/material/Button';
+import { Box } from '@mui/material';
+import { styled, Theme, useTheme } from '@mui/material/styles';
 import PersonAddAlt1Icon from '@mui/icons-material/PersonAddAlt1';
 import PersonRemoveAlt1Icon from '@mui/icons-material/PersonRemoveAlt1';
+import { useParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
+import { isMobile, isTablet } from 'react-device-detect';
+import { isNull } from 'lodash';
+import { ControlBar, ToolbarButton, controlBar, type Devices } from 'truetime-ui';
 import InfoButton from './Components/InfoButton.tsx';
 import MicButton from './Components/MicButton.tsx';
 import CameraButton from './Components/CameraButton.tsx';
@@ -15,18 +18,14 @@ import MessageButton from './Components/MessageButton.tsx';
 import ParticipantListButton from './Components/ParticipantListButton.tsx';
 import EndCallButton from './Components/EndCallButton.tsx';
 import ExternalStreamsButton from './Components/ExternalStreamsButton.tsx';
-
 import TimeZone from './Components/TimeZone.tsx';
-import { useParams } from 'react-router-dom';
-import { isMobile, isTablet } from 'react-device-detect';
 import ReactionsButton from './Components/ReactionsButton.tsx';
 import MoreOptionsButton from './Components/MoreOptionsButton.tsx';
-import { useTheme } from '@mui/material/styles';
 import RaiseHandButton from './Components/RaiseHandButton.tsx';
 import CaptionsButton from './Components/CaptionsButton.tsx';
-import type { Devices } from 'truetime-ui';
 import LocalRecordingButton from './Components/LocalRecordingButton.tsx';
-import { isNull } from 'lodash';
+import SettingsDialog from './Components/SettingsDialog.tsx';
+import { CameraTray, MicTray } from './Components/DeviceTrays.tsx';
 import { getRuntimeConfig } from '../../utils/configStore';
 import type { NoiseSuppressionStatus } from '../../hooks/useNoiseSuppression';
 import type { RecordingSources } from '../../hooks/useRecording';
@@ -40,7 +39,8 @@ interface FooterProps {
   isPlayOnly: boolean;
   effectsDrawerOpen?: boolean;
   handleEffectsOpen?: (open: boolean) => void;
-  handleBackgroundReplacement?: (mode: string) => void;
+  // Takes a virtual background option ({ type, value? }); typed loosely for the legacy buttons
+  handleBackgroundReplacement?: (mode: any) => void;
   microphoneSelected?: (mic: string) => void;
   devices?: Devices;
   selectedCamera?: string;
@@ -121,30 +121,63 @@ interface FooterProps {
   hideExternalStreams?: boolean;
   onAddFakeParticipant?: () => void;
   onRemoveFakeParticipant?: () => void;
+  /** Tile ids of who is talking; ours is `streamName`. */
+  talkers?: string[];
+  streamName?: string;
 }
 
-const getCustomizedGridStyle = (theme: Theme) => {
-  const customizedGridStyle = {
-    backgroundColor: theme.palette.themeColor?.[80],
-    position: 'fixed' as const,
-    bottom: 0,
+/** Height the meeting layout leaves free for the footer (see FOOTER_HEIGHT in MeetingPage). */
+const FOOTER_HEIGHT = 80;
+const BAR_HEIGHT = controlBar.buttonHeight + 2 * controlBar.padding;
+
+const FooterBar = styled('footer')(({ theme }: { theme: Theme }) => ({
+  position: 'fixed',
+  bottom: 0,
+  left: 0,
+  width: '100%',
+  zIndex: 101,
+  padding: theme.spacing(0.5, 2),
+  display: 'flex',
+  // The tray grows the call controls upwards; keep the side groups on the controls' bottom edge
+  alignItems: 'flex-end',
+  gap: theme.spacing(2),
+  // Only the bottom band is footer; above it the tray floats over the video and the rest of the
+  // footer's box lets clicks through to the tiles
+  pointerEvents: 'none',
+  '& > *': { pointerEvents: 'auto' },
+  '&::before': {
+    content: '""',
+    position: 'absolute',
     left: 0,
-    padding: 16,
-    width: '100%',
-    zIndex: 101,
-  };
+    right: 0,
+    bottom: 0,
+    height: FOOTER_HEIGHT,
+    backgroundColor: theme.palette.themeColor?.[80],
+    zIndex: -1,
+  },
+}));
 
-  return customizedGridStyle;
-};
+type TrayKind = 'camera' | 'mic';
 
-const CustomizedGrid = styled(Grid)(({ theme }: { theme: Theme }) => getCustomizedGridStyle(theme));
+const TRAY_ID = 'call-controls-tray';
 
 function Footer(props: FooterProps) {
   const { id } = useParams<{ id: string }>();
   const theme = useTheme();
+  const { t } = useTranslation();
   const mobileBreakpoint = 1000;
   const [windowWidth, setWindowWidth] = React.useState(window.innerWidth);
   const isExternalStreamsEnabled = getRuntimeConfig().VITE_ENABLE_EXTERNAL_STREAMS === 'true';
+  const wide = windowWidth > mobileBreakpoint;
+
+  // Which device tray shows above the call controls. `trayKind` outlives `trayOpen` so the tray
+  // keeps its content while it collapses.
+  const [trayOpen, setTrayOpen] = React.useState(false);
+  const [trayKind, setTrayKind] = React.useState<TrayKind>('camera');
+  const [settingsDialog, setSettingsDialog] = React.useState<{ open: boolean; focus: string }>({
+    open: false,
+    focus: 'camera',
+  });
 
   React.useEffect(() => {
     const handleResize = () => {
@@ -158,6 +191,36 @@ function Footer(props: FooterProps) {
     };
   }, []);
 
+  const toggleTray = (kind: TrayKind) => {
+    if (trayOpen && trayKind === kind) {
+      setTrayOpen(false);
+    } else {
+      setTrayKind(kind);
+      setTrayOpen(true);
+    }
+  };
+
+  const closeTray = () => {
+    setTrayOpen(false);
+    document.getElementById(`${trayKind === 'camera' ? 'camera' : 'mic'}-button-options`)?.focus();
+  };
+
+  const openSettings = (focus: string) => {
+    setTrayOpen(false);
+    setSettingsDialog({ open: true, focus });
+  };
+
+  const toggleBlur = () => {
+    const blurOn =
+      props.selectedBackgroundMode === 'blur' || props.selectedBackgroundMode === 'slight-blur';
+    props.handleBackgroundReplacement?.({ type: blurOn ? 'none' : 'blur' });
+  };
+
+  const openEffects = () => {
+    setTrayOpen(false);
+    props.handleEffectsOpen?.(true);
+  };
+
   const handleLeaveRoom = () => {
     if (props.isLocalRecordingActive) {
       props.stopLocalRecording?.();
@@ -165,32 +228,152 @@ function Footer(props: FooterProps) {
     props.setLeftTheRoom?.(true);
   };
 
+  const isTalking = Boolean(props.streamName && props.talkers?.includes(props.streamName));
+
+  const tray =
+    trayKind === 'camera' ? (
+      <CameraTray
+        videoInputs={props.devices?.videoInputs}
+        selectedCamera={props.selectedCamera}
+        onCameraChange={(camera: string) => props.cameraSelected?.(camera)}
+        isCamTurnedOff={props.isMyCamTurnedOff}
+        backgroundMode={props.selectedBackgroundMode}
+        onToggleBlur={toggleBlur}
+        onOpenEffects={openEffects}
+        onOpenSettings={() => openSettings('camera')}
+      />
+    ) : (
+      <MicTray
+        audioInputs={props.devices?.audioInputs}
+        audioOutputs={props.devices?.audioOutputs}
+        selectedMicrophone={props.selectedMicrophone}
+        onMicrophoneChange={(mic: string) => props.microphoneSelected?.(mic)}
+        selectedSpeaker={props.selectedSpeaker}
+        onSpeakerChange={(speaker: string) => props.speakerSelected?.(speaker)}
+        isMicMuted={props.isMyMicMuted}
+        noiseSuppressionEnabled={props.noiseSuppressionEnabled}
+        noiseSuppressionStatus={props.noiseSuppressionStatus}
+        onNoiseSuppressionChange={props.toggleNoiseSuppression}
+        onOpenSettings={() => openSettings('audio')}
+      />
+    );
+
   return (
-    <CustomizedGrid
-      container
-      alignItems="center"
-      justifyContent={windowWidth > mobileBreakpoint ? 'space-between' : 'center'}
-    >
-      <Grid sx={{ display: windowWidth > mobileBreakpoint ? 'block' : 'none' }}>
-        <Grid container alignItems="center">
-          <TimeZone />
-          <Typography
-            color={theme.palette.text.primary}
-            style={{ marginLeft: '6px', marginRight: '6px' }}
-            variant="body1"
-          >
-            |
-          </Typography>
-          <Typography color={theme.palette.text.primary} variant="body1">
-            {id}
-          </Typography>
-        </Grid>
-      </Grid>
+    <FooterBar>
+      <SettingsDialog
+        open={settingsDialog.open}
+        onClose={() => setSettingsDialog((current) => ({ ...current, open: false }))}
+        selectFocus={settingsDialog.focus}
+        devices={props.devices}
+        selectedCamera={props.selectedCamera}
+        cameraSelected={props.cameraSelected}
+        selectedMicrophone={props.selectedMicrophone}
+        microphoneSelected={props.microphoneSelected}
+        selectedSpeaker={props.selectedSpeaker}
+        speakerSelected={props.speakerSelected}
+        selectedBackgroundMode={props.selectedBackgroundMode}
+        setSelectedBackgroundMode={props.setSelectedBackgroundMode}
+        outgoingBitrate={
+          props.outgoingBitrate !== undefined ? String(props.outgoingBitrate) : undefined
+        }
+        updateOutgoingBitrate={(bitrate: string) => props.updateOutgoingBitrate?.(Number(bitrate))}
+        pushToTalkEnabled={props.pushToTalkEnabled}
+        onPushToTalkToggle={props.onPushToTalkToggle}
+      />
+
+      {/* Meeting time and id */}
+      <Box
+        sx={{
+          flex: 1,
+          minWidth: 0,
+          display: wide ? 'flex' : 'none',
+          alignItems: 'center',
+          height: BAR_HEIGHT,
+        }}
+      >
+        <TimeZone />
+        <Typography color={theme.palette.text.primary} sx={{ mx: 0.75 }} variant="body1">
+          |
+        </Typography>
+        <Typography color={theme.palette.text.primary} variant="body1" noWrap>
+          {id}
+        </Typography>
+      </Box>
 
       {props?.isPlayOnly === false ? (
-        <Grid>
-          <Grid container justifyContent="center" spacing={{ xs: 1, sm: 2 }}>
-            <Grid size="auto">
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'center',
+            flex: wide ? '0 1 auto' : 1,
+            minWidth: 0,
+            pointerEvents: 'none',
+            '& > *': { pointerEvents: 'auto' },
+          }}
+        >
+          <ControlBar
+            label={t('Call controls')}
+            tray={tray}
+            trayOpen={trayOpen}
+            trayId={TRAY_ID}
+            trayLabel={trayKind === 'camera' ? t('Camera options') : t('Microphone options')}
+            onTrayClose={closeTray}
+          >
+            <MicButton
+              isMicMuted={props?.isMyMicMuted}
+              toggleMic={props?.toggleMic}
+              microphoneButtonDisabled={props?.microphoneButtonDisabled}
+              audioInputs={props?.devices?.audioInputs}
+              selectedMicrophone={props?.selectedMicrophone}
+              onMicrophoneChange={(mic: string) => props?.microphoneSelected?.(mic)}
+              optionsOpen={trayOpen && trayKind === 'mic'}
+              optionsControls={TRAY_ID}
+              onOptionsClick={() => toggleTray('mic')}
+              isTalking={isTalking}
+            />
+            <CameraButton
+              isCamTurnedOff={props?.isMyCamTurnedOff}
+              cameraButtonDisabled={props?.cameraButtonDisabled}
+              onTurnOffCamera={props?.checkAndTurnOffLocalCamera}
+              onTurnOnCamera={props?.checkAndTurnOnLocalCamera}
+              videoInputs={props?.devices?.videoInputs}
+              selectedCamera={props?.selectedCamera}
+              onCameraChange={(cam: string) => props?.cameraSelected?.(cam)}
+              optionsOpen={trayOpen && trayKind === 'camera'}
+              optionsControls={TRAY_ID}
+              onOptionsClick={() => toggleTray('camera')}
+            />
+
+            {!isMobile && !isTablet && wide ? (
+              <ShareScreenButton
+                isScreenShared={props?.isScreenShared}
+                handleStartScreenShare={() => props?.handleStartScreenShare?.()}
+                handleStopScreenShare={() => props?.handleStopScreenShare?.()}
+              />
+            ) : null}
+
+            {wide ? (
+              <ReactionsButton
+                showEmojis={props?.showEmojis}
+                setShowEmojis={(showEmojis: boolean) => props?.setShowEmojis?.(showEmojis)}
+              />
+            ) : null}
+
+            {wide ? (
+              <CaptionsButton
+                captionsVisible={props?.captionsVisible}
+                onToggleCaptions={props?.onToggleCaptions}
+              />
+            ) : null}
+
+            {wide ? (
+              <RaiseHandButton
+                isRaiseHand={props?.isRaiseHand}
+                setIsRaiseHand={(isRaiseHand: boolean) => props?.setIsRaiseHand?.(isRaiseHand)}
+              />
+            ) : null}
+
+            {wide ? (
               <OptionButton
                 footer={true}
                 glass={props?.glass}
@@ -252,247 +435,116 @@ function Footer(props: FooterProps) {
                 transcriptionDrawerOpen={props?.transcriptionDrawerOpen}
                 handleTranscriptionDrawerOpen={props?.handleTranscriptionDrawerOpen}
               />
-            </Grid>
+            ) : (
+              <MoreOptionsButton
+                glass={props?.glass}
+                footer={true}
+                isPlayOnly={props?.isPlayOnly}
+                isScreenShared={props?.isScreenShared}
+                handleStartScreenShare={props?.handleStartScreenShare}
+                handleStopScreenShare={props?.handleStopScreenShare}
+                showEmojis={props?.showEmojis}
+                setShowEmojis={(showEmojis: boolean) => props?.setShowEmojis?.(showEmojis)}
+                messageDrawerOpen={props?.messageDrawerOpen}
+                toggleSetNumberOfUnreadMessages={(numberOfUnreadMessages?: number) =>
+                  props?.toggleSetNumberOfUnreadMessages?.(numberOfUnreadMessages)
+                }
+                handleMessageDrawerOpen={(open: boolean) => props?.handleMessageDrawerOpen?.(open)}
+                participantListDrawerOpen={props?.participantListDrawerOpen}
+                handleBackgroundReplacement={props.handleBackgroundReplacement}
+                microphoneSelected={(mic: string) => props?.microphoneSelected?.(mic)}
+                selectedSpeaker={props?.selectedSpeaker}
+                speakerSelected={(speaker: string) => props?.speakerSelected?.(speaker)}
+                devices={props?.devices}
+                updateDevicesList={props?.updateDevicesList}
+                selectedCamera={props?.selectedCamera}
+                cameraSelected={(camera: string) => props?.cameraSelected?.(camera)}
+                selectedMicrophone={props?.selectedMicrophone}
+                selectedBackgroundMode={props?.selectedBackgroundMode}
+                setSelectedBackgroundMode={(mode: string) =>
+                  props?.setSelectedBackgroundMode?.(mode)
+                }
+                globals={props?.globals}
+                handleParticipantListOpen={(open: boolean) =>
+                  props?.handleParticipantListOpen?.(open)
+                }
+                //@ts-expect-error - prop type mismatch with legacy component props
+                outgoingBitrate={props?.outgoingBitrate}
+                //@ts-expect-error - callback param type mismatch with legacy types
+                updateOutgoingBitrate={(bitrate: number) => props?.updateOutgoingBitrate?.(bitrate)}
+                captionsVisible={props?.captionsVisible}
+                onToggleCaptions={props?.onToggleCaptions}
+                isRaiseHand={props?.isRaiseHand}
+                setIsRaiseHand={(isRaiseHand: boolean) => props?.setIsRaiseHand?.(isRaiseHand)}
+                infoDrawerOpen={props?.infoDrawerOpen}
+                handleInfoDrawerOpen={(infoDrawerOpen: boolean) =>
+                  props?.handleInfoDrawerOpen?.(infoDrawerOpen)
+                }
+                transcriptionDrawerOpen={props?.transcriptionDrawerOpen}
+                handleTranscriptionDrawerOpen={(open: boolean) =>
+                  props?.handleTranscriptionDrawerOpen?.(open)
+                }
+                externalStreamsDrawerOpen={props?.externalStreamsDrawerOpen}
+                handleExternalStreamsDrawerOpen={props?.handleExternalStreamsDrawerOpen}
+                hideExternalStreams={!isExternalStreamsEnabled}
+              />
+            )}
 
-            {props?.isPlayOnly === false ? (
-              <Grid size="auto">
-                <CameraButton
-                  rounded={!props?.isMyCamTurnedOff}
-                  glass={props?.glass}
-                  showCameraOptions={true}
-                  footer={true}
-                  isCamTurnedOff={props?.isMyCamTurnedOff}
-                  cameraButtonDisabled={props?.cameraButtonDisabled}
-                  onTurnOffCamera={props?.checkAndTurnOffLocalCamera}
-                  onTurnOnCamera={props?.checkAndTurnOnLocalCamera}
-                  videoInputs={props?.devices?.videoInputs}
-                  selectedCamera={props?.selectedCamera}
-                  onCameraChange={(cam: string) => props?.cameraSelected?.(cam)}
-                />
-              </Grid>
-            ) : null}
-
-            {props?.isPlayOnly === false ? (
-              <Grid size="auto">
-                <MicButton
-                  rounded={!props?.isMyMicMuted}
-                  glass={props?.glass}
-                  showMicrophoneOptions={true}
-                  footer={true}
-                  isMicMuted={props?.isMyMicMuted}
-                  toggleMic={props?.toggleMic}
-                  microphoneButtonDisabled={props?.microphoneButtonDisabled}
-                  audioInputs={props?.devices?.audioInputs}
-                  selectedMicrophone={props?.selectedMicrophone}
-                  onMicrophoneChange={(mic: string) => props?.microphoneSelected?.(mic)}
-                  noiseSuppressionEnabled={props?.noiseSuppressionEnabled}
-                  noiseSuppressionStatus={props?.noiseSuppressionStatus}
-                  onNoiseSuppressionChange={props?.toggleNoiseSuppression}
-                />
-              </Grid>
-            ) : null}
-
-            {props?.isPlayOnly === false &&
-            !isMobile &&
-            !isTablet &&
-            windowWidth > mobileBreakpoint ? (
-              <Grid size="auto">
-                <ShareScreenButton
-                  footer={true}
-                  glass={props?.glass}
-                  rounded={!props?.isScreenShared}
-                  isScreenShared={props?.isScreenShared}
-                  handleStartScreenShare={() => props?.handleStartScreenShare?.()}
-                  handleStopScreenShare={() => props?.handleStopScreenShare?.()}
-                />
-              </Grid>
-            ) : null}
-
-            {windowWidth > mobileBreakpoint ? (
-              <Grid size="auto" style={{ display: '-webkit-inline-box' }}>
-                <ReactionsButton
-                  footer={true}
-                  glass={props?.glass}
-                  rounded={!props?.showEmojis}
-                  showEmojis={props?.showEmojis}
-                  setShowEmojis={(showEmojis: boolean) => props?.setShowEmojis?.(showEmojis)}
-                />
-              </Grid>
-            ) : null}
-
-            {windowWidth > mobileBreakpoint ? (
-              <Grid size="auto" style={{ display: '-webkit-inline-box' }}>
-                <RaiseHandButton
-                  footer={true}
-                  glass={props?.glass}
-                  rounded={!props?.showRaiseHand}
-                  isRaiseHand={props?.isRaiseHand}
-                  setIsRaiseHand={(isRaiseHand: boolean) => props?.setIsRaiseHand?.(isRaiseHand)}
-                />
-              </Grid>
-            ) : null}
-
-            {windowWidth > mobileBreakpoint ? (
-              <Grid size="auto" style={{ display: '-webkit-inline-box' }}>
-                <CaptionsButton
-                  footer={true}
-                  glass={props?.glass}
-                  rounded={!props?.captionsVisible}
-                  captionsVisible={props?.captionsVisible}
-                  onToggleCaptions={props?.onToggleCaptions}
-                />
-              </Grid>
-            ) : null}
-
-            <Grid size="auto">
-              <EndCallButton footer={true} glass={props?.glass} onLeaveRoom={handleLeaveRoom} />
-            </Grid>
-
-            {windowWidth <= mobileBreakpoint ? (
-              <Grid size="auto">
-                <MoreOptionsButton
-                  glass={props?.glass}
-                  footer={true}
-                  isPlayOnly={props?.isPlayOnly}
-                  isScreenShared={props?.isScreenShared}
-                  handleStartScreenShare={props?.handleStartScreenShare}
-                  handleStopScreenShare={props?.handleStopScreenShare}
-                  showEmojis={props?.showEmojis}
-                  setShowEmojis={(showEmojis: boolean) => props?.setShowEmojis?.(showEmojis)}
-                  messageDrawerOpen={props?.messageDrawerOpen}
-                  toggleSetNumberOfUnreadMessages={(numberOfUnreadMessages?: number) =>
-                    props?.toggleSetNumberOfUnreadMessages?.(numberOfUnreadMessages)
-                  }
-                  handleMessageDrawerOpen={(open: boolean) =>
-                    props?.handleMessageDrawerOpen?.(open)
-                  }
-                  participantListDrawerOpen={props?.participantListDrawerOpen}
-                  handleBackgroundReplacement={props.handleBackgroundReplacement}
-                  microphoneSelected={(mic: string) => props?.microphoneSelected?.(mic)}
-                  selectedSpeaker={props?.selectedSpeaker}
-                  speakerSelected={(speaker: string) => props?.speakerSelected?.(speaker)}
-                  //@ts-expect-error - prop type mismatch with legacy component props
-                  devices={props?.devices}
-                  updateDevicesList={props?.updateDevicesList}
-                  selectedCamera={props?.selectedCamera}
-                  cameraSelected={(camera: string) => props?.cameraSelected?.(camera)}
-                  selectedMicrophone={props?.selectedMicrophone}
-                  selectedBackgroundMode={props?.selectedBackgroundMode}
-                  setSelectedBackgroundMode={(mode: string) =>
-                    props?.setSelectedBackgroundMode?.(mode)
-                  }
-                  globals={props?.globals}
-                  handleParticipantListOpen={(open: boolean) =>
-                    props?.handleParticipantListOpen?.(open)
-                  }
-                  //@ts-expect-error - prop type mismatch with legacy component props
-                  outgoingBitrate={props?.outgoingBitrate}
-                  //@ts-expect-error - callback param type mismatch with legacy types
-                  updateOutgoingBitrate={(bitrate: number) =>
-                    props?.updateOutgoingBitrate?.(bitrate)
-                  }
-                  captionsVisible={props?.captionsVisible}
-                  onToggleCaptions={props?.onToggleCaptions}
-                  isRaiseHand={props?.isRaiseHand}
-                  setIsRaiseHand={(isRaiseHand: boolean) => props?.setIsRaiseHand?.(isRaiseHand)}
-                  infoDrawerOpen={props?.infoDrawerOpen}
-                  handleInfoDrawerOpen={(infoDrawerOpen: boolean) =>
-                    props?.handleInfoDrawerOpen?.(infoDrawerOpen)
-                  }
-                  transcriptionDrawerOpen={props?.transcriptionDrawerOpen}
-                  handleTranscriptionDrawerOpen={(open: boolean) =>
-                    props?.handleTranscriptionDrawerOpen?.(open)
-                  }
-                  externalStreamsDrawerOpen={props?.externalStreamsDrawerOpen}
-                  handleExternalStreamsDrawerOpen={props?.handleExternalStreamsDrawerOpen}
-                  hideExternalStreams={!isExternalStreamsEnabled}
-                />
-              </Grid>
-            ) : null}
-          </Grid>
-        </Grid>
+            <EndCallButton onLeaveRoom={handleLeaveRoom} />
+          </ControlBar>
+        </Box>
       ) : null}
 
-      <Grid
-        sx={{ display: windowWidth > mobileBreakpoint ? 'block' : 'none' }}
-        style={{ zIndex: 999999 }}
+      {/* Meeting tools */}
+      <Box
+        sx={{ flex: 1, minWidth: 0, display: wide ? 'flex' : 'none', justifyContent: 'flex-end' }}
       >
-        <Grid container alignItems="center">
-          <Grid size="auto">
-            <InfoButton
-              infoDrawerOpen={props?.infoDrawerOpen}
-              handleInfoDrawerOpen={props?.handleInfoDrawerOpen}
-            />
-          </Grid>
-          <Grid size="auto">
-            <ExternalStreamsButton
-              open={props?.externalStreamsDrawerOpen}
-              onClick={props?.handleExternalStreamsDrawerOpen}
-            />
-          </Grid>
+        <ControlBar label={t('Meeting tools')}>
+          <InfoButton
+            infoDrawerOpen={props?.infoDrawerOpen}
+            handleInfoDrawerOpen={props?.handleInfoDrawerOpen}
+          />
+          <ExternalStreamsButton
+            open={props?.externalStreamsDrawerOpen}
+            onClick={props?.handleExternalStreamsDrawerOpen}
+          />
           {(props?.isLocalRecordingActive || !isNull(props?.localRecordingStatus)) && (
-            <Grid size="auto">
-              <LocalRecordingButton
-                open={props?.localRecordingDrawerOpen}
-                isActive={props?.isLocalRecordingActive}
-                onClick={props?.handleLocalRecordingDrawerOpen}
-              />
-            </Grid>
+            <LocalRecordingButton
+              open={props?.localRecordingDrawerOpen}
+              isActive={props?.isLocalRecordingActive}
+              onClick={props?.handleLocalRecordingDrawerOpen}
+            />
           )}
           {import.meta.env.DEV && (
-            <Grid size="auto">
-              <Tooltip title="Add Fake Participant" placement="top">
-                <Button
-                  variant="text"
-                  onClick={() => props?.onAddFakeParticipant?.()}
-                  sx={{ ml: 0.5, px: 1, py: 1.5, minWidth: 'unset' }}
-                >
-                  <PersonAddAlt1Icon sx={{ color: '#FFF', fontSize: 24 }} />
-                </Button>
-              </Tooltip>
-            </Grid>
+            <ToolbarButton
+              tone="ghost"
+              icon={<PersonAddAlt1Icon />}
+              label="Add Fake Participant"
+              onClick={() => props?.onAddFakeParticipant?.()}
+            />
           )}
           {import.meta.env.DEV && (
-            <Grid size="auto">
-              <Tooltip title="Remove Fake Participant" placement="top">
-                <Button
-                  variant="text"
-                  onClick={() => props?.onRemoveFakeParticipant?.()}
-                  sx={{ ml: 0.5, px: 1, py: 1.5, minWidth: 'unset' }}
-                >
-                  <PersonRemoveAlt1Icon sx={{ color: '#FFF', fontSize: 24 }} />
-                </Button>
-              </Tooltip>
-            </Grid>
+            <ToolbarButton
+              tone="ghost"
+              icon={<PersonRemoveAlt1Icon />}
+              label="Remove Fake Participant"
+              onClick={() => props?.onRemoveFakeParticipant?.()}
+            />
           )}
-          <Grid size="auto">
-            <ParticipantListButton
-              showBackground={false}
-              footer={true}
-              glass={props?.glass}
-              rounded={!props?.participantListDrawerOpen}
-              participantCount={props?.participantCount}
-              participantListDrawerOpen={props?.participantListDrawerOpen}
-              handleParticipantListOpen={(open: boolean) =>
-                props?.handleParticipantListOpen?.(open)
-              }
-            />
-          </Grid>
-          <Grid size="auto">
-            <MessageButton
-              showBackground={false}
-              footer={true}
-              glass={props?.glass}
-              rounded={!props?.messageDrawerOpen}
-              numberOfUnReadMessages={props?.numberOfUnReadMessages}
-              toggleSetNumberOfUnreadMessages={() => props?.toggleSetNumberOfUnreadMessages?.()}
-              messageDrawerOpen={props?.messageDrawerOpen}
-              handleMessageDrawerOpen={(open: boolean) => props?.handleMessageDrawerOpen?.(open)}
-            />
-          </Grid>
-        </Grid>
-      </Grid>
-    </CustomizedGrid>
+          <ParticipantListButton
+            participantCount={props?.participantCount}
+            participantListDrawerOpen={props?.participantListDrawerOpen}
+            handleParticipantListOpen={(open: boolean) => props?.handleParticipantListOpen?.(open)}
+          />
+          <MessageButton
+            numberOfUnReadMessages={props?.numberOfUnReadMessages}
+            toggleSetNumberOfUnreadMessages={() => props?.toggleSetNumberOfUnreadMessages?.()}
+            messageDrawerOpen={props?.messageDrawerOpen}
+            handleMessageDrawerOpen={(open: boolean) => props?.handleMessageDrawerOpen?.(open)}
+          />
+        </ControlBar>
+      </Box>
+    </FooterBar>
   );
 }
 

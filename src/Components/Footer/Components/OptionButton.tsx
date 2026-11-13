@@ -10,7 +10,6 @@ import type { NoiseSuppressionStatus } from '../../../hooks/useNoiseSuppression'
 import {
   ListItemIcon,
   ListItemText,
-  Tooltip,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -28,9 +27,9 @@ import GeneralSettingsDialog from './GeneralSettingsDialog.tsx';
 import { ThemeList } from '../../../constants/themeList.js';
 import { ThemeContext } from '../../../contexts/ThemeContext';
 import i18n from 'i18next';
-import { CustomizedBtn, rectangularStyle } from '../../CustomizedBtn.tsx';
+import { ToolbarButton } from 'truetime-ui';
 import { getGlassMenuStyle } from '../../../styles/themeUtil.js';
-import { PictureInPicture, PictureInPictureAlt } from '@mui/icons-material';
+import { MoreVert, PictureInPicture, PictureInPictureAlt } from '@mui/icons-material';
 import log from 'loglevel';
 import { getRuntimeConfig } from '../../../utils/configStore';
 import { isMobile } from 'react-device-detect';
@@ -191,7 +190,6 @@ function OptionButton(props: OptionButtonProps) {
   React.useEffect(() => {
     localStorage.setItem('recordSeparatelyChecked', String(recordSeparatelyChecked));
   }, [recordSeparatelyChecked]);
-  const [_hovered, setHovered] = React.useState<boolean>(false);
   const theme = useTheme();
   const themeContext = React.useContext(ThemeContext);
 
@@ -302,11 +300,6 @@ function OptionButton(props: OptionButtonProps) {
       text: `Picture-in-Picture`,
       disabled: false,
     };
-  };
-
-  // Determine icon color based on button state
-  const getMainIconColor = (): string => {
-    return theme.palette.themeColor[99]; // Pure white for both states
   };
 
   // Get menu icon color
@@ -561,24 +554,17 @@ function OptionButton(props: OptionButtonProps) {
         </DialogActions>
       </Dialog>
 
-      <Tooltip title={t('Options')} placement="top">
-        <CustomizedBtn
-          className={props?.footer ? 'footer-icon-button' : ''}
-          id="settings-button"
-          variant="contained"
-          glass={props?.glass}
-          sx={rectangularStyle}
-          color={open ? 'primary' : 'secondary'}
-          aria-controls={open ? 'demo-positioned-menu' : undefined}
-          aria-haspopup="true"
-          aria-expanded={open ? 'true' : undefined}
-          onMouseEnter={() => setHovered(true)}
-          onMouseLeave={() => setHovered(false)}
-          onClick={handleClick}
-        >
-          <SvgIcon size={24} viewBox="0 0 500 500" name={'settings'} color={getMainIconColor()} />
-        </CustomizedBtn>
-      </Tooltip>
+      <ToolbarButton
+        id="settings-button"
+        size="narrow"
+        icon={<MoreVert />}
+        label={t('More options')}
+        tone={open ? 'active' : 'default'}
+        aria-controls={open ? 'basic-menu' : undefined}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        onClick={handleClick}
+      />
       <Menu
         id="basic-menu"
         anchorEl={anchorEl}

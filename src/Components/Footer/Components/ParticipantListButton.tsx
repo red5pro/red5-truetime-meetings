@@ -1,10 +1,6 @@
-import React from 'react';
-import { SvgIcon } from '../../SvgIcon';
-import { Tooltip } from '@mui/material';
 import { useTranslation } from 'react-i18next';
-// @ts-expect-error - legacy component has no proper type exports
-import { CustomizedBtn, roundStyle } from '../../CustomizedBtn.tsx';
-import Button from '@mui/material/Button';
+import { ToolbarButton } from 'truetime-ui';
+import { SvgIcon } from '../../SvgIcon';
 
 interface ParticipantListButtonProps {
   showBackground?: boolean;
@@ -18,44 +14,20 @@ interface ParticipantListButtonProps {
 
 function ParticipantListButton(props: ParticipantListButtonProps) {
   const { t } = useTranslation();
-  const [_, setHovered] = React.useState<boolean>(false);
-
-  const handleButtonClick = () => {
-    props?.handleParticipantListOpen?.(!props?.participantListDrawerOpen);
-  };
+  const open = Boolean(props.participantListDrawerOpen);
+  const count = props.participantCount;
 
   return (
-    <Tooltip title={t('Participant List')} placement="top">
-      {props?.showBackground ? (
-        <CustomizedBtn
-          onClick={handleButtonClick}
-          id="participant-list-button"
-          variant="contained"
-          glass={props?.glass}
-          sx={roundStyle}
-          className={props?.footer ? 'footer-icon-button' : ''}
-          color={props?.participantListDrawerOpen ? 'primary' : 'secondary'}
-        >
-          <SvgIcon size={24} viewBox="0 0 500 500" color="#FFF" name="participants" />
-          <span style={{ color: '#FFF' }}>{props?.participantCount}</span>
-        </CustomizedBtn>
-      ) : (
-        <Button
-          id="participant-list-button"
-          variant="text"
-          aria-controls={props?.participantListDrawerOpen ? 'participant-list-menu' : undefined}
-          aria-haspopup="true"
-          aria-expanded={props?.participantListDrawerOpen ? 'true' : undefined}
-          onClick={handleButtonClick}
-          sx={{ ml: 0.5, px: 1, py: 1.5, minWidth: 'unset' }}
-          onMouseEnter={() => setHovered(true)}
-          onMouseLeave={() => setHovered(false)}
-        >
-          <SvgIcon size={24} viewBox="0 0 500 500" color="#FFF" name="participants" />
-          <span style={{ color: '#FFF' }}>{props?.participantCount}</span>
-        </Button>
-      )}
-    </Tooltip>
+    <ToolbarButton
+      id="participant-list-button"
+      icon={<SvgIcon size={24} viewBox="0 0 500 500" name="participants" color="currentColor" />}
+      label={count != null ? `${t('Participant List')} (${count})` : t('Participant List')}
+      pressed={open}
+      tone={open ? 'active' : props.showBackground ? 'default' : 'ghost'}
+      onClick={() => props.handleParticipantListOpen?.(!open)}
+    >
+      {count != null ? <span aria-hidden>{count}</span> : undefined}
+    </ToolbarButton>
   );
 }
 
