@@ -108,6 +108,9 @@ interface OptionButtonProps {
   printStatLogs?: boolean;
   noiseSuppressionEnabled?: boolean;
   noiseSuppressionStatus?: NoiseSuppressionStatus;
+  toggleNoiseSuppression?: (enabled: boolean) => void;
+  noiseSuppressionPercent?: number;
+  setNoiseSuppressionPercent?: (percent: number) => void;
   pushToTalkEnabled?: boolean;
   pipSupported?: boolean;
   pipIsOpen?: boolean;
@@ -376,6 +379,11 @@ function OptionButton(props: OptionButtonProps) {
         pushToTalkEnabled={props?.pushToTalkEnabled}
         onPushToTalkToggle={props?.onPushToTalkToggle}
         microphoneSelected={props?.microphoneSelected}
+        noiseSuppressionEnabled={props?.noiseSuppressionEnabled}
+        noiseSuppressionStatus={props?.noiseSuppressionStatus}
+        onNoiseSuppressionToggle={props?.toggleNoiseSuppression}
+        noiseSuppressionPercent={props?.noiseSuppressionPercent}
+        onNoiseSuppressionPercentChange={props?.setNoiseSuppressionPercent}
       />
       <LayoutSettingsDialog
         open={layoutDialogOpen}

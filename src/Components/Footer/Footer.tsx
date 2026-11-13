@@ -50,6 +50,8 @@ interface FooterProps {
   noiseSuppressionEnabled?: boolean;
   noiseSuppressionStatus?: NoiseSuppressionStatus;
   toggleNoiseSuppression?: (enabled: boolean) => void;
+  noiseSuppressionPercent?: number;
+  setNoiseSuppressionPercent?: (percent: number) => void;
   selectedSpeaker?: string;
   speakerSelected?: (speaker: string) => void;
   selectedBackgroundMode?: string;
@@ -301,6 +303,11 @@ function Footer(props: FooterProps) {
         updateOutgoingBitrate={(bitrate: string) => props.updateOutgoingBitrate?.(Number(bitrate))}
         pushToTalkEnabled={props.pushToTalkEnabled}
         onPushToTalkToggle={props.onPushToTalkToggle}
+        noiseSuppressionEnabled={props.noiseSuppressionEnabled}
+        noiseSuppressionStatus={props.noiseSuppressionStatus}
+        onNoiseSuppressionToggle={props.toggleNoiseSuppression}
+        noiseSuppressionPercent={props.noiseSuppressionPercent}
+        onNoiseSuppressionPercentChange={props.setNoiseSuppressionPercent}
       />
 
       {/* Meeting time and id */}
@@ -439,6 +446,9 @@ function Footer(props: FooterProps) {
                 currentIssues={props?.currentIssues}
                 noiseSuppressionEnabled={props?.noiseSuppressionEnabled}
                 noiseSuppressionStatus={props?.noiseSuppressionStatus}
+                toggleNoiseSuppression={props?.toggleNoiseSuppression}
+                noiseSuppressionPercent={props?.noiseSuppressionPercent}
+                setNoiseSuppressionPercent={props?.setNoiseSuppressionPercent}
                 printStatLogs={props?.printStatLogs}
                 setPrintStatLogs={(printStatLogs: boolean) =>
                   props?.setPrintStatLogs?.(printStatLogs)
@@ -461,6 +471,11 @@ function Footer(props: FooterProps) {
             ) : (
               <MoreOptionsButton
                 glass={props?.glass}
+                noiseSuppressionEnabled={props?.noiseSuppressionEnabled}
+                noiseSuppressionStatus={props?.noiseSuppressionStatus}
+                toggleNoiseSuppression={props?.toggleNoiseSuppression}
+                noiseSuppressionPercent={props?.noiseSuppressionPercent}
+                setNoiseSuppressionPercent={props?.setNoiseSuppressionPercent}
                 footer={true}
                 isPlayOnly={props?.isPlayOnly}
                 isScreenShared={props?.isScreenShared}

@@ -17,6 +17,7 @@ import log from 'loglevel';
 import { ClosedCaption, ClosedCaptionDisabled, MoreVert } from '@mui/icons-material';
 import type { Devices } from 'truetime-ui';
 import { getRuntimeConfig } from '../../../utils/configStore';
+import type { NoiseSuppressionStatus } from '../../../hooks/useNoiseSuppression';
 
 interface Globals {
   desiredTileCount?: number;
@@ -24,6 +25,11 @@ interface Globals {
 
 interface MoreOptionsButtonProps {
   footer?: boolean;
+  noiseSuppressionEnabled?: boolean;
+  noiseSuppressionStatus?: NoiseSuppressionStatus;
+  toggleNoiseSuppression?: (enabled: boolean) => void;
+  noiseSuppressionPercent?: number;
+  setNoiseSuppressionPercent?: (percent: number) => void;
   glass?: boolean;
   isPlayOnly?: boolean;
   isScreenShared?: boolean;
@@ -201,6 +207,11 @@ function MoreOptionsButton(props: MoreOptionsButtonProps) {
         setSelectedBackgroundMode={props?.setSelectedBackgroundMode}
         updateOutgoingBitrate={props?.updateOutgoingBitrate}
         onPushToTalkToggle={props?.onPushToTalkToggle}
+        noiseSuppressionEnabled={props?.noiseSuppressionEnabled}
+        noiseSuppressionStatus={props?.noiseSuppressionStatus}
+        onNoiseSuppressionToggle={props?.toggleNoiseSuppression}
+        noiseSuppressionPercent={props?.noiseSuppressionPercent}
+        onNoiseSuppressionPercentChange={props?.setNoiseSuppressionPercent}
       />
       <LayoutSettingsDialog
         open={layoutDialogOpen}

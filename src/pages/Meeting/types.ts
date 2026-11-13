@@ -99,6 +99,8 @@ export interface MeetingPageProps {
   noiseSuppressionEnabled: boolean;
   noiseSuppressionStatus: NoiseSuppressionStatus;
   toggleNoiseSuppression: (enabled: boolean) => void;
+  noiseSuppressionPercent: number;
+  setNoiseSuppressionPercent: (percent: number) => void;
   selectedBackgroundMode: string;
   setSelectedBackgroundMode: (mode: string) => void;
   handleEffectsOpen: () => void;

@@ -144,26 +144,42 @@ export const getInitialPlayOnlyMode = (): boolean => {
 // Percentage of the background noise removed (0-100)
 const DEFAULT_NOISE_SUPPRESSION_PERCENT = 20;
 
-/** Configured share of the background noise to remove, 0-100 */
-export const getNoiseSuppressionPercent = (): number => {
+const clampPercent = (percent: number): number => Math.max(0, Math.min(100, percent));
+
+/** Share of the background noise to remove set in the config (VITE_NOISE_SUPPRESSION_LEVEL), 0-100 */
+export const getDefaultNoiseSuppressionPercent = (): number => {
   const configured = getRuntimeConfig().VITE_NOISE_SUPPRESSION_LEVEL;
   const percent = configured ? Number(configured) : NaN;
-  return Number.isFinite(percent)
-    ? Math.max(0, Math.min(100, percent))
-    : DEFAULT_NOISE_SUPPRESSION_PERCENT;
+  return Number.isFinite(percent) ? clampPercent(percent) : DEFAULT_NOISE_SUPPRESSION_PERCENT;
+};
+
+const NOISE_SUPPRESSION_PERCENT_KEY = 'noiseSuppressionPercent';
+
+/** Share of the background noise to remove, 0-100: the user's choice, or the configured default */
+export const getNoiseSuppressionPercent = (): number => {
+  const saved = Number(localStorage.getItem(NOISE_SUPPRESSION_PERCENT_KEY) ?? NaN);
+  return Number.isFinite(saved) ? clampPercent(saved) : getDefaultNoiseSuppressionPercent();
+};
+
+/** Remember the user's choice of how much background noise to remove (0-100) */
+export const saveNoiseSuppressionPercent = (percent: number): void => {
+  localStorage.setItem(NOISE_SUPPRESSION_PERCENT_KEY, String(clampPercent(percent)));
 };
 
 /**
  * The SDK passes its level straight to DeepFilterNet3 as an attenuation limit in dB (100 = no
- * limit), so 20 would remove 90% of the noise. This turns the configured percentage into dB.
+ * limit), so 20 would remove 90% of the noise. This turns a percentage of noise removed into dB.
  */
-export const getNoiseSuppressionLevel = (): number => {
-  const removed = getNoiseSuppressionPercent();
+export const noiseSuppressionPercentToLevel = (removed: number): number => {
   if (removed >= 100) return 100;
   const db = -20 * Math.log10(1 - removed / 100);
   // DeepFilterNet3 floors the level to whole dB and treats 0 as off, so keep at least 1 dB
   return removed > 0 ? Math.max(1, Math.round(db)) : 0;
 };
+
+/** The suppression level (dB) for the current percentage */
+export const getNoiseSuppressionLevel = (): number =>
+  noiseSuppressionPercentToLevel(getNoiseSuppressionPercent());
 
 // Camera capture resolution for everyone in the room ('360p', '720p' or '1080p').
 // Unset keeps the SDK default (640x360).

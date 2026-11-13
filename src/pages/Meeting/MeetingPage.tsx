@@ -551,6 +551,8 @@ const MeetingPage = React.memo<MeetingPageProps>((props) => {
         noiseSuppressionEnabled={props.noiseSuppressionEnabled}
         noiseSuppressionStatus={props.noiseSuppressionStatus}
         toggleNoiseSuppression={props.toggleNoiseSuppression}
+        noiseSuppressionPercent={props.noiseSuppressionPercent}
+        setNoiseSuppressionPercent={props.setNoiseSuppressionPercent}
         selectedBackgroundMode={props.selectedBackgroundMode}
         setSelectedBackgroundMode={props.setSelectedBackgroundMode}
         effectsDrawerOpen={props.effectsDrawerOpen}

@@ -1,8 +1,10 @@
 // hooks/useNoiseSuppression.ts
 import { useState, useCallback, useEffect } from 'react';
 import {
-  getNoiseSuppressionLevel,
+  getNoiseSuppressionPercent,
   getNoiseSuppressionPreference,
+  noiseSuppressionPercentToLevel,
+  saveNoiseSuppressionPercent,
   saveNoiseSuppressionPreference,
 } from '../utils/conferenceConfig';
 
@@ -49,12 +51,15 @@ export interface UseNoiseSuppressionReturn {
   noiseSuppressionEnabled: boolean;
   noiseSuppressionStatus: NoiseSuppressionStatus;
   toggleNoiseSuppression: (enabled: boolean) => void;
+  /** Share of the background noise removed while it's on, 0-100 (remembered in localStorage). */
+  noiseSuppressionPercent: number;
+  setNoiseSuppressionPercent: (percent: number) => void;
 }
 
 /**
- * Noise suppression on the published microphone: on unless turned off (remembered in
- * localStorage). Turning it off sets the suppression level to 0, which only works once the model
- * runs, so the status says when it can be changed.
+ * Noise suppression on the published microphone: on unless turned off, at a level the user can
+ * choose (both remembered in localStorage). Turning it off sets the suppression level to 0. Changes
+ * only take effect once the model runs, so the status says when they can be made.
  */
 export const useNoiseSuppression = (conferenceClient: {
   readonly current: object | null;
@@ -64,6 +69,16 @@ export const useNoiseSuppression = (conferenceClient: {
   );
   const [noiseSuppressionStatus, setNoiseSuppressionStatus] =
     useState<NoiseSuppressionStatus>('idle');
+  const [noiseSuppressionPercent, setPercent] = useState<number>(getNoiseSuppressionPercent);
+
+  const applyLevel = useCallback(
+    (level: number) => {
+      (
+        conferenceClient.current as SuppressorOwner | null
+      )?.mediaStreamManager?.setNoiseSuppressionLevel?.(level);
+    },
+    [conferenceClient],
+  );
 
   useEffect(() => {
     if (noiseSuppressionStatus === 'ready') return;
@@ -77,12 +92,26 @@ export const useNoiseSuppression = (conferenceClient: {
     (enabled: boolean): void => {
       setNoiseSuppressionEnabled(enabled);
       saveNoiseSuppressionPreference(enabled);
-      (
-        conferenceClient.current as SuppressorOwner | null
-      )?.mediaStreamManager?.setNoiseSuppressionLevel?.(enabled ? getNoiseSuppressionLevel() : 0);
+      applyLevel(enabled ? noiseSuppressionPercentToLevel(noiseSuppressionPercent) : 0);
     },
-    [conferenceClient],
+    [applyLevel, noiseSuppressionPercent],
   );
 
-  return { noiseSuppressionEnabled, noiseSuppressionStatus, toggleNoiseSuppression };
+  const setNoiseSuppressionPercent = useCallback(
+    (percent: number): void => {
+      setPercent(percent);
+      saveNoiseSuppressionPercent(percent);
+      // While it's off the level stays 0; the new percentage applies when it's turned back on
+      if (noiseSuppressionEnabled) applyLevel(noiseSuppressionPercentToLevel(percent));
+    },
+    [applyLevel, noiseSuppressionEnabled],
+  );
+
+  return {
+    noiseSuppressionEnabled,
+    noiseSuppressionStatus,
+    toggleNoiseSuppression,
+    noiseSuppressionPercent,
+    setNoiseSuppressionPercent,
+  };
 };
