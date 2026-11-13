@@ -1,57 +1,46 @@
 import * as React from 'react';
-import { alpha } from '@mui/material/styles';
-
+import { alpha, type Theme } from '@mui/material/styles';
 import {
   Box,
-  Button,
   Dialog,
   DialogContent,
   DialogTitle,
-  FormControlLabel,
-  Grid,
-  Typography,
+  IconButton,
   useMediaQuery,
   useTheme,
-  Card,
-  CardContent,
-  Chip,
-  LinearProgress,
-  Divider,
-  List,
-  ListItem,
-  ListItemText,
-  ListItemIcon,
-  Checkbox,
 } from '@mui/material';
-
+import {
+  AcUnit,
+  CallMade,
+  CallReceived,
+  CheckCircleOutline,
+  Close,
+  GraphicEq,
+  Hub,
+  NoiseAware,
+  ScreenShare,
+  Speed,
+  TrendingDown,
+  VolumeOff,
+  WarningAmber,
+} from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
-import { Card as TrueTimeCard, Spinner, StatusBadge, Text, type StatusTone } from 'truetime-ui';
-import { SvgIcon } from '../../SvgIcon.js';
+import {
+  Card,
+  Checkbox,
+  Heading,
+  Spinner,
+  StatusBadge,
+  Text,
+  TruncatedText,
+  monoText,
+  radii,
+  themeColors,
+  type StatusTone,
+} from 'truetime-ui';
 import { getDialogStyle } from '../../../styles/themeUtil.js';
 import type { NoiseSuppressionStatus } from '../../../hooks/useNoiseSuppression';
 import { getNoiseSuppressionPercent } from '../../../utils/conferenceConfig';
-
-interface Red5DialogTitleProps {
-  children: React.ReactNode;
-  onClose?: () => void;
-}
-
-interface QualityIndicatorProps {
-  label: string;
-  score: number;
-  icon: string;
-}
-
-interface ConnectionStatsProps {
-  connectionId: string;
-  stats: ConnectionStatData;
-  connectionType: string;
-  quality?: any;
-}
-
-interface IssuesDisplayProps {
-  issues: Issue[];
-}
 
 interface DiagnosticDialogProps {
   open: boolean;
@@ -64,11 +53,6 @@ interface DiagnosticDialogProps {
   noiseSuppressionStatus?: NoiseSuppressionStatus;
   printStatLogs: boolean;
   setPrintStatLogs: (value: boolean) => void;
-}
-
-interface NoiseSuppressionIndicatorProps {
-  enabled?: boolean;
-  status?: NoiseSuppressionStatus;
 }
 
 interface NetworkScore {
@@ -114,269 +98,355 @@ interface ConnectionStatData {
   };
 }
 
+type Severity = 'critical' | 'warning' | 'info';
+
 interface Issue {
   type: string;
   reason: string;
   statsSample: {
     description: string;
-    severity: 'critical' | 'warning' | 'info';
+    severity: Severity;
     connectionId: string;
   };
 }
 
-const Red5DialogTitle: React.FC<Red5DialogTitleProps> = (props) => {
-  const { children, onClose, ...other } = props;
+// --- Formatting -------------------------------------------------------------------------------
 
+const formatBytes = (bytes?: number): string => {
+  if (!bytes) return '0 B';
+  const units = ['B', 'KB', 'MB', 'GB'];
+  const i = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1);
+  return `${parseFloat((bytes / Math.pow(1024, i)).toFixed(1))} ${units[i]}`;
+};
+
+const formatBitrate = (bps?: number): string => {
+  if (!bps) return '0 bps';
+  const units = ['bps', 'kbps', 'Mbps', 'Gbps'];
+  const i = Math.min(Math.floor(Math.log(bps) / Math.log(1000)), units.length - 1);
+  return `${parseFloat((bps / Math.pow(1000, i)).toFixed(1))} ${units[i]}`;
+};
+
+const formatCount = (value?: number): string => (value ?? 0).toLocaleString();
+
+/** Lost packets as a share of all packets that were meant to arrive (or be sent) */
+const formatLoss = (lost?: number, delivered?: number): string => {
+  const total = (lost ?? 0) + (delivered ?? 0);
+  if (!total) return '0%';
+  return `${(((lost ?? 0) / total) * 100).toFixed(1)}%`;
+};
+
+const formatResolution = (width?: number, height?: number): string =>
+  width && height ? `${width}×${height}` : '—';
+
+// --- Quality ----------------------------------------------------------------------------------
+
+interface QualityLevel {
+  label: string;
+  tone: StatusTone;
+}
+
+/** Network score (0–5) as a label and a status tone */
+const qualityLevel = (score: number): QualityLevel => {
+  if (score >= 4.5) return { label: 'Excellent', tone: 'success' };
+  if (score >= 3.5) return { label: 'Good', tone: 'success' };
+  if (score >= 2.5) return { label: 'Fair', tone: 'warning' };
+  if (score >= 1.5) return { label: 'Poor', tone: 'error' };
+  return { label: 'Critical', tone: 'error' };
+};
+
+const toneColor = (theme: Theme, tone: StatusTone): string => {
+  const colors = themeColors(theme);
+  if (tone === 'success') return colors.success;
+  if (tone === 'warning') return colors.warning;
+  if (tone === 'error') return colors.error;
+  return colors.mutedText;
+};
+
+const severityTone: Record<Severity, StatusTone> = {
+  critical: 'error',
+  warning: 'warning',
+  info: 'neutral',
+};
+
+const issueIcon = (reason: string): React.ReactNode => {
+  switch (reason) {
+    case 'high-packet-loss':
+      return <TrendingDown fontSize="small" />;
+    case 'high-rtt':
+      return <Speed fontSize="small" />;
+    case 'high-jitter':
+      return <GraphicEq fontSize="small" />;
+    case 'video-freeze':
+      return <AcUnit fontSize="small" />;
+    case 'audio-silence':
+      return <VolumeOff fontSize="small" />;
+    default:
+      return <WarningAmber fontSize="small" />;
+  }
+};
+
+const connectionIcon = (type: string): React.ReactNode => {
+  if (type.includes('screen-share')) return <ScreenShare fontSize="small" />;
+  if (type.includes('publisher')) return <CallMade fontSize="small" />;
+  if (type.includes('subscriber')) return <CallReceived fontSize="small" />;
+  return <Hub fontSize="small" />;
+};
+
+// --- Building blocks --------------------------------------------------------------------------
+
+function Section({
+  id,
+  title,
+  action,
+  children,
+}: {
+  id: string;
+  title: string;
+  action?: React.ReactNode;
+  children: React.ReactNode;
+}) {
   return (
-    <DialogTitle
-      {...other}
-      sx={{
-        pr: 7,
-      }}
-    >
+    <Box component="section" aria-labelledby={id}>
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1.5 }}>
+        <Heading
+          id={id}
+          level={3}
+          variant="subtitle2"
+          sx={(theme) => ({
+            color: themeColors(theme).mutedText,
+            textTransform: 'uppercase',
+            letterSpacing: '0.06em',
+            fontSize: 12,
+          })}
+        >
+          {title}
+        </Heading>
+        {action}
+      </Box>
       {children}
-      {onClose ? (
-        <Button
-          aria-label="close"
-          onClick={onClose}
-          id="diagnostic-dialog-close-button"
-          sx={{
-            position: 'absolute',
-            right: { xs: 10, sm: 18, md: 26 },
-            top: { xs: 12, sm: 18, md: 27 },
-            minWidth: 'auto',
-            p: 0.5,
-          }}
-        >
-          <SvgIcon size={20} viewBox="0 0 500 500" name={'close'} color={'#fff'} />
-        </Button>
-      ) : null}
-    </DialogTitle>
+    </Box>
   );
-};
+}
 
-// Helper function to get quality color
-const getQualityColor = (score: number): string => {
-  if (score >= 4.5) return '#4caf50'; // Green
-  if (score >= 3.5) return '#8bc34a'; // Light Green
-  if (score >= 2.5) return '#ffeb3b'; // Yellow
-  if (score >= 1.5) return '#ff9800'; // Orange
-  return '#f44336'; // Red
-};
+/** A measurement: a small muted label over a fixed-width value */
+function Metric({ label, value }: { label: string; value: string }) {
+  return (
+    <Box sx={{ minWidth: 0 }}>
+      <Text tone="muted" variant="caption" component="div">
+        {label}
+      </Text>
+      <Text variant="body2" component="div" mono sx={{ mt: 0.25 }}>
+        {value}
+      </Text>
+    </Box>
+  );
+}
 
-// Helper function to get quality text
-const getQualityText = (score: number): string => {
-  if (score >= 4.5) return 'Excellent';
-  if (score >= 3.5) return 'Good';
-  if (score >= 2.5) return 'Fair';
-  if (score >= 1.5) return 'Poor';
-  return 'Critical';
-};
-
-// Quality indicator component
-const QualityIndicator: React.FC<QualityIndicatorProps> = ({ label, score, icon }) => {
-  const color = getQualityColor(score);
-  const text = getQualityText(score);
+function QualityTile({
+  icon,
+  label,
+  score,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  score: number;
+}) {
+  const { t } = useTranslation();
+  const level = qualityLevel(score);
+  const filled = Math.round(Math.max(0, Math.min(5, score)));
 
   return (
-    <Card sx={{ mb: 2, backgroundColor: alpha(color, 0.1) }}>
-      <CardContent sx={{ py: 2 }}>
-        <Box
-          display="flex"
-          alignItems="center"
-          justifyContent="space-between"
-          gap={1}
-          flexWrap="wrap"
-        >
-          <Box display="flex" alignItems="center" sx={{ minWidth: 0 }}>
-            <Typography variant="body2" sx={{ mr: 1 }}>
-              {icon}
-            </Typography>
-            <Typography variant="subtitle2" sx={{ wordBreak: 'break-word' }}>
-              {label}
-            </Typography>
+    <Card padding="sm" variant="plain">
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, color: 'text.secondary' }}>
+        {icon}
+        <Text variant="body2" tone="muted">
+          {label}
+        </Text>
+      </Box>
+      <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1, mt: 1.5 }}>
+        <Text component="span" sx={{ ...monoText, fontSize: 32, fontWeight: 600, lineHeight: 1 }}>
+          {score.toFixed(1)}
+        </Text>
+        <Text component="span" tone="muted" variant="body2" mono>
+          / 5
+        </Text>
+        <Box sx={{ ml: 'auto' }}>
+          <StatusBadge tone={level.tone}>{t(level.label)}</StatusBadge>
+        </Box>
+      </Box>
+      {/* Five-step meter; decorative, the score above is the value */}
+      <Box aria-hidden sx={{ display: 'flex', gap: 0.5, mt: 1.5 }}>
+        {[0, 1, 2, 3, 4].map((step) => (
+          <Box
+            key={step}
+            sx={(theme) => ({
+              flex: 1,
+              height: 6,
+              borderRadius: 3,
+              backgroundColor:
+                step < filled ? toneColor(theme, level.tone) : alpha(themeColors(theme).text, 0.1),
+            })}
+          />
+        ))}
+      </Box>
+    </Card>
+  );
+}
+
+function IssuesList({ issues }: { issues: Issue[] }) {
+  const { t } = useTranslation();
+
+  if (issues.length === 0) {
+    return (
+      <Card padding="sm" variant="plain">
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+          <Box sx={(theme) => ({ color: themeColors(theme).success, display: 'flex' })}>
+            <CheckCircleOutline />
           </Box>
-          <Box display="flex" alignItems="center" sx={{ width: { xs: '100%', sm: 'auto' } }}>
-            <Chip
-              label={`${score.toFixed(1)} - ${text}`}
-              size="small"
-              sx={{
-                backgroundColor: color,
-                color: 'white',
-                fontWeight: 'bold',
-                width: { xs: '100%', sm: 'auto' },
-                '& .MuiChip-label': {
-                  overflow: 'unset',
-                  whiteSpace: 'normal',
-                },
-              }}
-            />
+          <Box>
+            <Text variant="body2">{t('No issues detected')}</Text>
+            <Text variant="caption" tone="muted">
+              {t('All connections are performing well')}
+            </Text>
           </Box>
         </Box>
-        <LinearProgress
-          variant="determinate"
-          value={(score / 5) * 100}
-          sx={{
-            mt: 1,
-            backgroundColor: alpha(color, 0.2),
-            '& .MuiLinearProgress-bar': {
-              backgroundColor: color,
-            },
-          }}
-        />
-      </CardContent>
-    </Card>
-  );
-};
-
-// Connection stats component
-const ConnectionStats: React.FC<ConnectionStatsProps> = ({
-  connectionId,
-  stats,
-  connectionType,
-}) => {
-  const getConnectionIcon = (type: string): string => {
-    if (type.includes('publisher')) return '📤';
-    if (type.includes('subscriber')) return '📥';
-    if (type.includes('screen-share')) return '🖥️';
-    return '🔗';
-  };
-
-  const formatBytes = (bytes?: number): string => {
-    if (!bytes) return '0 B';
-    const k = 1024;
-    const sizes = ['B', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
-  };
-
-  const formatBitrate = (bps?: number): string => {
-    if (!bps) return '0 bps';
-    const k = 1000;
-    const sizes = ['bps', 'kbps', 'Mbps'];
-    const i = Math.floor(Math.log(bps) / Math.log(k));
-    return parseFloat((bps / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
-  };
+      </Card>
+    );
+  }
 
   return (
-    <Card sx={{ mb: 2 }}>
-      <CardContent sx={{ py: 2 }}>
-        <Typography
-          variant="subtitle2"
-          sx={{ mb: 1, display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 0.5 }}
-        >
-          {getConnectionIcon(connectionType)} {connectionId}
-          <Chip
-            label={connectionType}
-            size="small"
-            sx={{
-              ml: 1,
-              fontSize: '0.7rem',
-              '& .MuiChip-label': {
-                overflow: 'unset',
-                whiteSpace: 'normal',
-              },
-            }}
-          />
-        </Typography>
-
-        <Grid container spacing={2}>
-          {/* Video Stats */}
-          {(stats.outboundVideo || stats.inboundVideo) && (
-            <Grid item xs={12} sm={6}>
-              <Typography variant="caption" color="textSecondary">
-                📹 Video
-              </Typography>
-              {stats.outboundVideo && (
-                <Box>
-                  <Typography variant="body2" fontSize="0.75rem">
-                    📤 {formatBitrate(stats.quality?.bitrate)} •{' '}
-                    {stats.outboundVideo.framesPerSecond || 0} fps
-                  </Typography>
-                  <Typography variant="body2" fontSize="0.75rem">
-                    📦 {stats.outboundVideo.packetsSent || 0} sent •{' '}
-                    {stats.outboundVideo.packetsLost || 0} lost
-                  </Typography>
-                  <Typography variant="body2" fontSize="0.75rem">
-                    📺 {stats.outboundVideo.frameWidth}×{stats.outboundVideo.frameHeight}
-                  </Typography>
-                </Box>
-              )}
-              {stats.inboundVideo && (
-                <Box>
-                  <Typography variant="body2" fontSize="0.75rem">
-                    📥 {formatBitrate(stats.quality?.bitrate)} •{' '}
-                    {stats.inboundVideo.framesPerSecond || 0} fps
-                  </Typography>
-                  <Typography variant="body2" fontSize="0.75rem">
-                    📦 {stats.inboundVideo.packetsReceived || 0} recv •{' '}
-                    {stats.inboundVideo.packetsLost || 0} lost
-                  </Typography>
-                  <Typography variant="body2" fontSize="0.75rem">
-                    📺 {stats.inboundVideo.frameWidth}×{stats.inboundVideo.frameHeight}
-                  </Typography>
-                </Box>
-              )}
-            </Grid>
-          )}
-
-          {/* Audio Stats */}
-          {(stats.outboundAudio || stats.inboundAudio) && (
-            <Grid item xs={12} sm={6}>
-              <Typography variant="caption" color="textSecondary">
-                🔊 Audio
-              </Typography>
-              {stats.outboundAudio && (
-                <Box>
-                  <Typography variant="body2" fontSize="0.75rem">
-                    📤 {formatBytes(stats.outboundAudio.bytesSent)}
-                  </Typography>
-                  <Typography variant="body2" fontSize="0.75rem">
-                    📦 {stats.outboundAudio.packetsSent || 0} sent
-                  </Typography>
-                </Box>
-              )}
-              {stats.inboundAudio && (
-                <Box>
-                  <Typography variant="body2" fontSize="0.75rem">
-                    📥 {formatBytes(stats.inboundAudio.bytesReceived)}
-                  </Typography>
-                  <Typography variant="body2" fontSize="0.75rem">
-                    📦 {stats.inboundAudio.packetsReceived || 0} recv
-                  </Typography>
-                  <Typography variant="body2" fontSize="0.75rem">
-                    📊 Jitter: {stats.inboundAudio.jitter?.toFixed(1) || 0}ms
-                  </Typography>
-                </Box>
-              )}
-            </Grid>
-          )}
-
-          {/* Network Stats */}
-          {stats.candidatePairs && stats.candidatePairs.length > 0 && (
-            <Grid item xs={12}>
-              <Typography variant="caption" color="textSecondary">
-                🌐 Network
-              </Typography>
-              {stats.candidatePairs.map((pair, index) => (
-                <Typography key={index} variant="body2" fontSize="0.75rem">
-                  🔄 RTT: {pair.rtt?.toFixed(0) || 0}ms • 📤 {formatBytes(pair.bytesSent)} • 📥{' '}
-                  {formatBytes(pair.bytesReceived)}
-                </Typography>
-              ))}
-            </Grid>
-          )}
-        </Grid>
-      </CardContent>
+    <Card padding="none" variant="plain" component="ul" sx={{ listStyle: 'none', m: 0 }}>
+      {issues.map((issue, index) => {
+        const tone = severityTone[issue.statsSample.severity] ?? 'neutral';
+        return (
+          <Box
+            component="li"
+            key={`${issue.statsSample.connectionId}-${issue.reason}-${index}`}
+            sx={(theme) => ({
+              display: 'flex',
+              alignItems: 'flex-start',
+              gap: 1.5,
+              px: 2,
+              py: 1.5,
+              '& + &': { borderTop: `1px solid ${alpha(themeColors(theme).text, 0.08)}` },
+            })}
+          >
+            <Box sx={(theme) => ({ color: toneColor(theme, tone), display: 'flex', mt: 0.25 })}>
+              {issueIcon(issue.reason)}
+            </Box>
+            <Box sx={{ flex: 1, minWidth: 0 }}>
+              <Text variant="body2" sx={{ wordBreak: 'break-word' }}>
+                {issue.statsSample.description}
+              </Text>
+              <Text variant="caption" tone="muted" mono component="div">
+                <TruncatedText>{issue.statsSample.connectionId}</TruncatedText>
+              </Text>
+            </Box>
+            <StatusBadge tone={tone}>{t(issue.statsSample.severity)}</StatusBadge>
+          </Box>
+        );
+      })}
     </Card>
   );
-};
+}
 
-// Noise suppression model state and whether it's turned on in the microphone menu
-const NoiseSuppressionIndicator: React.FC<NoiseSuppressionIndicatorProps> = ({
+function ConnectionCard({ id, stats }: { id: string; stats: ConnectionStatData }) {
+  const { t } = useTranslation();
+  const type = stats.connectionType || 'unknown';
+  const rtt = stats.candidatePairs?.find((pair) => pair.rtt !== undefined)?.rtt;
+
+  const groups: { title: string; metrics: { label: string; value: string }[] }[] = [];
+  if (stats.outboundVideo) {
+    const video = stats.outboundVideo;
+    groups.push({
+      title: t('Video sent'),
+      metrics: [
+        { label: t('Bitrate'), value: formatBitrate(stats.quality?.bitrate) },
+        { label: t('Frame rate'), value: `${video.framesPerSecond ?? 0} fps` },
+        { label: t('Resolution'), value: formatResolution(video.frameWidth, video.frameHeight) },
+        { label: t('Packet loss'), value: formatLoss(video.packetsLost, video.packetsSent) },
+      ],
+    });
+  }
+  if (stats.inboundVideo) {
+    const video = stats.inboundVideo;
+    groups.push({
+      title: t('Video received'),
+      metrics: [
+        { label: t('Bitrate'), value: formatBitrate(stats.quality?.bitrate) },
+        { label: t('Frame rate'), value: `${video.framesPerSecond ?? 0} fps` },
+        { label: t('Resolution'), value: formatResolution(video.frameWidth, video.frameHeight) },
+        { label: t('Packet loss'), value: formatLoss(video.packetsLost, video.packetsReceived) },
+      ],
+    });
+  }
+  if (stats.outboundAudio) {
+    groups.push({
+      title: t('Audio sent'),
+      metrics: [
+        { label: t('Data'), value: formatBytes(stats.outboundAudio.bytesSent) },
+        { label: t('Packets'), value: formatCount(stats.outboundAudio.packetsSent) },
+      ],
+    });
+  }
+  if (stats.inboundAudio) {
+    groups.push({
+      title: t('Audio received'),
+      metrics: [
+        { label: t('Data'), value: formatBytes(stats.inboundAudio.bytesReceived) },
+        { label: t('Packets'), value: formatCount(stats.inboundAudio.packetsReceived) },
+        { label: t('Jitter'), value: `${(stats.inboundAudio.jitter ?? 0).toFixed(1)} ms` },
+      ],
+    });
+  }
+
+  return (
+    <Card padding="sm" variant="plain">
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, minWidth: 0 }}>
+        <Box sx={{ color: 'text.secondary', display: 'flex' }}>{connectionIcon(type)}</Box>
+        <Text variant="body2" mono component="div" sx={{ minWidth: 0, flex: 1 }}>
+          <TruncatedText>{id}</TruncatedText>
+        </Text>
+        <StatusBadge tone="neutral">{type}</StatusBadge>
+      </Box>
+
+      {rtt !== undefined && (
+        <Box sx={{ display: 'flex', gap: 3, mt: 1.5 }}>
+          <Metric label={t('Round trip')} value={`${rtt.toFixed(0)} ms`} />
+        </Box>
+      )}
+
+      {groups.map((group) => (
+        <Box key={group.title} sx={{ mt: 2 }}>
+          <Text variant="caption" sx={{ fontWeight: 600 }} component="div">
+            {group.title}
+          </Text>
+          <Box
+            sx={{
+              display: 'grid',
+              gridTemplateColumns: { xs: 'repeat(2, 1fr)', sm: 'repeat(4, 1fr)' },
+              gap: 1.5,
+              mt: 1,
+            }}
+          >
+            {group.metrics.map((metric) => (
+              <Metric key={metric.label} label={metric.label} value={metric.value} />
+            ))}
+          </Box>
+        </Box>
+      ))}
+    </Card>
+  );
+}
+
+/** Noise suppression model state, and whether it's on */
+function NoiseSuppressionRow({
   enabled,
   status = 'idle',
-}) => {
+}: {
+  enabled?: boolean;
+  status?: NoiseSuppressionStatus;
+}) {
   const { t } = useTranslation();
 
   const states: Record<
@@ -403,12 +473,12 @@ const NoiseSuppressionIndicator: React.FC<NoiseSuppressionIndicatorProps> = ({
     ready: enabled
       ? {
           tone: 'success',
-          label: t('Enabled'),
+          label: t('On'),
           note: t('Removing about {{percent}}% of background noise', {
             percent: getNoiseSuppressionPercent(),
           }),
         }
-      : { tone: 'neutral', label: t('Off'), note: t('Turned off in the microphone menu') },
+      : { tone: 'neutral', label: t('Off'), note: t('Turned off in Audio Settings') },
     unavailable: {
       tone: 'error',
       label: t('Unavailable'),
@@ -418,95 +488,27 @@ const NoiseSuppressionIndicator: React.FC<NoiseSuppressionIndicatorProps> = ({
   const state = states[status];
 
   return (
-    <TrueTimeCard padding="sm" sx={{ mb: 2 }}>
-      <Box display="flex" alignItems="center" justifyContent="space-between" gap={1}>
-        <Typography variant="subtitle2">🎙️ {t('Noise suppression')}</Typography>
+    <Card padding="sm" variant="plain">
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+        <Box sx={{ color: 'text.secondary', display: 'flex' }}>
+          <NoiseAware />
+        </Box>
+        <Box sx={{ flex: 1, minWidth: 0 }}>
+          <Text variant="body2">{t('Noise suppression')}</Text>
+          <Text variant="caption" tone="muted" component="div">
+            {state.note}
+          </Text>
+        </Box>
         <StatusBadge tone={state.tone}>
           {state.busy && <Spinner size={10} label={state.label} />}
           {state.label}
         </StatusBadge>
       </Box>
-      <Text tone="muted" variant="body2" sx={{ mt: 0.5 }}>
-        {state.note}
-      </Text>
-    </TrueTimeCard>
-  );
-};
-
-// Issues component
-const IssuesDisplay: React.FC<IssuesDisplayProps> = ({ issues }) => {
-  const getIssueIcon = (_type: string, reason: string): string => {
-    if (reason === 'high-packet-loss') return '📉';
-    if (reason === 'high-rtt') return '🐌';
-    if (reason === 'high-jitter') return '📳';
-    if (reason === 'video-freeze') return '🧊';
-    if (reason === 'audio-silence') return '🔇';
-    return '⚠️';
-  };
-
-  const getIssueSeverityColor = (severity: string): string => {
-    if (severity === 'critical') return '#f44336';
-    if (severity === 'warning') return '#ff9800';
-    return '#2196f3';
-  };
-
-  if (!issues || issues.length === 0) {
-    return (
-      <Card sx={{ mb: 2, backgroundColor: alpha('#4caf50', 0.1) }}>
-        <CardContent sx={{ py: 2 }}>
-          <Typography variant="subtitle2" sx={{ display: 'flex', alignItems: 'center' }}>
-            ✅ No Issues Detected
-          </Typography>
-          <Typography variant="body2" color="textSecondary">
-            All connections are performing well
-          </Typography>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  return (
-    <Card sx={{ mb: 2 }}>
-      <CardContent sx={{ py: 2 }}>
-        <Typography variant="subtitle2" sx={{ mb: 1 }}>
-          🚨 Issues Detected ({issues.length})
-        </Typography>
-        <List dense>
-          {issues.map((issue, index) => (
-            <ListItem key={index} sx={{ px: 0 }}>
-              <ListItemIcon sx={{ minWidth: 30 }}>
-                <Typography>{getIssueIcon(issue.type, issue.reason)}</Typography>
-              </ListItemIcon>
-              <ListItemText
-                primary={
-                  <Box display="flex" alignItems="center" flexWrap="wrap" gap={0.5}>
-                    <Typography variant="body2" sx={{ mr: 1, wordBreak: 'break-word' }}>
-                      {issue.statsSample.description}
-                    </Typography>
-                    <Chip
-                      label={issue.statsSample.severity}
-                      size="small"
-                      sx={{
-                        backgroundColor: getIssueSeverityColor(issue.statsSample.severity),
-                        color: 'white',
-                        fontSize: '0.7rem',
-                        '& .MuiChip-label': {
-                          overflow: 'unset',
-                          whiteSpace: 'normal',
-                        },
-                      }}
-                    />
-                  </Box>
-                }
-                secondary={`Connection: ${issue.statsSample.connectionId}`}
-              />
-            </ListItem>
-          ))}
-        </List>
-      </CardContent>
     </Card>
   );
-};
+}
+
+// --- Dialog -----------------------------------------------------------------------------------
 
 export function DiagnosticDialog({
   open,
@@ -523,38 +525,28 @@ export function DiagnosticDialog({
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
-  const handleClose = () => {
-    onClose(!open);
-  };
+  const scores = networkScore ?? { inbound: 0, outbound: 0, statsSamples: {} };
+  const stats = connectionStats ?? {};
+  const issues = currentIssues ?? [];
+  const connectionIds = Object.keys(scores.statsSamples);
+  const hasCritical = issues.some((issue) => issue.statsSample.severity === 'critical');
 
-  const handlePrintStatLogsChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const checked = event.target.checked;
-    setPrintStatLogs(checked);
-  };
-
-  // Default values if no data provided
-  const defaultNetworkScore: NetworkScore = {
-    inbound: 0,
-    outbound: 0,
-    statsSamples: {},
-  };
-
-  const scores = networkScore || defaultNetworkScore;
-  const stats = connectionStats || {};
-  const issues = currentIssues || [];
+  const handleClose = () => onClose(!open);
 
   return (
     <Dialog
       onClose={handleClose}
       open={open}
       fullScreen={isMobile}
-      maxWidth={'md'} // Changed to md for more space
+      maxWidth="md"
+      fullWidth
+      aria-labelledby="diagnostic-dialog-title"
       PaperProps={{
         sx: {
           ...getDialogStyle(theme),
-          width: { xs: '100%', sm: 'auto' },
           m: { xs: 0, sm: 2 },
-          borderRadius: { xs: 0, sm: 2 },
+          borderRadius: { xs: 0, sm: `${radii.container}px` },
+          px: { xs: 2, sm: 4 },
         },
       }}
       BackdropProps={{
@@ -564,128 +556,97 @@ export function DiagnosticDialog({
         },
       }}
     >
-      <Red5DialogTitle onClose={handleClose}>{t('Network Diagnostic')} 📊</Red5DialogTitle>
+      <DialogTitle id="diagnostic-dialog-title" sx={{ pr: 6, pb: 1 }}>
+        {t('Diagnostics')}
+        <IconButton
+          aria-label={t('Close')}
+          onClick={handleClose}
+          id="diagnostic-dialog-close-button"
+          sx={{ position: 'absolute', right: { xs: 8, sm: 24 }, top: { xs: 16, sm: 24 } }}
+        >
+          <Close />
+        </IconButton>
+      </DialogTitle>
+
+      {/* At a glance: overall state and how many connections are measured */}
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flexWrap: 'wrap' }}>
+        <StatusBadge tone={issues.length === 0 ? 'success' : hasCritical ? 'error' : 'warning'}>
+          {issues.length === 0
+            ? t('Healthy')
+            : issues.length === 1
+              ? t('1 issue')
+              : t('{{count}} issues', { count: issues.length })}
+        </StatusBadge>
+        <Text variant="body2" tone="muted">
+          {connectionIds.length === 1
+            ? t('1 connection')
+            : t('{{count}} connections', { count: connectionIds.length })}
+        </Text>
+      </Box>
+
       <DialogContent
-        sx={{ px: { xs: 1.5, sm: 3 }, maxHeight: { xs: '100vh', sm: '70vh' }, overflowY: 'auto' }}
+        sx={{
+          maxHeight: { xs: 'none', sm: '70vh' },
+          overflowY: 'auto',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 3,
+          pb: 3,
+        }}
       >
-        <Box component="div" sx={{ display: 'flex', flexDirection: 'column' }}>
-          <NoiseSuppressionIndicator
-            enabled={noiseSuppressionEnabled}
-            status={noiseSuppressionStatus}
-          />
+        <Section id="diagnostic-quality" title={t('Connection quality')}>
+          <Box
+            sx={{
+              display: 'grid',
+              gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' },
+              gap: 1.5,
+            }}
+          >
+            <QualityTile
+              icon={<CallMade fontSize="small" />}
+              label={t('Upload')}
+              score={scores.outbound}
+            />
+            <QualityTile
+              icon={<CallReceived fontSize="small" />}
+              label={t('Download')}
+              score={scores.inbound}
+            />
+          </Box>
+        </Section>
 
-          {/* Overall Network Quality */}
-          <Typography variant="h6" sx={{ mb: 2 }}>
-            📡 Network Quality Overview
-          </Typography>
+        <Section id="diagnostic-issues" title={t('Issues')}>
+          <IssuesList issues={issues} />
+        </Section>
 
-          <Grid container spacing={2} sx={{ mb: 3 }}>
-            <Grid item xs={12} sm={6}>
-              <QualityIndicator label="Inbound Quality" score={scores.inbound} icon="📥" />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <QualityIndicator label="Outbound Quality" score={scores.outbound} icon="📤" />
-            </Grid>
-          </Grid>
+        <Section id="diagnostic-audio" title={t('Audio')}>
+          <NoiseSuppressionRow enabled={noiseSuppressionEnabled} status={noiseSuppressionStatus} />
+        </Section>
 
-          <Divider sx={{ my: 2 }} />
-
-          {/* Current Issues */}
-          <Typography variant="h6" sx={{ mb: 2 }}>
-            🚨 Current Issues
-          </Typography>
-          <IssuesDisplay issues={issues} />
-
-          <Divider sx={{ my: 2 }} />
-
-          {/* Connection Statistics */}
-          <Typography variant="h6" sx={{ mb: 2 }}>
-            🔗 Connection Statistics
-          </Typography>
-
-          {Object.keys(scores.statsSamples).length === 0 ? (
-            <Card sx={{ mb: 2 }}>
-              <CardContent sx={{ py: 2 }}>
-                <Typography variant="body2" color="textSecondary">
-                  📡 No active connections to monitor
-                </Typography>
-              </CardContent>
+        <Section id="diagnostic-connections" title={t('Connections')}>
+          {connectionIds.length === 0 ? (
+            <Card padding="sm" variant="plain">
+              <Text variant="body2" tone="muted">
+                {t('No active connections to measure yet')}
+              </Text>
             </Card>
           ) : (
-            Object.entries(scores.statsSamples).map(([connectionId, connectionData]) => (
-              <ConnectionStats
-                key={connectionId}
-                connectionId={connectionId}
-                stats={stats[connectionId] || {}}
-                connectionType={stats[connectionId]?.connectionType || 'unknown'}
-                quality={connectionData}
-              />
-            ))
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+              {connectionIds.map((id) => (
+                <ConnectionCard key={id} id={id} stats={stats[id] ?? {}} />
+              ))}
+            </Box>
           )}
+        </Section>
 
-          {/* Summary Stats */}
-          <Card sx={{ mt: 2 }}>
-            <CardContent sx={{ py: 2 }}>
-              <Typography variant="subtitle2" sx={{ mb: 1 }}>
-                📈 Session Summary
-              </Typography>
-              <Grid container spacing={2}>
-                <Grid item xs={12} sm={4}>
-                  <Typography variant="caption" color="textSecondary">
-                    Active Connections
-                  </Typography>
-                  <Typography variant="h6">{Object.keys(scores.statsSamples).length}</Typography>
-                </Grid>
-                <Grid item xs={12} sm={4}>
-                  <Typography variant="caption" color="textSecondary">
-                    Current Issues
-                  </Typography>
-                  <Typography variant="h6" color={issues.length > 0 ? 'error' : 'success'}>
-                    {issues.length}
-                  </Typography>
-                </Grid>
-                <Grid item xs={12} sm={4}>
-                  <Typography variant="caption" color="textSecondary" sx={{ mr: 0.5 }}>
-                    Overall Status
-                  </Typography>
-                  <Chip
-                    label={issues.length === 0 ? 'Healthy' : 'Issues Detected'}
-                    size="small"
-                    color={issues.length === 0 ? 'success' : 'error'}
-                    sx={{
-                      width: { xs: '100%', sm: 'auto' },
-                      '& .MuiChip-label': {
-                        overflow: 'unset',
-                        whiteSpace: 'normal',
-                      },
-                    }}
-                  />
-                </Grid>
-              </Grid>
-            </CardContent>
-          </Card>
-
-          {/* Debug Options */}
-          <Card sx={{ mt: 2, backgroundColor: alpha('#2196f3', 0.05) }}>
-            <CardContent sx={{ py: 2 }}>
-              <Typography variant="subtitle2" sx={{ mb: 1 }}>
-                🔧 Debug Options
-              </Typography>
-              <FormControlLabel
-                control={
-                  <Checkbox
-                    checked={printStatLogs}
-                    onChange={handlePrintStatLogsChange}
-                    color="primary"
-                  />
-                }
-                label={
-                  <Typography variant="body2">📋 Print detailed statistics to console</Typography>
-                }
-              />
-            </CardContent>
-          </Card>
-        </Box>
+        <Section id="diagnostic-debug" title={t('Troubleshooting')}>
+          <Checkbox
+            id="diagnostic-print-stats"
+            checked={printStatLogs}
+            onChange={(event) => setPrintStatLogs(event.target.checked)}
+            label={t('Print detailed statistics to the browser console')}
+          />
+        </Section>
       </DialogContent>
     </Dialog>
   );
