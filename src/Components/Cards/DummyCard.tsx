@@ -16,7 +16,9 @@ function DummyCard({ isVisible, streamName }: DummyCardProps) {
   const theme = useTheme();
 
   return isVisible ? (
-    <CustomCard theme={theme}>
+    // Darker fill: the camera, mic and effects buttons sit on this card (lobby, tile controls), and
+    // the default gradient ends in the same grey as their fill
+    <CustomCard theme={theme} hasOverlayButtons>
       {isNull(streamName) ? (
         <Avatar
           sx={{
