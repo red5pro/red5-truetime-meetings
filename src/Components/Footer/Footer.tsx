@@ -188,10 +188,10 @@ function Footer(props: FooterProps) {
   if (shownTray && shownTray !== trayKind) {
     setTrayKind(shownTray);
   }
-  const [settingsDialog, setSettingsDialog] = React.useState<{ open: boolean; focus: string }>({
-    open: false,
-    focus: 'camera',
-  });
+  const [settingsDialog, setSettingsDialog] = React.useState<{
+    open: boolean;
+    section: 'audio' | 'video';
+  }>({ open: false, section: 'video' });
 
   React.useEffect(() => {
     const handleResize = () => {
@@ -251,9 +251,9 @@ function Footer(props: FooterProps) {
       ?.focus();
   };
 
-  const openSettings = (focus: string) => {
+  const openSettings = (section: 'audio' | 'video') => {
     setTrayOpen(false);
-    setSettingsDialog({ open: true, focus });
+    setSettingsDialog({ open: true, section });
   };
 
   const openEffects = () => {
@@ -285,7 +285,7 @@ function Footer(props: FooterProps) {
         selectedCamera={props.selectedCamera}
         onCameraChange={(camera: string) => props.cameraSelected?.(camera)}
         onOpenEffects={openEffects}
-        onOpenSettings={() => openSettings('camera')}
+        onOpenSettings={() => openSettings('video')}
       />
     ) : (
       <MicTray
@@ -308,7 +308,7 @@ function Footer(props: FooterProps) {
       <SettingsDialog
         open={settingsDialog.open}
         onClose={() => setSettingsDialog((current) => ({ ...current, open: false }))}
-        selectFocus={settingsDialog.focus}
+        section={settingsDialog.section}
         devices={props.devices}
         selectedCamera={props.selectedCamera}
         cameraSelected={props.cameraSelected}

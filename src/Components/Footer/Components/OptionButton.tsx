@@ -151,6 +151,7 @@ function OptionButton(props: OptionButtonProps) {
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
   const [dialogOpen, setDialogOpen] = React.useState<boolean>(false);
+  const [settingsSection, setSettingsSection] = React.useState<'audio' | 'video'>('audio');
   const [layoutDialogOpen, setLayoutDialogOpen] = React.useState<boolean>(false);
   const [diagnosticDialogOpen, setDiagnosticDialogOpen] = React.useState<boolean>(false);
   const [generalSettingsDialogOpen, setGeneralSettingsDialogOpen] = React.useState<boolean>(false);
@@ -234,8 +235,8 @@ function OptionButton(props: OptionButtonProps) {
     setAnchorEl(null);
   };
 
-  const handleDialogOpen = (focus?: string): void => {
-    setSelectFocus(focus || null);
+  const handleDialogOpen = (section: 'audio' | 'video'): void => {
+    setSettingsSection(section);
     setDialogOpen(true);
     handleClose();
   };
@@ -364,8 +365,7 @@ function OptionButton(props: OptionButtonProps) {
       <SettingsDialog
         open={dialogOpen}
         onClose={handleDialogClose}
-        //@ts-expect-error - prop type mismatch with legacy component props
-        selectFocus={selectFocus}
+        section={settingsSection}
         devices={props?.devices}
         selectedCamera={props?.selectedCamera}
         cameraSelected={props?.cameraSelected}
@@ -616,26 +616,39 @@ function OptionButton(props: OptionButtonProps) {
           <ListItemText>{t('Change Layout')}</ListItemText>
         </MenuItem>
 
-        {props?.isPlayOnly === false && (
+        {props?.isPlayOnly === false && [
           <MenuItem
-            key="call-settings"
+            key="audio-settings"
             onClick={() => {
               props?.updateDevicesList();
-              handleDialogOpen();
+              handleDialogOpen('audio');
             }}
-            id="call-settings"
+            id="audio-settings"
           >
             <ListItemIcon>
               <SvgIcon
                 size={24}
                 viewBox="0 0 500 500"
-                name={'call-settings'}
+                name={'microphone'}
                 color={getMenuIconColor()}
               />
             </ListItemIcon>
-            <ListItemText>{t('Call Settings')}</ListItemText>
-          </MenuItem>
-        )}
+            <ListItemText>{t('Audio Settings')}</ListItemText>
+          </MenuItem>,
+          <MenuItem
+            key="video-settings"
+            onClick={() => {
+              props?.updateDevicesList();
+              handleDialogOpen('video');
+            }}
+            id="video-settings"
+          >
+            <ListItemIcon>
+              <SvgIcon size={24} viewBox="0 0 500 500" name={'camera'} color={getMenuIconColor()} />
+            </ListItemIcon>
+            <ListItemText>{t('Video Settings')}</ListItemText>
+          </MenuItem>,
+        ]}
 
         {/* Picture-in-Picture Menu Item */}
         {!isMobile && (
