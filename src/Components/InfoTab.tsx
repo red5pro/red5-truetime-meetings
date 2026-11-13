@@ -1,7 +1,6 @@
 import { JSX } from 'react';
 import { Box } from '@mui/material';
-import { alpha } from '@mui/material/styles';
-import { ContentCopy, Link as LinkIcon } from '@mui/icons-material';
+import { ContentCopy } from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
 import { enqueueSnackbar } from 'notistack';
 import { Button, Heading, Text, radii, themeColors } from 'truetime-ui';
@@ -41,21 +40,6 @@ function InfoTab({ appVersion, buildTime, meetingLink }: InfoTabProps): JSX.Elem
           px: 1,
         }}
       >
-        <Box
-          aria-hidden
-          sx={(theme) => ({
-            width: 56,
-            height: 56,
-            borderRadius: radii.round,
-            display: 'grid',
-            placeItems: 'center',
-            color: themeColors(theme).text,
-            backgroundColor: alpha(themeColors(theme).text, 0.08),
-          })}
-        >
-          <LinkIcon />
-        </Box>
-
         <Box>
           <Heading level={3} variant="h6">
             {t('Joining info')}
