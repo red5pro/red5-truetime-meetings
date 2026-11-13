@@ -2,13 +2,11 @@ import React from 'react';
 import Typography from '@mui/material/Typography';
 import { Box } from '@mui/material';
 import { styled, Theme, useTheme } from '@mui/material/styles';
-import PersonAddAlt1Icon from '@mui/icons-material/PersonAddAlt1';
-import PersonRemoveAlt1Icon from '@mui/icons-material/PersonRemoveAlt1';
 import { useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { isMobile, isTablet } from 'react-device-detect';
 import { isNull } from 'lodash';
-import { ControlBar, ToolbarButton, controlBar, type Devices } from 'truetime-ui';
+import { ControlBar, controlBar, type Devices } from 'truetime-ui';
 import InfoButton from './Components/InfoButton.tsx';
 import MicButton from './Components/MicButton.tsx';
 import CameraButton from './Components/CameraButton.tsx';
@@ -496,10 +494,14 @@ function Footer(props: FooterProps) {
                 downloadLocalRecording={props?.downloadLocalRecording}
                 transcriptionDrawerOpen={props?.transcriptionDrawerOpen}
                 handleTranscriptionDrawerOpen={props?.handleTranscriptionDrawerOpen}
+                onAddFakeParticipant={props?.onAddFakeParticipant}
+                onRemoveFakeParticipant={props?.onRemoveFakeParticipant}
               />
             ) : (
               <MoreOptionsButton
                 glass={props?.glass}
+                onAddFakeParticipant={props?.onAddFakeParticipant}
+                onRemoveFakeParticipant={props?.onRemoveFakeParticipant}
                 noiseSuppressionEnabled={props?.noiseSuppressionEnabled}
                 noiseSuppressionStatus={props?.noiseSuppressionStatus}
                 toggleNoiseSuppression={props?.toggleNoiseSuppression}
@@ -580,22 +582,6 @@ function Footer(props: FooterProps) {
               open={props?.localRecordingDrawerOpen}
               isActive={props?.isLocalRecordingActive}
               onClick={props?.handleLocalRecordingDrawerOpen}
-            />
-          )}
-          {import.meta.env.DEV && (
-            <ToolbarButton
-              tone="ghost"
-              icon={<PersonAddAlt1Icon />}
-              label="Add Fake Participant"
-              onClick={() => props?.onAddFakeParticipant?.()}
-            />
-          )}
-          {import.meta.env.DEV && (
-            <ToolbarButton
-              tone="ghost"
-              icon={<PersonRemoveAlt1Icon />}
-              label="Remove Fake Participant"
-              onClick={() => props?.onRemoveFakeParticipant?.()}
             />
           )}
           <ParticipantListButton

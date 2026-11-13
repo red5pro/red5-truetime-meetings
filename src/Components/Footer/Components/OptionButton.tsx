@@ -34,6 +34,7 @@ import log from 'loglevel';
 import { getRuntimeConfig } from '../../../utils/configStore';
 import { isMobile } from 'react-device-detect';
 import { RecordingResolutionCheck } from '../../RecordingResolutionCheck';
+import { fakeParticipantMenuItems } from './fakeParticipantMenuItems.tsx';
 import type { RecordingSources } from '../../../hooks/useRecording';
 import {
   DEFAULT_RECORDING_PRESET,
@@ -89,6 +90,8 @@ interface PiPInfo {
 }
 
 interface OptionButtonProps {
+  onAddFakeParticipant?: () => void;
+  onRemoveFakeParticipant?: () => void;
   footer?: boolean;
   glass?: boolean;
   isPlayOnly?: boolean;
@@ -837,6 +840,10 @@ function OptionButton(props: OptionButtonProps) {
           </ListItemIcon>
           <ListItemText>{t('Report Problem')}</ListItemText>
         </MenuItem>
+        {fakeParticipantMenuItems({
+          onAdd: props?.onAddFakeParticipant,
+          onRemove: props?.onRemoveFakeParticipant,
+        })}
       </Menu>
     </>
   );

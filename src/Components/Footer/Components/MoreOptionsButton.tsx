@@ -17,6 +17,7 @@ import log from 'loglevel';
 import { ClosedCaption, ClosedCaptionDisabled, MoreVert } from '@mui/icons-material';
 import type { Devices } from 'truetime-ui';
 import { getRuntimeConfig } from '../../../utils/configStore';
+import { fakeParticipantMenuItems } from './fakeParticipantMenuItems.tsx';
 import type { NoiseSuppressionStatus } from '../../../hooks/useNoiseSuppression';
 
 interface Globals {
@@ -24,6 +25,8 @@ interface Globals {
 }
 
 interface MoreOptionsButtonProps {
+  onAddFakeParticipant?: () => void;
+  onRemoveFakeParticipant?: () => void;
   footer?: boolean;
   noiseSuppressionEnabled?: boolean;
   noiseSuppressionStatus?: NoiseSuppressionStatus;
@@ -409,6 +412,10 @@ function MoreOptionsButton(props: MoreOptionsButtonProps) {
             }}
           />
         </MenuItem>
+        {fakeParticipantMenuItems({
+          onAdd: props?.onAddFakeParticipant,
+          onRemove: props?.onRemoveFakeParticipant,
+        })}
       </Menu>
     </>
   );
