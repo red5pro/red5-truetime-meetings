@@ -1,7 +1,10 @@
 # AGENTS.md — red5-truetime-meetings
 
 TrueTime Meetings: video conferencing app built with React, MUI and Red5 Pro (Vite).
-See [README.md](README.md) for features, configuration and deployment.
+See [README.md](README.md) for an overview and the docs index; settings are in
+[docs/configuration.md](docs/configuration.md), the code structure in [docs/architecture.md](docs/architecture.md),
+and the user guide in [docs/user-guide/](docs/user-guide/). Update the docs when a change affects a feature, a
+setting or the API the app uses.
 
 ## Use truetime-ui; don't build UI locally
 

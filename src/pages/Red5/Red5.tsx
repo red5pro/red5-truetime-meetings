@@ -27,7 +27,6 @@ import { setupPeerConnectionConfig } from '../../utils/utils.tsx';
 import { saveDesiredTileCount } from '../../utils/conferenceConfig.ts';
 import log from 'loglevel';
 import { sharedVariables } from '../../constants/config.ts';
-import GuestWaiting from '../GuestWaiting/GuestWaiting.tsx';
 
 // Setup peer connection config
 setupPeerConnectionConfig();
