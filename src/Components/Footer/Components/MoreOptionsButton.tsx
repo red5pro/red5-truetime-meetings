@@ -12,6 +12,7 @@ import { isMobile, isTablet } from 'react-device-detect';
 import i18n from 'i18next';
 import { ThemeList } from '../../../constants/themeList.js';
 import { ThemeContext } from '../../../contexts/ThemeContext';
+import { saveTheme } from '../../../utils/savedTheme';
 import { ToolbarButton } from 'truetime-ui';
 import { getGlassMenuStyle } from '../../../styles/themeUtil.js';
 import log from 'loglevel';
@@ -109,7 +110,7 @@ function MoreOptionsButton(props: MoreOptionsButtonProps) {
 
   // Theme handler
   const switchTheme = (value: string): void => {
-    localStorage.setItem('selectedTheme', value);
+    saveTheme(value);
     themeContext?.setCurrentTheme(value);
     setCurrentTheme(value);
   };

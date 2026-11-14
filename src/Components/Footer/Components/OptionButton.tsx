@@ -26,6 +26,7 @@ import { useTranslation } from 'react-i18next';
 import GeneralSettingsDialog from './GeneralSettingsDialog.tsx';
 import { ThemeList } from '../../../constants/themeList.js';
 import { ThemeContext } from '../../../contexts/ThemeContext';
+import { saveTheme } from '../../../utils/savedTheme';
 import i18n from 'i18next';
 import { ToolbarButton } from 'truetime-ui';
 import { getGlassMenuStyle } from '../../../styles/themeUtil.js';
@@ -222,7 +223,7 @@ function OptionButton(props: OptionButtonProps) {
 
   // Theme handler
   const switchTheme = (value: string): void => {
-    localStorage.setItem('selectedTheme', value);
+    saveTheme(value);
     themeContext?.setCurrentTheme(value);
     setCurrentTheme(value);
   };
