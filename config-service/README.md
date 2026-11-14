@@ -1,15 +1,22 @@
 # Config Service
 
-A lightweight Express.js service for managing runtime configuration via REST API with authentication and validation.
+A lightweight Express.js service that holds TrueTime Meetings' runtime settings and acts as its backend: it issues
+conference tokens and calls Red5's conference API (recording, captions, external streams, moderation) with
+credentials the browser never sees.
+
+How the app uses it is described in [Configuration](../docs/configuration.md) and [Deployment](../docs/deployment.md).
 
 ## Features
 
 - **GET /api/config** - Retrieve current configuration (public)
 - **POST /api/config** - Update configuration (partial updates supported, requires authentication)
 - **PUT /api/config** - Replace entire configuration (requires authentication)
+- **POST /api/generate-token** - Conference token for a user, room and role
+- **/api/room/...** and **/api/external-streams** - Recording, transcription, external streams, room users and
+  blocking, forwarded to Red5's conference API (see [src/routes/apiRoutes.js](src/routes/apiRoutes.js))
 - **GET /health** - Health check endpoint (public)
-- **Authentication** - Bearer token authentication for write operations
-- **Validation** - Input validation for all configuration values
+- **Authentication** - Bearer token authentication for config writes
+- **Validation** - Input validation for configuration values
 
 ## Configuration
 
@@ -50,6 +57,11 @@ GRANT ALL ON truetime_meetings.* TO 'truetime_studio'@'%';
 - `PORT` - Service port (default: 3001)
 - `CONFIG_FILE` - Path to config file (default: /data/config.json)
 - `MEETINGS_CONFIG_ADMIN_TOKEN` - Authentication token for write operations (default: "default-admin-token-change-me")
+- `CONFERENCE_MASTER_KEY` - Conference master key of your Red5 Cloud deployment; needed for tokens and every
+  `/api/room/...` call
+- `CONFERENCE_MASTER_SECRET` - Conference master secret that goes with it
+- `VITE_*` - Starting values for the app's settings, used only when the config is first created (see
+  [Configuration](../docs/configuration.md#settings))
 - `MEETINGS_DB_HOST` - MySQL host; with `MEETINGS_DB_USER`, stores the config in the database
 - `MEETINGS_DB_USER` - MySQL user
 - `MEETINGS_DB_PASSWORD` - MySQL password
@@ -86,13 +98,13 @@ docker run -p 3001:3001 \
 ### Get current configuration (No authentication required)
 
 ```bash
-curl http://localhost:3000/api/config
+curl http://localhost:3001/api/config
 ```
 
 ### Update specific fields (partial update) - **Requires Authentication**
 
 ```bash
-curl -X POST http://localhost:3000/api/config \
+curl -X POST http://localhost:3001/api/config \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer your-admin-token" \
   -d '{
@@ -104,11 +116,11 @@ curl -X POST http://localhost:3000/api/config \
 ### Replace entire configuration - **Requires Authentication**
 
 ```bash
-curl -X PUT http://localhost:3000/api/config \
+curl -X PUT http://localhost:3001/api/config \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer your-admin-token" \
   -d '{
-    "VITE_HOST": "https://new-domain.com",
+    "VITE_HOST": "userid-000-xxxxxxxxxx.cloud.red5.net",
     "VITE_BACKEND_HOST": "",
     "VITE_ENABLE_RECORDING": "false",
     "VITE_ENABLE_CLOSED_CAPTION": "true",
@@ -127,12 +139,14 @@ When saving, `***` keeps the stored value, a new value replaces it, and an empty
 
 The service validates all configuration values:
 
-### URL Fields
+### Keys
 
-- `VITE_HOST` - Must be a valid URL or empty string
-- `VITE_BACKEND_HOST` - Must be a valid URL or empty string
-- `VITE_LOGO_URL` - Must be a valid URL or empty string
-- `VITE_TURN_SERVER_URL` - Must start with `turn:` or `turns:` or be empty
+Only the settings listed in [src/utils/validation.js](src/utils/validation.js) (`ALLOWED_KEYS`) are accepted;
+any other key is rejected.
+
+### TURN Server
+
+- `VITE_TURN_SERVER_URL` - Must start with `turn:`, `turns:` or `stun:`, or be empty
 
 ### Boolean Fields
 
@@ -153,7 +167,7 @@ The service validates all configuration values:
 {
   "error": "Validation failed",
   "errors": [
-    "VITE_HOST must be a valid URL or empty string",
+    "Unknown config key: VITE_HOSTNAME",
     "VITE_ENABLE_RECORDING must be \"true\" or \"false\"",
     "VITE_DEFAULT_THEME must be one of: black, blue, purple, emerald, aurora, sunset, ocean, broadcast"
   ]
@@ -208,7 +222,7 @@ MEETINGS_CONFIG_ADMIN_TOKEN=your-super-secret-token-here-min-32-chars
 ```json
 {
   "error": "Validation failed",
-  "errors": ["VITE_HOST must be a valid URL or empty string"]
+  "errors": ["VITE_ENABLE_RECORDING must be \"true\" or \"false\""]
 }
 ```
 

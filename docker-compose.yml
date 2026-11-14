@@ -12,6 +12,10 @@ services:
       - CONFIG_FILE=/data/config.json
       # IMPORTANT: Set a strong admin token in production!
       - MEETINGS_CONFIG_ADMIN_TOKEN=${MEETINGS_CONFIG_ADMIN_TOKEN:-default-admin-token-change-me}
+      # Conference master key and secret of the Red5 Cloud deployment. Needed for room tokens,
+      # recording, captions, external streams and moderation. Never sent to the browser.
+      - CONFERENCE_MASTER_KEY=${CONFERENCE_MASTER_KEY:-}
+      - CONFERENCE_MASTER_SECRET=${CONFERENCE_MASTER_SECRET:-}
       # Optional: keep the config in MySQL (e.g. TrueTime Studio's server, in its own schema)
       # instead of /data/config.json. Leave MEETINGS_DB_HOST empty to use the file.
       - MEETINGS_DB_HOST=${MEETINGS_DB_HOST:-}
@@ -19,18 +23,31 @@ services:
       - MEETINGS_DB_USER=${MEETINGS_DB_USER:-}
       - MEETINGS_DB_PASSWORD=${MEETINGS_DB_PASSWORD:-}
       - MEETINGS_DB_NAME=${MEETINGS_DB_NAME:-truetime_meetings}
+      - MEETINGS_DB_SSL=${MEETINGS_DB_SSL:-false}
+      - MEETINGS_DB_CONNECT_RETRIES=${MEETINGS_DB_CONNECT_RETRIES:-10}
+      - MEETINGS_DB_CONNECT_RETRY_DELAY_MS=${MEETINGS_DB_CONNECT_RETRY_DELAY_MS:-3000}
       # Initialize with these values (can be overridden via .env file)
       - VITE_HOST=${VITE_HOST:-}
       - VITE_BASENAME=${VITE_BASENAME:-}
       - VITE_BACKEND_HOST=${VITE_BACKEND_HOST:-}
       - VITE_ENABLE_RECORDING=${VITE_ENABLE_RECORDING:-false}
       - VITE_ENABLE_CLOSED_CAPTION=${VITE_ENABLE_CLOSED_CAPTION:-false}
+      - VITE_ENABLE_EXTERNAL_STREAMS=${VITE_ENABLE_EXTERNAL_STREAMS:-false}
       - VITE_DEFAULT_THEME=${VITE_DEFAULT_THEME:-default}
       - VITE_TURN_SERVER_URL=${VITE_TURN_SERVER_URL:-}
       - VITE_TURN_SERVER_USERNAME=${VITE_TURN_SERVER_USERNAME:-}
       - VITE_TURN_SERVER_CREDENTIAL=${VITE_TURN_SERVER_CREDENTIAL:-}
       - VITE_NODE_GROUP=${VITE_NODE_GROUP:-}
       - VITE_LOGO_URL=${VITE_LOGO_URL:-}
+      - VITE_VIRTUAL_BACKGROUND_IMAGES=${VITE_VIRTUAL_BACKGROUND_IMAGES:-}
+      - VITE_ENABLE_GOOGLE_AUTH=${VITE_ENABLE_GOOGLE_AUTH:-false}
+      - VITE_GOOGLE_CLIENT_ID=${VITE_GOOGLE_CLIENT_ID:-}
+      - VITE_PUBNUB_PUBLISH_KEY=${VITE_PUBNUB_PUBLISH_KEY:-}
+      - VITE_PUBNUB_SUBSCRIBE_KEY=${VITE_PUBNUB_SUBSCRIBE_KEY:-}
+      - VITE_AWS_ACCESS_KEY=${VITE_AWS_ACCESS_KEY:-}
+      - VITE_AWS_SECRET_ACCESS_KEY=${VITE_AWS_SECRET_ACCESS_KEY:-}
+      - VITE_AWS_BUCKET_NAME=${VITE_AWS_BUCKET_NAME:-}
+      - VITE_AWS_BUCKET_LOCATION=${VITE_AWS_BUCKET_LOCATION:-}
     volumes:
       - config-data:/data
     restart: unless-stopped
