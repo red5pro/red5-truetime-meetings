@@ -2,7 +2,6 @@ import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { Container, Box, IconButton } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
-import { ReactionBarSelector } from '@charkour/react-reactions';
 import { Close } from '@mui/icons-material';
 
 import Footer from '../../Components/Footer/Footer.tsx';
@@ -18,25 +17,14 @@ import MuteParticipantDialog from '../../Components/MuteParticipantDialog.tsx';
 import { usePictureInPicture } from '../../utils/PiPManager.tsx';
 import ClosedCaptions from '../../Components/ClosedCaptions.tsx';
 import { useKeyboardShortcuts } from '../../hooks/useKeyboardShortcuts.ts';
-import { GallerySize, MeetingPageProps, Reaction, SubscribedParticipant } from './types.ts';
+import { GallerySize, MeetingPageProps, SubscribedParticipant } from './types.ts';
 import { debounce } from 'lodash';
 import { getRuntimeConfig } from '../../utils/configStore';
+import { FOOTER_HEIGHT } from '../../constants/layout';
 
 // Constants
-const REACTION_LIST: Reaction[] = [
-  { label: 'Love It', node: <div>💖</div>, key: 'sparkling_heart' },
-  { label: 'Like', node: <div>👍🏼</div>, key: 'thumbs_up' },
-  { label: 'Tada', node: <div>🎉</div>, key: 'party_popper' },
-  { label: 'Applause', node: <div>👏🏼</div>, key: 'clapping_hands' },
-  { label: 'Haha', node: <div>😂</div>, key: 'face_with_tears_of_joy' },
-  { label: 'Surprised', node: <div>😮</div>, key: 'open_mouth' },
-  { label: 'Sad', node: <div>😢</div>, key: 'sad_face' },
-  { label: 'Thinking', node: <div>🤔</div>, key: 'thinking_face' },
-  { label: 'Dislike', node: <div>👎🏼</div>, key: 'thumbs_down' },
-];
 
 const AUTO_LAYOUT_PARTICIPANT_LIMIT = 8;
-const FOOTER_HEIGHT = 80;
 const CAPTIONS_PANEL_HEIGHT_DESKTOP = 240;
 const CAPTIONS_PANEL_HEIGHT_MOBILE = 180;
 const PHONE_LANDSCAPE_QUERY =
@@ -58,6 +46,17 @@ const MeetingPage = React.memo<MeetingPageProps>((props) => {
   });
   const theme = useTheme();
   const isSmallScreen = useMediaQuery(theme.breakpoints.down('sm'));
+  // A side drawer takes the right of the window; the gallery and the captions panel make room
+  const hasOpenDrawer = Boolean(
+    props.messageDrawerOpen ||
+    props.participantListDrawerOpen ||
+    props.effectsDrawerOpen ||
+    props.infoDrawerOpen ||
+    props.localRecordingDrawerOpen ||
+    props.transcriptionDrawerOpen ||
+    props.externalStreamsDrawerOpen,
+  );
+  const captionsVisible = Boolean(props?.closedCaptions.captionsVisible);
   // A phone turned to landscape is wider than the `sm` breakpoint, but its short height can't
   // fit the desktop layouts (they crop and #stream-gallery doesn't scroll), so keep it on the
   // mobile layout, which has its own landscape arrangements.
@@ -271,25 +270,13 @@ const MeetingPage = React.memo<MeetingPageProps>((props) => {
     return () => document.removeEventListener('visibilitychange', onVisibility);
   }, [autoOpenPiP, autoClosePiP, pipOptions]);
 
-  // Gallery resize handler
-  const handleGalleryResize = useCallback((calcDrawer = false) => {
+  // Gallery resize handler. The `drawer-open` class that narrows the gallery is rendered by React
+  // (see #stream-gallery below): set by hand on the element, React dropped it whenever the
+  // gallery's other classes changed, e.g. when the captions panel closed.
+  const handleGalleryResize = useCallback(() => {
     const gallery = document.getElementById('stream-gallery');
 
     if (!gallery) return;
-
-    if (calcDrawer) {
-      const currentProps = propsRef.current;
-      const hasOpenDrawer =
-        currentProps.messageDrawerOpen ||
-        currentProps.participantListDrawerOpen ||
-        currentProps.effectsDrawerOpen ||
-        currentProps.infoDrawerOpen ||
-        currentProps.localRecordingDrawerOpen ||
-        currentProps.transcriptionDrawerOpen ||
-        currentProps.externalStreamsDrawerOpen;
-
-      gallery.classList.toggle('drawer-open', hasOpenDrawer);
-    }
 
     const { width: screenWidth, height: screenHeight } = gallery.getBoundingClientRect();
     setGallerySize({ w: screenWidth, h: screenHeight });
@@ -388,7 +375,7 @@ const MeetingPage = React.memo<MeetingPageProps>((props) => {
     // Deferred via rAF: gallery measurement reads the DOM, and this indirection keeps the
     // setState call out of the effect's own synchronous body (see the resize-listener effect
     // below, which uses the same debounce-based indirection).
-    requestAnimationFrame(() => handleGalleryResize(false));
+    requestAnimationFrame(() => handleGalleryResize());
   }, [
     props.participants,
     props.subscribedParticipants,
@@ -396,46 +383,17 @@ const MeetingPage = React.memo<MeetingPageProps>((props) => {
     handleGalleryResize,
   ]);
 
+  // Measure again once a drawer or the captions panel changes the gallery's size
   useEffect(() => {
-    requestAnimationFrame(() => handleGalleryResize(true));
-  }, [
-    props.infoDrawerOpen,
-    props.messageDrawerOpen,
-    props.participantListDrawerOpen,
-    props.effectsDrawerOpen,
-    props.localRecordingDrawerOpen,
-    props.transcriptionDrawerOpen,
-    props.externalStreamsDrawerOpen,
-    handleGalleryResize,
-  ]);
+    requestAnimationFrame(() => handleGalleryResize());
+  }, [hasOpenDrawer, captionsVisible, handleGalleryResize]);
 
   useEffect(() => {
-    const debouncedResize = debounce(() => handleGalleryResize(false), 500);
+    const debouncedResize = debounce(() => handleGalleryResize(), 500);
     window.addEventListener('resize', debouncedResize);
 
     return () => window.removeEventListener('resize', debouncedResize);
   }, [handleGalleryResize]);
-
-  // Reaction bar styles
-  const reactionBarStyle: React.CSSProperties = {
-    position: 'fixed',
-    bottom: 105,
-    left: '50%',
-    transform: 'translate(-50%, 50%)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 16,
-    zIndex: 666,
-    height: 46,
-  };
-
-  const reactionSelectorStyle: React.CSSProperties = {
-    backgroundColor: theme.palette.themeColor?.[60],
-    paddingTop: '7px',
-    paddingLeft: '7px',
-    paddingRight: '7px',
-  };
 
   const pipOverlay = () => {
     return (
@@ -476,9 +434,10 @@ const MeetingPage = React.memo<MeetingPageProps>((props) => {
     <Container id="meeting-page" maxWidth={false} sx={{ width: '100%', maxWidth: '100%', px: 0 }}>
       <Box
         id="stream-gallery"
+        className={hasOpenDrawer ? 'drawer-open' : undefined}
         sx={{
           // Keep gallery space in sync with captions panel + footer heights.
-          height: props?.closedCaptions.captionsVisible
+          height: captionsVisible
             ? `calc(100dvh - ${
                 FOOTER_HEIGHT +
                 (isSmallScreen ? CAPTIONS_PANEL_HEIGHT_MOBILE : CAPTIONS_PANEL_HEIGHT_DESKTOP)
@@ -505,18 +464,6 @@ const MeetingPage = React.memo<MeetingPageProps>((props) => {
         setParticipantIdMuted={(participant) => props?.setParticipantIdMuted?.(participant)}
         turnOffYourMicNotification={(streamId) => props?.turnOffYourMicNotification?.(streamId)}
       />
-
-      {/* Emoji Reactions */}
-      {props.showEmojis && (
-        <Box id="reactions-bar" style={reactionBarStyle}>
-          <ReactionBarSelector
-            reactions={REACTION_LIST}
-            iconSize={28}
-            style={reactionSelectorStyle}
-            onSelect={handleEmojiSend}
-          />
-        </Box>
-      )}
 
       {/* Screen Share Video Element */}
       <VideoCard
@@ -554,6 +501,7 @@ const MeetingPage = React.memo<MeetingPageProps>((props) => {
         isLiveCaptions={props?.closedCaptions?.isLiveCaptions}
         // @ts-expect-error - prop type mismatch with legacy component props
         subscribedParticipants={props?.subscribedParticipants}
+        drawerOpen={hasOpenDrawer}
       />
 
       {/* Footer */}
@@ -573,6 +521,7 @@ const MeetingPage = React.memo<MeetingPageProps>((props) => {
         isRaiseHand={props.isRaiseHand}
         setIsRaiseHand={props.setIsRaiseHand}
         showEmojis={props.showEmojis}
+        onSendReaction={handleEmojiSend}
         setShowEmojis={props.setShowEmojis}
         numberOfUnReadMessages={props.numberOfUnReadMessages}
         toggleSetNumberOfUnreadMessages={props.toggleSetNumberOfUnreadMessages}
@@ -595,6 +544,8 @@ const MeetingPage = React.memo<MeetingPageProps>((props) => {
         noiseSuppressionEnabled={props.noiseSuppressionEnabled}
         noiseSuppressionStatus={props.noiseSuppressionStatus}
         toggleNoiseSuppression={props.toggleNoiseSuppression}
+        noiseSuppressionPercent={props.noiseSuppressionPercent}
+        setNoiseSuppressionPercent={props.setNoiseSuppressionPercent}
         selectedBackgroundMode={props.selectedBackgroundMode}
         setSelectedBackgroundMode={props.setSelectedBackgroundMode}
         effectsDrawerOpen={props.effectsDrawerOpen}
@@ -625,7 +576,6 @@ const MeetingPage = React.memo<MeetingPageProps>((props) => {
         openAllParticipantsPiP={openAllParticipantsPiP}
         closePiP={closePiP}
         allParticipants={allParticipants}
-        // @ts-expect-error - prop type mismatch with legacy component props
         talkers={props.talkers}
         streamName={props.streamName}
         captionsVisible={props?.closedCaptions.captionsVisible}

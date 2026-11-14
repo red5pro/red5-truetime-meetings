@@ -5,25 +5,35 @@ import { useTheme } from '@mui/material/styles';
 import MenuItem from '@mui/material/MenuItem';
 import SettingsDialog from './SettingsDialog.tsx';
 import { LayoutSettingsDialog } from './LayoutSettingsDialog.tsx';
-import { ListItemIcon, ListItemText, Tooltip } from '@mui/material';
+import { ListItemIcon, ListItemText } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 import GeneralSettingsDialog from './GeneralSettingsDialog.tsx';
 import { isMobile, isTablet } from 'react-device-detect';
 import i18n from 'i18next';
 import { ThemeList } from '../../../constants/themeList.js';
 import { ThemeContext } from '../../../contexts/ThemeContext';
-import { CustomizedBtn, rectangularStyle } from '../../CustomizedBtn.tsx';
+import { ToolbarButton } from 'truetime-ui';
+import { getGlassMenuStyle } from '../../../styles/themeUtil.js';
 import log from 'loglevel';
-import { ClosedCaption, ClosedCaptionDisabled } from '@mui/icons-material';
+import { ClosedCaption, ClosedCaptionDisabled, MoreVert } from '@mui/icons-material';
 import type { Devices } from 'truetime-ui';
 import { getRuntimeConfig } from '../../../utils/configStore';
+import { devMenuItems } from './devMenuItems.tsx';
+import type { NoiseSuppressionStatus } from '../../../hooks/useNoiseSuppression';
 
 interface Globals {
   desiredTileCount?: number;
 }
 
 interface MoreOptionsButtonProps {
+  onAddFakeParticipant?: () => void;
+  onRemoveFakeParticipant?: () => void;
   footer?: boolean;
+  noiseSuppressionEnabled?: boolean;
+  noiseSuppressionStatus?: NoiseSuppressionStatus;
+  toggleNoiseSuppression?: (enabled: boolean) => void;
+  noiseSuppressionPercent?: number;
+  setNoiseSuppressionPercent?: (percent: number) => void;
   glass?: boolean;
   isPlayOnly?: boolean;
   isScreenShared?: boolean;
@@ -125,9 +135,6 @@ function MoreOptionsButton(props: MoreOptionsButtonProps) {
   };
 
   // Determine icon color based on button state
-  const getMainIconColor = (): string => {
-    return theme.palette.themeColor[99]; // Pure white for both states
-  };
 
   // Get menu icon color
   const getMenuIconColor = (): string => {
@@ -204,6 +211,11 @@ function MoreOptionsButton(props: MoreOptionsButtonProps) {
         setSelectedBackgroundMode={props?.setSelectedBackgroundMode}
         updateOutgoingBitrate={props?.updateOutgoingBitrate}
         onPushToTalkToggle={props?.onPushToTalkToggle}
+        noiseSuppressionEnabled={props?.noiseSuppressionEnabled}
+        noiseSuppressionStatus={props?.noiseSuppressionStatus}
+        onNoiseSuppressionToggle={props?.toggleNoiseSuppression}
+        noiseSuppressionPercent={props?.noiseSuppressionPercent}
+        onNoiseSuppressionPercentChange={props?.setNoiseSuppressionPercent}
       />
       <LayoutSettingsDialog
         open={layoutDialogOpen}
@@ -222,22 +234,17 @@ function MoreOptionsButton(props: MoreOptionsButtonProps) {
         currentTheme={currentTheme}
         switchTheme={switchTheme}
       />
-      <Tooltip title={t('More options')} placement="top">
-        <CustomizedBtn
-          className={props?.footer ? 'footer-icon-button' : ''}
-          id="more-button"
-          glass={props?.glass}
-          sx={rectangularStyle}
-          variant="contained"
-          color={open ? 'primary' : 'secondary'}
-          aria-controls={open ? 'demo-positioned-menu' : undefined}
-          aria-haspopup="true"
-          aria-expanded={open ? 'true' : undefined}
-          onClick={handleClick}
-        >
-          <SvgIcon size={24} viewBox="0 0 500 500" name={'option'} color={getMainIconColor()} />
-        </CustomizedBtn>
-      </Tooltip>
+      <ToolbarButton
+        id="more-button"
+        size="narrow"
+        icon={<MoreVert />}
+        label={t('More options')}
+        tone={open ? 'active' : 'default'}
+        aria-controls={open ? 'basic-menu' : undefined}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        onClick={handleClick}
+      />
       <Menu
         id="basic-menu"
         anchorEl={anchorEl}
@@ -246,6 +253,7 @@ function MoreOptionsButton(props: MoreOptionsButtonProps) {
         MenuListProps={{
           'aria-labelledby': 'basic-button',
         }}
+        PaperProps={{ sx: getGlassMenuStyle(theme, 'secondary', true) }}
         anchorOrigin={{
           vertical: 'top',
           horizontal: 'left',
@@ -406,6 +414,12 @@ function MoreOptionsButton(props: MoreOptionsButtonProps) {
             }}
           />
         </MenuItem>
+        {devMenuItems({
+          onAddFakeParticipant: props?.onAddFakeParticipant,
+          onRemoveFakeParticipant: props?.onRemoveFakeParticipant,
+          currentTheme,
+          onThemeChange: switchTheme,
+        })}
       </Menu>
     </>
   );

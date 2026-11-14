@@ -10,7 +10,6 @@ import type { NoiseSuppressionStatus } from '../../../hooks/useNoiseSuppression'
 import {
   ListItemIcon,
   ListItemText,
-  Tooltip,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -28,13 +27,14 @@ import GeneralSettingsDialog from './GeneralSettingsDialog.tsx';
 import { ThemeList } from '../../../constants/themeList.js';
 import { ThemeContext } from '../../../contexts/ThemeContext';
 import i18n from 'i18next';
-import { CustomizedBtn, rectangularStyle } from '../../CustomizedBtn.tsx';
+import { ToolbarButton } from 'truetime-ui';
 import { getGlassMenuStyle } from '../../../styles/themeUtil.js';
-import { PictureInPicture, PictureInPictureAlt } from '@mui/icons-material';
+import { MoreVert, PictureInPicture, PictureInPictureAlt } from '@mui/icons-material';
 import log from 'loglevel';
 import { getRuntimeConfig } from '../../../utils/configStore';
 import { isMobile } from 'react-device-detect';
 import { RecordingResolutionCheck } from '../../RecordingResolutionCheck';
+import { devMenuItems } from './devMenuItems.tsx';
 import type { RecordingSources } from '../../../hooks/useRecording';
 import {
   DEFAULT_RECORDING_PRESET,
@@ -90,6 +90,8 @@ interface PiPInfo {
 }
 
 interface OptionButtonProps {
+  onAddFakeParticipant?: () => void;
+  onRemoveFakeParticipant?: () => void;
   footer?: boolean;
   glass?: boolean;
   isPlayOnly?: boolean;
@@ -109,6 +111,9 @@ interface OptionButtonProps {
   printStatLogs?: boolean;
   noiseSuppressionEnabled?: boolean;
   noiseSuppressionStatus?: NoiseSuppressionStatus;
+  toggleNoiseSuppression?: (enabled: boolean) => void;
+  noiseSuppressionPercent?: number;
+  setNoiseSuppressionPercent?: (percent: number) => void;
   pushToTalkEnabled?: boolean;
   pipSupported?: boolean;
   pipIsOpen?: boolean;
@@ -149,6 +154,7 @@ function OptionButton(props: OptionButtonProps) {
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
   const [dialogOpen, setDialogOpen] = React.useState<boolean>(false);
+  const [settingsSection, setSettingsSection] = React.useState<'audio' | 'video'>('audio');
   const [layoutDialogOpen, setLayoutDialogOpen] = React.useState<boolean>(false);
   const [diagnosticDialogOpen, setDiagnosticDialogOpen] = React.useState<boolean>(false);
   const [generalSettingsDialogOpen, setGeneralSettingsDialogOpen] = React.useState<boolean>(false);
@@ -191,7 +197,6 @@ function OptionButton(props: OptionButtonProps) {
   React.useEffect(() => {
     localStorage.setItem('recordSeparatelyChecked', String(recordSeparatelyChecked));
   }, [recordSeparatelyChecked]);
-  const [_hovered, setHovered] = React.useState<boolean>(false);
   const theme = useTheme();
   const themeContext = React.useContext(ThemeContext);
 
@@ -233,8 +238,8 @@ function OptionButton(props: OptionButtonProps) {
     setAnchorEl(null);
   };
 
-  const handleDialogOpen = (focus?: string): void => {
-    setSelectFocus(focus || null);
+  const handleDialogOpen = (section: 'audio' | 'video'): void => {
+    setSettingsSection(section);
     setDialogOpen(true);
     handleClose();
   };
@@ -304,11 +309,6 @@ function OptionButton(props: OptionButtonProps) {
     };
   };
 
-  // Determine icon color based on button state
-  const getMainIconColor = (): string => {
-    return theme.palette.themeColor[99]; // Pure white for both states
-  };
-
   // Get menu icon color
   const getMenuIconColor = (): string => {
     return theme.palette.themeColor[99]; // Pure white for menu icons
@@ -368,8 +368,7 @@ function OptionButton(props: OptionButtonProps) {
       <SettingsDialog
         open={dialogOpen}
         onClose={handleDialogClose}
-        //@ts-expect-error - prop type mismatch with legacy component props
-        selectFocus={selectFocus}
+        section={settingsSection}
         devices={props?.devices}
         selectedCamera={props?.selectedCamera}
         cameraSelected={props?.cameraSelected}
@@ -383,6 +382,11 @@ function OptionButton(props: OptionButtonProps) {
         pushToTalkEnabled={props?.pushToTalkEnabled}
         onPushToTalkToggle={props?.onPushToTalkToggle}
         microphoneSelected={props?.microphoneSelected}
+        noiseSuppressionEnabled={props?.noiseSuppressionEnabled}
+        noiseSuppressionStatus={props?.noiseSuppressionStatus}
+        onNoiseSuppressionToggle={props?.toggleNoiseSuppression}
+        noiseSuppressionPercent={props?.noiseSuppressionPercent}
+        onNoiseSuppressionPercentChange={props?.setNoiseSuppressionPercent}
       />
       <LayoutSettingsDialog
         open={layoutDialogOpen}
@@ -561,24 +565,17 @@ function OptionButton(props: OptionButtonProps) {
         </DialogActions>
       </Dialog>
 
-      <Tooltip title={t('Options')} placement="top">
-        <CustomizedBtn
-          className={props?.footer ? 'footer-icon-button' : ''}
-          id="settings-button"
-          variant="contained"
-          glass={props?.glass}
-          sx={rectangularStyle}
-          color={open ? 'primary' : 'secondary'}
-          aria-controls={open ? 'demo-positioned-menu' : undefined}
-          aria-haspopup="true"
-          aria-expanded={open ? 'true' : undefined}
-          onMouseEnter={() => setHovered(true)}
-          onMouseLeave={() => setHovered(false)}
-          onClick={handleClick}
-        >
-          <SvgIcon size={24} viewBox="0 0 500 500" name={'settings'} color={getMainIconColor()} />
-        </CustomizedBtn>
-      </Tooltip>
+      <ToolbarButton
+        id="settings-button"
+        size="narrow"
+        icon={<MoreVert />}
+        label={t('More options')}
+        tone={open ? 'active' : 'default'}
+        aria-controls={open ? 'basic-menu' : undefined}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        onClick={handleClick}
+      />
       <Menu
         id="basic-menu"
         anchorEl={anchorEl}
@@ -622,26 +619,39 @@ function OptionButton(props: OptionButtonProps) {
           <ListItemText>{t('Change Layout')}</ListItemText>
         </MenuItem>
 
-        {props?.isPlayOnly === false && (
+        {props?.isPlayOnly === false && [
           <MenuItem
-            key="call-settings"
+            key="audio-settings"
             onClick={() => {
               props?.updateDevicesList();
-              handleDialogOpen();
+              handleDialogOpen('audio');
             }}
-            id="call-settings"
+            id="audio-settings"
           >
             <ListItemIcon>
               <SvgIcon
                 size={24}
                 viewBox="0 0 500 500"
-                name={'call-settings'}
+                name={'microphone'}
                 color={getMenuIconColor()}
               />
             </ListItemIcon>
-            <ListItemText>{t('Call Settings')}</ListItemText>
-          </MenuItem>
-        )}
+            <ListItemText>{t('Audio Settings')}</ListItemText>
+          </MenuItem>,
+          <MenuItem
+            key="video-settings"
+            onClick={() => {
+              props?.updateDevicesList();
+              handleDialogOpen('video');
+            }}
+            id="video-settings"
+          >
+            <ListItemIcon>
+              <SvgIcon size={24} viewBox="0 0 500 500" name={'camera'} color={getMenuIconColor()} />
+            </ListItemIcon>
+            <ListItemText>{t('Video Settings')}</ListItemText>
+          </MenuItem>,
+        ]}
 
         {/* Picture-in-Picture Menu Item */}
         {!isMobile && (
@@ -830,6 +840,12 @@ function OptionButton(props: OptionButtonProps) {
           </ListItemIcon>
           <ListItemText>{t('Report Problem')}</ListItemText>
         </MenuItem>
+        {devMenuItems({
+          onAddFakeParticipant: props?.onAddFakeParticipant,
+          onRemoveFakeParticipant: props?.onRemoveFakeParticipant,
+          currentTheme,
+          onThemeChange: switchTheme,
+        })}
       </Menu>
     </>
   );

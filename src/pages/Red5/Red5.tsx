@@ -358,6 +358,8 @@ function Red5(props: Red5Props) {
               noiseSuppressionEnabled={conference.media.noiseSuppressionEnabled}
               noiseSuppressionStatus={conference.media.noiseSuppressionStatus}
               toggleNoiseSuppression={conference.media.toggleNoiseSuppression}
+              noiseSuppressionPercent={conference.media.noiseSuppressionPercent}
+              setNoiseSuppressionPercent={conference.media.setNoiseSuppressionPercent}
               selectedSpeaker={conference.media.selectedSpeaker}
               cameraSelected={conference.media.cameraSelected}
               microphoneSelected={conference.media.microphoneSelected}
@@ -532,6 +534,8 @@ function Red5(props: Red5Props) {
               handleBackgroundReplacement={
                 conference.features.virtualBackground.handleBackgroundReplacement
               }
+              selectedBackgroundMode={conference.features.virtualBackground.selectedBackgroundMode}
+              isCameraOff={conference.media.isMyCamTurnedOff}
               handleInfoDrawerOpen={conference.ui.handleInfoDrawerOpen}
               handleMessageDrawerOpen={conference.ui.handleMessageDrawerOpen}
               handleParticipantListOpen={conference.ui.handleParticipantListOpen}

@@ -1,9 +1,6 @@
-import { SvgIcon } from '../../SvgIcon';
-import { Tooltip } from '@mui/material';
 import { useTranslation } from 'react-i18next';
-import { useTheme } from '@mui/material/styles';
-// @ts-expect-error - legacy component has no proper type exports
-import { CustomizedBtn, rectangularStyle } from '../../CustomizedBtn.tsx';
+import { ToolbarButton } from 'truetime-ui';
+import { SvgIcon } from '../../SvgIcon';
 
 interface RaiseHandButtonProps {
   rounded?: boolean;
@@ -13,40 +10,17 @@ interface RaiseHandButtonProps {
   glass?: boolean;
 }
 
-function RaiseHandButton(props: RaiseHandButtonProps) {
-  const { footer, isRaiseHand, setIsRaiseHand, glass } = props;
+function RaiseHandButton({ isRaiseHand, setIsRaiseHand }: RaiseHandButtonProps) {
   const { t } = useTranslation();
-  const theme = useTheme();
-
-  // Determine icon color based on button state
-  const getIconColor = (): string => {
-    return theme.palette.themeColor[99]; // Pure white for both states
-  };
-
-  // Get button color variant
-  const getButtonColor = (): 'primary' | 'secondary' => {
-    return isRaiseHand ? 'primary' : 'secondary';
-  };
-
-  const handleClick = () => {
-    setIsRaiseHand?.(!isRaiseHand);
-  };
-
   return (
-    <>
-      <Tooltip title={t('Raise hand')} placement="top">
-        <CustomizedBtn
-          glass={glass}
-          className={footer ? 'footer-icon-button' : ''}
-          variant="contained"
-          color={getButtonColor()}
-          sx={rectangularStyle}
-          onClick={handleClick}
-        >
-          <SvgIcon size={24} viewBox="0 0 500 500" name="raise-hand" color={getIconColor()} />
-        </CustomizedBtn>
-      </Tooltip>
-    </>
+    <ToolbarButton
+      id="raise-hand-button"
+      icon={<SvgIcon size={24} viewBox="0 0 500 500" name="raise-hand" color="currentColor" />}
+      label={t(isRaiseHand ? 'Lower hand' : 'Raise hand')}
+      pressed={Boolean(isRaiseHand)}
+      tone={isRaiseHand ? 'active' : 'default'}
+      onClick={() => setIsRaiseHand?.(!isRaiseHand)}
+    />
   );
 }
 

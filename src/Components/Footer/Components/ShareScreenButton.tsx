@@ -1,9 +1,6 @@
-import { SvgIcon } from '../../SvgIcon';
-import { Tooltip } from '@mui/material';
 import { useTranslation } from 'react-i18next';
-import { useTheme } from '@mui/material/styles';
-// @ts-expect-error - legacy component has no proper type exports
-import { CustomizedBtn, rectangularStyle } from '../../CustomizedBtn.tsx';
+import { ToolbarButton } from 'truetime-ui';
+import { SvgIcon } from '../../SvgIcon';
 
 interface ShareScreenButtonProps {
   footer?: boolean;
@@ -16,44 +13,23 @@ interface ShareScreenButtonProps {
 
 function ShareScreenButton(props: ShareScreenButtonProps) {
   const { t } = useTranslation();
-  const theme = useTheme();
-
-  // Determine icon color based on button state
-  const getIconColor = (): string => {
-    return theme.palette.themeColor[99]; // Pure white for both states
-  };
-
-  // Get button color variant
-  const getButtonColor = (): 'primary' | 'secondary' => {
-    return props?.isScreenShared ? 'primary' : 'secondary';
-  };
-
   const handleClick = () => {
-    if (props?.isScreenShared) {
-      props?.handleStopScreenShare?.();
+    if (props.isScreenShared) {
+      props.handleStopScreenShare?.();
     } else {
-      props?.handleStartScreenShare?.();
-      // send other that you are sharing screen.
+      props.handleStartScreenShare?.();
     }
   };
 
   return (
-    <Tooltip
-      title={props?.isScreenShared ? t('You are presenting') : t('Present now')}
-      placement="top"
-    >
-      <CustomizedBtn
-        className={props?.footer ? 'footer-icon-button' : ''}
-        id="share-screen-button"
-        glass={props?.glass}
-        sx={rectangularStyle}
-        onClick={handleClick}
-        variant="contained"
-        color={getButtonColor()}
-      >
-        <SvgIcon color={getIconColor()} size={24} viewBox="0 0 500 500" name="share-screen" />
-      </CustomizedBtn>
-    </Tooltip>
+    <ToolbarButton
+      id="share-screen-button"
+      icon={<SvgIcon size={24} viewBox="0 0 500 500" name="share-screen" color="currentColor" />}
+      label={props.isScreenShared ? t('Stop presenting') : t('Present now')}
+      pressed={Boolean(props.isScreenShared)}
+      tone={props.isScreenShared ? 'active' : 'default'}
+      onClick={handleClick}
+    />
   );
 }
 

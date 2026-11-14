@@ -1,12 +1,9 @@
 import { JSX } from 'react';
-import Stack from '@mui/material/Stack';
-import Grid from '@mui/material/Grid2';
-import Typography from '@mui/material/Typography';
-import Button from '@mui/material/Button';
-import { SvgIcon } from './SvgIcon';
+import { Box } from '@mui/material';
+import { ContentCopy } from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
 import { enqueueSnackbar } from 'notistack';
-import { Box } from '@mui/system';
+import { Button, Heading, Text, radii, themeColors } from 'truetime-ui';
 
 interface InfoTabProps {
   appVersion: string;
@@ -20,54 +17,77 @@ function InfoTab({ appVersion, buildTime, meetingLink }: InfoTabProps): JSX.Elem
   const handleCopyLink = async (): Promise<void> => {
     try {
       await navigator.clipboard.writeText(meetingLink);
-
-      enqueueSnackbar(t('Link copied'), {
-        variant: 'info',
-        autoHideDuration: 1500,
-      });
+      enqueueSnackbar(t('Link copied'), { variant: 'info', autoHideDuration: 1500 });
     } catch (error) {
-      // Fallback for browsers that don't support clipboard API
+      // Browsers without the clipboard API, or without permission to use it
       console.error('Failed to copy to clipboard:', error);
-      enqueueSnackbar(t('Failed to copy link'), {
-        variant: 'error',
-        autoHideDuration: 1500,
-      });
+      enqueueSnackbar(t('Failed to copy link'), { variant: 'error', autoHideDuration: 1500 });
     }
   };
 
   return (
-    <>
-      <Box display="flex" flexDirection="column" justifyContent="space-between" height="100%">
-        <Grid container sx={{ mt: 1 }} style={{ flexWrap: 'nowrap', flex: 'auto' }}>
-          <Stack sx={{ width: '100%' }} spacing={3}>
-            <Stack spacing={1} alignItems="flex-start" style={{ marginTop: '21px' }}>
-              <Typography variant="body1" component="div">
-                Joining Info
-              </Typography>
-              <Typography variant="body2" component="div">
-                {meetingLink}
-              </Typography>
-              <Button style={{ marginTop: '12px' }} variant="text" onClick={handleCopyLink}>
-                <SvgIcon size={16} viewBox="0 0 500 500" name="copy" color="#fff" />
-                <Typography variant="subtitle1" style={{ marginLeft: '10px' }}>
-                  Copy joining info
-                </Typography>
-              </Button>
-            </Stack>
-          </Stack>
-        </Grid>
-        <Box mt="auto" p={2} textAlign="center">
-          <Typography variant="caption" component="div">
-            Version: {appVersion}
-          </Typography>
-          {appVersion.endsWith('-beta') && (
-            <Typography variant="caption" component="div">
-              Build: {buildTime}
-            </Typography>
-          )}
+    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%' }}>
+      {/* Joining info, centred in the panel */}
+      <Box
+        sx={{
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          textAlign: 'center',
+          gap: 2,
+          px: 1,
+        }}
+      >
+        <Box>
+          <Heading level={3} variant="h6">
+            {t('Joining info')}
+          </Heading>
+          <Text tone="muted" variant="body2" sx={{ mt: 0.5 }}>
+            {t('Share this link to invite people to the meeting')}
+          </Text>
         </Box>
+
+        <Box
+          id="meeting-link"
+          sx={(theme) => ({
+            width: '100%',
+            px: 2,
+            py: 1.5,
+            borderRadius: `${radii.container}px`,
+            backgroundColor: themeColors(theme).surface,
+            wordBreak: 'break-all',
+          })}
+        >
+          <Text variant="body2" mono>
+            {meetingLink}
+          </Text>
+        </Box>
+
+        <Button
+          id="copy-joining-info-button"
+          shape="pill"
+          color="secondary"
+          startIcon={<ContentCopy fontSize="small" />}
+          onClick={handleCopyLink}
+        >
+          {t('Copy joining info')}
+        </Button>
       </Box>
-    </>
+
+      {/* Build details */}
+      <Box sx={{ p: 2, textAlign: 'center' }}>
+        <Text variant="caption" tone="muted" component="div">
+          {t('Version')} {appVersion}
+        </Text>
+        {appVersion.endsWith('-beta') && (
+          <Text variant="caption" tone="muted" component="div">
+            {t('Build')} {buildTime}
+          </Text>
+        )}
+      </Box>
+    </Box>
   );
 }
 

@@ -10,12 +10,12 @@ import {
 } from '../../utils/utils.tsx';
 import { CardDimensions, LayoutConfig, LayoutTiledProps, ParticipantObject } from './types.ts';
 import { calculateOptimalLayout } from './utils.ts';
+import { FOOTER_HEIGHT } from '../../constants/layout';
 
 // Constants
 const DEFAULT_ASPECT_RATIO = 16 / 9;
 const CARD_MARGIN = 8;
 const LAYOUT_BUFFER = 2; // Extra count to prevent single video filling entire page
-const FOOTER_HEIGHT = 80;
 
 const getInitialCardDimensions = (): CardDimensions => {
   if (typeof window === 'undefined') {

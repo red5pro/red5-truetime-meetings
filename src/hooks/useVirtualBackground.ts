@@ -293,8 +293,7 @@ export const useVirtualBackground = (
           imageUrl = await fetchImageAsBlob(url);
         }
 
-        await handleBackgroundReplacement({ type: 'image', value: imageUrl });
-        return true;
+        return await handleBackgroundReplacement({ type: 'image', value: imageUrl });
       } catch (error) {
         log.error('Failed to set virtual background image:', error);
         return false;

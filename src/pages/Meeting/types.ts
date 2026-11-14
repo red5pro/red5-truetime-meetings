@@ -1,4 +1,3 @@
-import React from 'react';
 import type { NoiseSuppressionStatus } from '../../hooks/useNoiseSuppression';
 import type { RecordingSources } from '../../hooks/useRecording';
 import type { ResolutionPreset } from '../../utils/recordingResolution';
@@ -100,6 +99,8 @@ export interface MeetingPageProps {
   noiseSuppressionEnabled: boolean;
   noiseSuppressionStatus: NoiseSuppressionStatus;
   toggleNoiseSuppression: (enabled: boolean) => void;
+  noiseSuppressionPercent: number;
+  setNoiseSuppressionPercent: (percent: number) => void;
   selectedBackgroundMode: string;
   setSelectedBackgroundMode: (mode: string) => void;
   handleEffectsOpen: () => void;
@@ -137,10 +138,4 @@ export interface MeetingPageProps {
 export interface GallerySize {
   w: number;
   h: number;
-}
-
-export interface Reaction {
-  label: string;
-  node: React.ReactNode;
-  key: string;
 }

@@ -6,6 +6,7 @@ import LayoutMobile from '../Layout/MobileLayout.tsx';
 import { ParticipantObject } from '../Layout/types.ts';
 import Footer from '../../Components/Footer/Footer.tsx';
 import { LayoutOptions } from '../../utils/layoutOptions.ts';
+import { FOOTER_HEIGHT } from '../../constants/layout';
 
 // Dev-only route (see CustomRoutes.tsx) for eyeballing LayoutMobile's scenarios
 // (Auto / Tiled / pinned, any participant count, several phone sizes, portrait and landscape) without a
@@ -42,7 +43,6 @@ const PHONE_SIZES = [
   { value: '844x390', label: 'iPhone 14 landscape (844×390)' },
   { value: '915x412', label: 'Pixel 7 landscape (915×412)' },
 ];
-const FOOTER_HEIGHT = 80;
 const NO_PIN = 'none';
 
 const SCENARIO_LABEL: Record<number, string> = {
