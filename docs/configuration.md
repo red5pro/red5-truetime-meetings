@@ -87,6 +87,8 @@ Recording, captions and external streams also have to be available on your Red5 
 
 ### Recording uploads (Amazon S3)
 
+**Set these on the config service only.** They need the config service, and never belong in the app's `.env`.
+
 | Setting                      | Default     | What it does                               |
 | ---------------------------- | ----------- | ------------------------------------------ |
 | `VITE_AWS_ACCESS_KEY`        | _(empty)_   | Access key used to upload local recordings |
@@ -94,11 +96,18 @@ Recording, captions and external streams also have to be available on your Red5 
 | `VITE_AWS_BUCKET_NAME`       | _(empty)_   | Bucket                                     |
 | `VITE_AWS_BUCKET_LOCATION`   | `us-east-1` | Bucket region                              |
 
-When the access key, secret and bucket are all set, local recordings upload to S3 straight from the browser.
+When the access key, secret and bucket are all set, a local recording is uploaded when it stops. The browser sends
+the file to the config service (`POST /api/room/{room}/local-recording`), which checks the person's conference
+token for that room and stores the file in the bucket as
+`recordings/live/streams/localrecording_<room>_<time>_<user>.zip`. The keys stay on the config service: its API
+returns them only as `***`, which tells the app that uploads are set up.
 
-> **These keys reach every visitor's browser.** Anything the app uses is readable by anyone who opens it, even
-> though the config service masks them in its API. Only use a key limited to uploading into one bucket, or leave
-> uploads off.
+The config service accepts recordings up to 2 GB; change the limit with `MEETINGS_MAX_RECORDING_UPLOAD_MB`. Give the
+key permission to write to that one bucket only (`s3:PutObject` and the multipart upload actions).
+
+`npm run build` stops with an error if `VITE_AWS_ACCESS_KEY` or `VITE_AWS_SECRET_ACCESS_KEY` is set in the app's
+environment, because Vite builds every `VITE_*` value into the JavaScript where anyone can read it. `npm run dev`
+warns instead.
 
 ### Other
 

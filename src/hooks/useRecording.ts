@@ -23,8 +23,42 @@ import {
 } from '../utils/recordingResolution';
 import { withTimeout, TimeoutError } from '../utils/withTimeout';
 import JSZip from 'jszip';
-import { S3Client } from '@aws-sdk/client-s3';
-import { Upload } from '@aws-sdk/lib-storage';
+import { isConfigServiceAvailable } from '../utils/utils';
+
+/**
+ * Sends a local recording to the config service, which stores it in S3 with keys the browser never
+ * sees. Uses XHR for upload progress, which fetch doesn't report.
+ */
+const postRecording = (
+  url: string,
+  body: Blob,
+  token: string,
+  onProgress: (percent: number) => void,
+): Promise<void> =>
+  new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', url);
+    xhr.setRequestHeader('Content-Type', 'application/zip');
+    if (token) xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+    xhr.upload.onprogress = (event) => {
+      if (event.lengthComputable) onProgress(Math.round((event.loaded / event.total) * 100));
+    };
+    xhr.onload = () => {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        resolve();
+        return;
+      }
+      let message = `Upload failed (${xhr.status})`;
+      try {
+        message = JSON.parse(xhr.responseText).error || message;
+      } catch {
+        // Not JSON; keep the status
+      }
+      reject(new Error(message));
+    };
+    xhr.onerror = () => reject(new Error('Network error while uploading the recording'));
+    xhr.send(body);
+  });
 
 // Some browsers (notably Safari) can hang indefinitely while flushing WebCodecs
 // encoders on stop(); cap the wait so the UI never gets stuck showing "recording".
@@ -128,11 +162,15 @@ export const useRecording = (
 ): UseRecordingReturn => {
   const { t } = useTranslation();
   const config = getRuntimeConfig();
-  const hasS3Config = !!(
-    config.VITE_AWS_ACCESS_KEY &&
-    config.VITE_AWS_SECRET_ACCESS_KEY &&
-    config.VITE_AWS_BUCKET_NAME
-  );
+  // Uploads go through the config service, which holds the S3 keys; it only tells us whether
+  // they're set (its API returns them masked)
+  const hasS3Config =
+    isConfigServiceAvailable() &&
+    !!(
+      config.VITE_AWS_ACCESS_KEY &&
+      config.VITE_AWS_SECRET_ACCESS_KEY &&
+      config.VITE_AWS_BUCKET_NAME
+    );
 
   // Server Recording State
   const [isRecordingActive, setIsRecordingActive] = useState<boolean>(false);
@@ -744,14 +782,8 @@ export const useRecording = (
       return false;
     }
 
-    const config = getRuntimeConfig();
-    const accessKeyId = config.VITE_AWS_ACCESS_KEY;
-    const secretAccessKey = config.VITE_AWS_SECRET_ACCESS_KEY;
-    const bucket = config.VITE_AWS_BUCKET_NAME;
-    const region = config.VITE_AWS_BUCKET_LOCATION || 'us-east-1';
-
-    if (!accessKeyId || !secretAccessKey || !bucket) {
-      log.error('AWS S3 configuration missing');
+    if (!hasS3Config) {
+      log.error('Recording uploads need the config service with S3 set up');
       return false;
     }
 
@@ -777,37 +809,13 @@ export const useRecording = (
 
       const zipBlob = await zip.generateAsync({ type: 'blob' });
 
-      const s3Client = new S3Client({
-        region,
-        credentials: { accessKeyId, secretAccessKey },
-        requestChecksumCalculation: 'WHEN_REQUIRED',
-        responseChecksumValidation: 'WHEN_REQUIRED',
-      });
-
-      const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-      const streamName = conferenceClientRef?.current?.streamName || 'unknown';
-      const key = `recordings/live/streams/localrecording_${roomName}_${timestamp}_${streamName}.zip`;
-
-      const upload = new Upload({
-        client: s3Client,
-        params: {
-          Bucket: bucket,
-          Key: key,
-          Body: zipBlob,
-          ContentType: 'application/zip',
-        },
-        // Disable checksum to avoid CRC32 multipart upload issues
-        leavePartsOnError: false,
-      });
-
-      upload.on('httpUploadProgress', (progress) => {
-        if (progress.loaded && progress.total) {
-          const percentage = Math.round((progress.loaded / progress.total) * 100);
-          setUploadProgress(percentage);
-        }
-      });
-
-      await upload.done();
+      // The service names the file in the bucket from the room and the token's user
+      const backendConfig = getBackendConfig();
+      const url = `${backendConfig.host}${backendConfig.apiEndpoints.uploadLocalRecording.replace(
+        '{roomName}',
+        encodeURIComponent(roomName),
+      )}`;
+      await postRecording(url, zipBlob, token, setUploadProgress);
 
       setIsUploading(false);
       setUploadStatus('success');
@@ -827,7 +835,7 @@ export const useRecording = (
       }
       return false;
     }
-  }, [roomName, conferenceClientRef, t]);
+  }, [roomName, token, hasS3Config, t]);
 
   /**
    * Stop local recording (Mediabunny)

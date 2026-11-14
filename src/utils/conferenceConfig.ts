@@ -57,6 +57,8 @@ interface ApiEndpoints {
   generateToken: string;
   startRecording: string;
   stopRecording: string;
+  /** Config service only: stores a local recording in S3 */
+  uploadLocalRecording: string;
   transcription: string;
   blockUser: string;
   unblockUser: string;
@@ -271,6 +273,7 @@ export const getBackendConfig = (): BackendConfig => {
       stopRecording: isConfigServiceAvailable()
         ? '/api/room/{roomName}/stopRecording'
         : '/as/v1/conference/room/{roomName}/stopRecording',
+      uploadLocalRecording: '/api/room/{roomName}/local-recording',
       transcription: isConfigServiceAvailable()
         ? '/api/room/{roomName}/transcriptions'
         : '/as/v1/conference/room/{roomName}/transcriptions',

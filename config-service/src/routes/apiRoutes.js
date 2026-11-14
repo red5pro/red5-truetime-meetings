@@ -5,6 +5,7 @@ import configController from '../controllers/configController.js';
 import tokenController from '../controllers/tokenController.js';
 import roomController from '../controllers/roomController.js';
 import healthController from '../controllers/healthController.js';
+import recordingUploadController from '../controllers/recordingUploadController.js';
 
 // Config Routes
 router.get('/config', configController.getConfig);
@@ -35,6 +36,11 @@ router.delete(
 // Recording Routes
 router.post('/room/:roomName/startRecording', roomController.startRecording.bind(roomController));
 router.post('/room/:roomName/stopRecording', roomController.stopRecording.bind(roomController));
+// The browser's local recording, stored in S3 with the keys kept on this service
+router.post(
+  '/room/:roomName/local-recording',
+  recordingUploadController.uploadLocalRecording.bind(recordingUploadController),
+);
 
 // User Moderation Routes
 router.post('/room/:roomName/user/:userId/block', roomController.blockUser.bind(roomController));

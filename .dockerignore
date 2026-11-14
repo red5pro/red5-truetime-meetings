@@ -1,0 +1,14 @@
+# Local environment files must not reach the image: Vite builds every VITE_* value into the
+# JavaScript bundle. The Docker build uses .env.docker only.
+.env
+.env.*
+!.env.docker
+
+.git
+node_modules
+dist
+coverage
+public/config.json
+public/build-info.json
+config-service/node_modules
+config-service/config.json

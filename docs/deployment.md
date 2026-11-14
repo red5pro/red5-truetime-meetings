@@ -99,8 +99,10 @@ make sure the noise suppression model is reachable at `<path>/noise-suppression/
 - Set a long, random `MEETINGS_CONFIG_ADMIN_TOKEN`. Anyone with it can change the app's settings.
 - Keep `CONFERENCE_MASTER_KEY` and `CONFERENCE_MASTER_SECRET` on the config service only. They never go to the
   browser.
-- Don't put broad AWS keys in `VITE_AWS_*`: they reach the browser (see
-  [Configuration](configuration.md#recording-uploads-amazon-s3)).
+- Set the `VITE_AWS_*` recording upload keys on the config service, never in the app's build environment, and limit
+  the key to writing into its bucket (see [Configuration](configuration.md#recording-uploads-amazon-s3)).
+- Keep `.env` files out of image builds. The repo's `.dockerignore` does this for the app image, because Vite
+  builds every `VITE_*` value into the JavaScript.
 - Serve everything over HTTPS.
 - Consider rate limiting the config service at your proxy.
 

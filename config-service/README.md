@@ -14,6 +14,10 @@ How the app uses it is described in [Configuration](../docs/configuration.md) an
 - **POST /api/generate-token** - Conference token for a user, room and role
 - **/api/room/...** and **/api/external-streams** - Recording, transcription, external streams, room users and
   blocking, forwarded to Red5's conference API (see [src/routes/apiRoutes.js](src/routes/apiRoutes.js))
+- **POST /api/room/{room}/local-recording** - Stores a browser's local recording (a zip, sent as the request
+  body) in S3 with the `VITE_AWS_*` keys kept here. Needs `Authorization: Bearer <conference token>` for that room.
+  Returns `{ "success": true, "key": "..." }`; 401 without a valid token, 413 over the size limit, 503 when S3 isn't
+  set up
 - **GET /health** - Health check endpoint (public)
 - **Authentication** - Bearer token authentication for config writes
 - **Validation** - Input validation for configuration values
@@ -60,6 +64,7 @@ GRANT ALL ON truetime_meetings.* TO 'truetime_studio'@'%';
 - `CONFERENCE_MASTER_KEY` - Conference master key of your Red5 Cloud deployment; needed for tokens and every
   `/api/room/...` call
 - `CONFERENCE_MASTER_SECRET` - Conference master secret that goes with it
+- `MEETINGS_MAX_RECORDING_UPLOAD_MB` - Largest local recording accepted for upload (default: 2048)
 - `VITE_*` - Starting values for the app's settings, used only when the config is first created (see
   [Configuration](../docs/configuration.md#settings))
 - `MEETINGS_DB_HOST` - MySQL host; with `MEETINGS_DB_USER`, stores the config in the database
