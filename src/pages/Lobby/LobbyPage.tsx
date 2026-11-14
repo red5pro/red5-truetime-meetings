@@ -12,7 +12,7 @@ import { getUrlParameter, makeId } from '../../utils/utils.tsx';
 import { useRoomInfo } from '../../hooks/useRoomInfo.ts';
 import { useAspectFitWidth } from '../../hooks/useAspectFitWidth.ts';
 import { isMobile } from 'react-device-detect';
-import { DeviceSelector } from 'truetime-ui';
+import { DeviceSelector, enterAnimation } from 'truetime-ui';
 import EffectsDrawer from '../../Components/EffectsDrawer.tsx';
 import { LobbyPageProps } from './types.ts';
 import { JoinForm } from './components/JoinForm.tsx';
@@ -333,7 +333,13 @@ const LobbyPage = React.memo<LobbyPageProps>((props) => {
     <Container
       id="lobby-page"
       maxWidth={false}
-      sx={{ width: '100%', maxWidth: '100%', px: { xs: 2, sm: 3 } }}
+      sx={{
+        width: '100%',
+        maxWidth: '100%',
+        px: { xs: 2, sm: 3 },
+        // Fade only: the lobby holds fixed-position drawers, which a moving parent would shift
+        ...enterAnimation({ variant: 'fade', duration: 'slow' }),
+      }}
     >
       <SettingsDialog
         open={dialogOpen}

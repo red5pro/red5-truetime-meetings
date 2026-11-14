@@ -11,6 +11,8 @@ import { AvailableLanguages } from './constants/AvailableLanguages';
 import log from 'loglevel';
 import { getRuntimeConfig } from './utils/configStore';
 import { ThemeContext } from './contexts/ThemeContext';
+import { getSavedTheme } from './utils/savedTheme';
+import { readString, writeStored } from './utils/appStorage';
 
 // Extend the global Window interface to include our custom functions
 declare global {
@@ -30,15 +32,15 @@ i18n
 
 // Language setup
 const availableLanguagesList = Object.keys(AvailableLanguages);
-let preferredLanguage: string | null = localStorage.getItem('i18nextLng');
+let preferredLanguage: string | undefined = readString('language');
 if (!preferredLanguage) {
   preferredLanguage = window.navigator.language.slice(0, 2);
 }
 if (availableLanguagesList.includes(preferredLanguage)) {
-  localStorage.setItem('i18nextLng', preferredLanguage);
+  writeStored('language', preferredLanguage);
 } else {
   // Falling back to english.
-  localStorage.setItem('i18nextLng', 'en');
+  writeStored('language', 'en');
   preferredLanguage = 'en';
 }
 
@@ -72,8 +74,9 @@ window.getWindowLocation = getWindowLocation;
 window.copyWindowLocation = copyWindowLocation;
 
 function App(): JSX.Element {
+  // The theme the user picked last time (stored as `theme` in `ttm`) wins over the configured default.
   const [currentTheme, setCurrentTheme] = useState<string>(
-    getRuntimeConfig().VITE_DEFAULT_THEME || ThemeList.Black,
+    () => getSavedTheme() || getRuntimeConfig().VITE_DEFAULT_THEME || ThemeList.Black,
   );
 
   useEffect(() => {

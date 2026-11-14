@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, ReactNode } from 'react';
 import { googleLogout } from '@react-oauth/google';
 import { jwtDecode } from 'jwt-decode';
 import log from 'loglevel';
+import { readString, removeStored, writeStored } from '../utils/appStorage';
 
 interface GoogleUser {
   email: string;
@@ -40,7 +41,7 @@ interface GoogleAuthProviderProps {
 
 export const AuthProvider: React.FC<GoogleAuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<GoogleUser | null>(null);
-  const [token, setToken] = useState<string | null>(localStorage.getItem('google_token'));
+  const [token, setToken] = useState<string | null>(() => readString('googleToken') ?? null);
   const [isGuest, setIsGuest] = useState<boolean>(false);
 
   const logOut = () => {
@@ -48,13 +49,13 @@ export const AuthProvider: React.FC<GoogleAuthProviderProps> = ({ children }) =>
     setUser(null);
     setToken(null);
     setIsGuest(false);
-    localStorage.removeItem('google_token');
+    removeStored('googleToken');
   };
 
   // Load user from token on mount or when token changes
   React.useEffect(() => {
     queueMicrotask(() => {
-      const storedToken = localStorage.getItem('google_token');
+      const storedToken = readString('googleToken');
       if (storedToken) {
         if (storedToken === 'guest') {
           setToken(storedToken);
@@ -93,7 +94,7 @@ export const AuthProvider: React.FC<GoogleAuthProviderProps> = ({ children }) =>
 
   const setCredential = (credential: string) => {
     setToken(credential);
-    localStorage.setItem('google_token', credential);
+    writeStored('googleToken', credential);
     try {
       const decoded = jwtDecode<GoogleUser>(credential);
       setUser(decoded);
@@ -107,7 +108,7 @@ export const AuthProvider: React.FC<GoogleAuthProviderProps> = ({ children }) =>
   const loginAsGuest = () => {
     const guestToken = 'guest';
     setToken(guestToken);
-    localStorage.setItem('google_token', guestToken);
+    writeStored('googleToken', guestToken);
     setIsGuest(true);
     setUser({
       email: 'guest@red5.net',

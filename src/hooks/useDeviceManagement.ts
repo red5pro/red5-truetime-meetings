@@ -2,6 +2,7 @@
 import { useState, useCallback, useEffect, useRef, MutableRefObject } from 'react';
 import { isNull } from '../utils/utils';
 import log from 'loglevel';
+import { readString, writeStored } from '../utils/appStorage';
 
 // Type definitions
 interface MediaDeviceInfo {
@@ -67,13 +68,13 @@ export const useDeviceManagement = (
   displayMessage: (message: string) => void,
 ): UseDeviceManagementReturn => {
   const [selectedCamera, setSelectedCamera] = useState<string | null>(
-    localStorage.getItem('selectedCamera'),
+    () => readString('camera') ?? null,
   );
   const [selectedMicrophone, setSelectedMicrophone] = useState<string | null>(
-    localStorage.getItem('selectedMicrophone'),
+    () => readString('microphone') ?? null,
   );
   const [selectedSpeaker, setSelectedSpeaker] = useState<string | null>(
-    localStorage.getItem('selectedSpeaker'),
+    () => readString('speaker') ?? null,
   );
   const [devices, setDevices] = useState<DeviceList>({});
 
@@ -127,15 +128,15 @@ export const useDeviceManagement = (
   const setSelectedDevices = useCallback((devices: SelectedDevices): void => {
     if (!isNull(devices.videoDeviceId)) {
       setSelectedCamera(devices.videoDeviceId!);
-      localStorage.setItem('selectedCamera', devices.videoDeviceId!);
+      writeStored('camera', devices.videoDeviceId!);
     }
     if (!isNull(devices.audioDeviceId)) {
       setSelectedMicrophone(devices.audioDeviceId!);
-      localStorage.setItem('selectedMicrophone', devices.audioDeviceId!);
+      writeStored('microphone', devices.audioDeviceId!);
     }
     if (!isNull(devices.speakerDeviceId)) {
       setSelectedSpeaker(devices.speakerDeviceId!);
-      localStorage.setItem('selectedSpeaker', devices.speakerDeviceId!);
+      writeStored('speaker', devices.speakerDeviceId!);
     }
   }, []);
 

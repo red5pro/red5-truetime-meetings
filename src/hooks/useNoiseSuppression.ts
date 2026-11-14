@@ -51,14 +51,14 @@ export interface UseNoiseSuppressionReturn {
   noiseSuppressionEnabled: boolean;
   noiseSuppressionStatus: NoiseSuppressionStatus;
   toggleNoiseSuppression: (enabled: boolean) => void;
-  /** Share of the background noise removed while it's on, 0-100 (remembered in localStorage). */
+  /** Share of the background noise removed while it's on, 0-100 (remembered in the app's storage). */
   noiseSuppressionPercent: number;
   setNoiseSuppressionPercent: (percent: number) => void;
 }
 
 /**
  * Noise suppression on the published microphone: on unless turned off, at a level the user can
- * choose (both remembered in localStorage). Turning it off sets the suppression level to 0. Changes
+ * choose (both remembered in the app's storage). Turning it off sets the suppression level to 0. Changes
  * only take effect once the model runs, so the status says when they can be made.
  */
 export const useNoiseSuppression = (conferenceClient: {

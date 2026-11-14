@@ -50,7 +50,6 @@ const InfoDrawer = React.memo<InfoDrawerProps>((props) => {
 
   return (
     <Red5Drawer
-      transitionDuration={200}
       anchor="right"
       id="info-drawer"
       open={props?.infoDrawerOpen}

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Container, Box, IconButton } from '@mui/material';
+import { enterAnimation } from 'truetime-ui';
 import { useTheme } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import { Close } from '@mui/icons-material';
@@ -21,6 +22,7 @@ import { GallerySize, MeetingPageProps, SubscribedParticipant } from './types.ts
 import { debounce } from 'lodash';
 import { getRuntimeConfig } from '../../utils/configStore';
 import { FOOTER_HEIGHT } from '../../constants/layout';
+import { readBoolean, writeStored } from '../../utils/appStorage';
 
 // Constants
 
@@ -32,7 +34,7 @@ const PHONE_LANDSCAPE_QUERY =
 
 const MeetingPage = React.memo<MeetingPageProps>((props) => {
   const [pushToTalkEnabled, setPushToTalkEnabled] = useState<boolean>(
-    localStorage.getItem('isPushToTalkEnabled') === 'true',
+    () => readBoolean('pushToTalk') === true,
   );
   const [gallerySize, setGallerySize] = useState<GallerySize>(() => {
     if (typeof window === 'undefined') {
@@ -162,7 +164,7 @@ const MeetingPage = React.memo<MeetingPageProps>((props) => {
   });
 
   useEffect(() => {
-    localStorage.setItem('isPushToTalkEnabled', String(pushToTalkEnabled));
+    writeStored('pushToTalk', pushToTalkEnabled);
     keyboardShortcuts.setIsTapToTalkEnabled(pushToTalkEnabled);
   }, [pushToTalkEnabled, keyboardShortcuts]);
 
@@ -431,7 +433,17 @@ const MeetingPage = React.memo<MeetingPageProps>((props) => {
   };
 
   return (
-    <Container id="meeting-page" maxWidth={false} sx={{ width: '100%', maxWidth: '100%', px: 0 }}>
+    <Container
+      id="meeting-page"
+      maxWidth={false}
+      sx={{
+        width: '100%',
+        maxWidth: '100%',
+        px: 0,
+        // Fade only: the footer and drawers are fixed, so nothing here may move
+        ...enterAnimation({ variant: 'fade', duration: 'slow' }),
+      }}
+    >
       <Box
         id="stream-gallery"
         className={hasOpenDrawer ? 'drawer-open' : undefined}

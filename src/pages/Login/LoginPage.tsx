@@ -1,5 +1,6 @@
 import React, { JSX } from 'react';
 import { Typography, Box, Button } from '@mui/material';
+import { enterAnimation } from 'truetime-ui';
 import Grid from '@mui/material/Grid2';
 import { GoogleLogin } from '@react-oauth/google';
 import { useGoogleAuth } from '../../contexts/GoogleAuthContext';
@@ -39,7 +40,7 @@ const LoginPage = (): JSX.Element => {
       }}
     >
       <Grid size={{ xs: 12, sm: 10, md: 8, lg: 6 }} sx={{ width: '100%' }}>
-        <Box textAlign="center">
+        <Box textAlign="center" sx={enterAnimation()}>
           <Box sx={{ mb: 2 }}>
             <img src={logoUrl} alt="Red5 Logo" style={{ maxWidth: '100%', maxHeight: '100px' }} />
           </Box>

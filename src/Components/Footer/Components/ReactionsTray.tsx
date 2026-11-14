@@ -1,7 +1,14 @@
 import { Box, ButtonBase, Tooltip } from '@mui/material';
 import { alpha } from '@mui/material/styles';
 import { useTranslation } from 'react-i18next';
-import { focusRingStyle, motion, radii, themeColors } from 'truetime-ui';
+import {
+  enterAnimation,
+  focusRingStyle,
+  motion,
+  radii,
+  themeColors,
+  transition,
+} from 'truetime-ui';
 
 /** Reactions everyone can send; `key` is what goes over the wire and what receivers look up. */
 export const REACTIONS = [
@@ -42,7 +49,7 @@ export function ReactionsTray({ onSend }: ReactionsTrayProps) {
         backgroundColor: alpha(themeColors(theme).text, 0.06),
       })}
     >
-      {REACTIONS.map((reaction) => (
+      {REACTIONS.map((reaction, index) => (
         <Tooltip key={reaction.key} title={t(reaction.label)} placement="top">
           <ButtonBase
             id={`reaction-${reaction.key}`}
@@ -55,7 +62,9 @@ export function ReactionsTray({ onSend }: ReactionsTrayProps) {
               borderRadius: radii.round,
               fontSize: 26,
               lineHeight: 1,
-              transition: motion.standard,
+              transition: transition(['background-color', 'transform'], { easing: 'spring' }),
+              // The tray's emoji pop in one after another
+              ...enterAnimation({ variant: 'pop', delay: index * motion.stagger }),
               '@media (hover: hover)': {
                 '&:hover': {
                   backgroundColor: alpha(themeColors(theme).text, 0.1),

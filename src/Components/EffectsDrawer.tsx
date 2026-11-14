@@ -114,7 +114,6 @@ const EffectsDrawer = React.memo<EffectsDrawerProps>((props) => {
 
   return (
     <Red5Drawer
-      transitionDuration={200}
       anchor="right"
       id="effects-drawer"
       open={props?.effectsDrawerOpen}

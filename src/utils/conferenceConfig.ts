@@ -7,6 +7,7 @@ import {
   type VideoResolution,
 } from './recordingResolution';
 import { getRuntimeConfig } from './configStore';
+import { readBoolean, readNumber, readString, writeStored } from './appStorage';
 
 // Types
 interface IceServer {
@@ -153,17 +154,15 @@ export const getDefaultNoiseSuppressionPercent = (): number => {
   return Number.isFinite(percent) ? clampPercent(percent) : DEFAULT_NOISE_SUPPRESSION_PERCENT;
 };
 
-const NOISE_SUPPRESSION_PERCENT_KEY = 'noiseSuppressionPercent';
-
 /** Share of the background noise to remove, 0-100: the user's choice, or the configured default */
 export const getNoiseSuppressionPercent = (): number => {
-  const saved = Number(localStorage.getItem(NOISE_SUPPRESSION_PERCENT_KEY) ?? NaN);
-  return Number.isFinite(saved) ? clampPercent(saved) : getDefaultNoiseSuppressionPercent();
+  const saved = readNumber('noiseSuppressionPercent');
+  return saved !== undefined ? clampPercent(saved) : getDefaultNoiseSuppressionPercent();
 };
 
 /** Remember the user's choice of how much background noise to remove (0-100) */
 export const saveNoiseSuppressionPercent = (percent: number): void => {
-  localStorage.setItem(NOISE_SUPPRESSION_PERCENT_KEY, String(clampPercent(percent)));
+  writeStored('noiseSuppressionPercent', clampPercent(percent));
 };
 
 /**
@@ -331,55 +330,54 @@ export const getVirtualBackgroundConfigs = (): VirtualBackgroundConfigs => {
  * Get noise suppression preference (on unless turned off)
  */
 export const getNoiseSuppressionPreference = (): boolean => {
-  return localStorage.getItem('noiseSuppressionEnabled') !== 'false';
+  return readBoolean('noiseSuppressionEnabled') !== false;
 };
 
 /**
  * Save noise suppression preference
  */
 export const saveNoiseSuppressionPreference = (enabled: boolean): void => {
-  localStorage.setItem('noiseSuppressionEnabled', String(enabled));
+  writeStored('noiseSuppressionEnabled', enabled);
 };
 
 /**
  * Get layout preferences
  */
 export const getLayoutPreference = (): string => {
-  return localStorage.getItem('layoutPreference') || 'Auto';
+  return readString('layout') || 'Auto';
 };
 
 /**
  * Save layout preference
  */
 export const saveLayoutPreference = (layout: string): void => {
-  localStorage.setItem('layoutPreference', layout);
+  writeStored('layout', layout);
 };
 
 /**
  * Get desired tile count
  */
 export const getDesiredTileCount = (): number => {
-  const stored = localStorage.getItem('desiredTileCount');
-  return stored ? parseInt(stored, 10) : 60;
+  return readNumber('desiredTileCount') ?? 60;
 };
 
 /**
  * Save desired tile count
  */
 export const saveDesiredTileCount = (count: number): void => {
-  localStorage.setItem('desiredTileCount', count.toString());
+  writeStored('desiredTileCount', count);
 };
 
 /**
  * Get outgoing bitrate preference
  */
 export const getOutgoingBitrate = (): string => {
-  return localStorage.getItem('outgoingBitrate') || '1500';
+  return readString('outgoingBitrate') || '1500';
 };
 
 /**
  * Save outgoing bitrate preference
  */
 export const saveOutgoingBitrate = (bitrate: string): void => {
-  localStorage.setItem('outgoingBitrate', bitrate);
+  writeStored('outgoingBitrate', bitrate);
 };

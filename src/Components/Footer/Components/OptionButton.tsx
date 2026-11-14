@@ -26,6 +26,7 @@ import { useTranslation } from 'react-i18next';
 import GeneralSettingsDialog from './GeneralSettingsDialog.tsx';
 import { ThemeList } from '../../../constants/themeList.js';
 import { ThemeContext } from '../../../contexts/ThemeContext';
+import { saveTheme } from '../../../utils/savedTheme';
 import i18n from 'i18next';
 import { ToolbarButton } from 'truetime-ui';
 import { getGlassMenuStyle } from '../../../styles/themeUtil.js';
@@ -41,6 +42,7 @@ import {
   isResolutionPreset,
   type ResolutionPreset,
 } from '../../../utils/recordingResolution';
+import { readBoolean, readString, writeStored } from '../../../utils/appStorage';
 
 interface Device {
   deviceId: string;
@@ -160,42 +162,42 @@ function OptionButton(props: OptionButtonProps) {
   const [generalSettingsDialogOpen, setGeneralSettingsDialogOpen] = React.useState<boolean>(false);
   const [recordingModalOpen, setRecordingModalOpen] = React.useState<boolean>(false);
   const [localRecordingChecked, setLocalRecordingChecked] = React.useState<boolean>(() => {
-    return localStorage.getItem('localRecordingChecked') === 'true';
+    return readBoolean('recordLocal') === true;
   });
   const [recordingPreset, setRecordingPreset] = React.useState<ResolutionPreset>(() => {
-    const saved = localStorage.getItem('recordingResolution');
+    const saved = readString('recordingResolution') ?? null;
     return isResolutionPreset(saved) ? saved : DEFAULT_RECORDING_PRESET;
   });
   const [serverSideRecordingChecked, setServerSideRecordingChecked] = React.useState<boolean>(
     () => {
-      return localStorage.getItem('serverSideRecordingChecked') === 'true';
+      return readBoolean('recordServerSide') === true;
     },
   );
   const [gridRecordingChecked, setGridRecordingChecked] = React.useState<boolean>(() => {
-    return localStorage.getItem('gridRecordingChecked') !== 'false';
+    return readBoolean('recordGrid') !== false;
   });
   const [recordSeparatelyChecked, setRecordSeparatelyChecked] = React.useState<boolean>(() => {
-    return localStorage.getItem('recordSeparatelyChecked') === 'true';
+    return readBoolean('recordSeparately') === true;
   });
 
   React.useEffect(() => {
-    localStorage.setItem('localRecordingChecked', String(localRecordingChecked));
+    writeStored('recordLocal', localRecordingChecked);
   }, [localRecordingChecked]);
 
   React.useEffect(() => {
-    localStorage.setItem('serverSideRecordingChecked', String(serverSideRecordingChecked));
+    writeStored('recordServerSide', serverSideRecordingChecked);
   }, [serverSideRecordingChecked]);
 
   React.useEffect(() => {
-    localStorage.setItem('recordingResolution', recordingPreset);
+    writeStored('recordingResolution', recordingPreset);
   }, [recordingPreset]);
 
   React.useEffect(() => {
-    localStorage.setItem('gridRecordingChecked', String(gridRecordingChecked));
+    writeStored('recordGrid', gridRecordingChecked);
   }, [gridRecordingChecked]);
 
   React.useEffect(() => {
-    localStorage.setItem('recordSeparatelyChecked', String(recordSeparatelyChecked));
+    writeStored('recordSeparately', recordSeparatelyChecked);
   }, [recordSeparatelyChecked]);
   const theme = useTheme();
   const themeContext = React.useContext(ThemeContext);
@@ -205,7 +207,7 @@ function OptionButton(props: OptionButtonProps) {
 
   // Language and theme states
   const [currentLanguage, setCurrentLanguage] = React.useState<string>(
-    localStorage.getItem('i18nextLng') || 'en',
+    readString('language') || 'en',
   );
   const [currentTheme, setCurrentTheme] = React.useState<string>(
     themeContext?.currentTheme || ThemeList.Black,
@@ -213,7 +215,7 @@ function OptionButton(props: OptionButtonProps) {
 
   // Language handler
   const switchLanguage = (value: string): void => {
-    localStorage.setItem('i18nextLng', value);
+    writeStored('language', value);
     i18n.changeLanguage(value).then(() => {
       setCurrentLanguage(value);
       log.log('Language switched to', value);
@@ -222,7 +224,7 @@ function OptionButton(props: OptionButtonProps) {
 
   // Theme handler
   const switchTheme = (value: string): void => {
-    localStorage.setItem('selectedTheme', value);
+    saveTheme(value);
     themeContext?.setCurrentTheme(value);
     setCurrentTheme(value);
   };

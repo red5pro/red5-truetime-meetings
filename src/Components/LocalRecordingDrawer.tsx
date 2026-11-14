@@ -274,7 +274,6 @@ const LocalRecordingDrawer = React.memo<LocalRecordingDrawerProps>((props) => {
 
   return (
     <Red5Drawer
-      transitionDuration={200}
       anchor="right"
       id="local-recording-drawer"
       open={open}

@@ -141,7 +141,6 @@ const ExternalStreamsDrawer = React.memo<ExternalStreamsDrawerProps>((props) => 
 
   return (
     <Red5Drawer
-      transitionDuration={200}
       anchor="right"
       id="external-streams-drawer"
       open={open}

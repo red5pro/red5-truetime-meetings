@@ -12,6 +12,7 @@ import { isMobile, isTablet } from 'react-device-detect';
 import i18n from 'i18next';
 import { ThemeList } from '../../../constants/themeList.js';
 import { ThemeContext } from '../../../contexts/ThemeContext';
+import { saveTheme } from '../../../utils/savedTheme';
 import { ToolbarButton } from 'truetime-ui';
 import { getGlassMenuStyle } from '../../../styles/themeUtil.js';
 import log from 'loglevel';
@@ -20,6 +21,7 @@ import type { Devices } from 'truetime-ui';
 import { getRuntimeConfig } from '../../../utils/configStore';
 import { devMenuItems } from './devMenuItems.tsx';
 import type { NoiseSuppressionStatus } from '../../../hooks/useNoiseSuppression';
+import { readString, writeStored } from '../../../utils/appStorage';
 
 interface Globals {
   desiredTileCount?: number;
@@ -92,7 +94,7 @@ function MoreOptionsButton(props: MoreOptionsButtonProps) {
 
   // Language and theme states
   const [currentLanguage, setCurrentLanguage] = React.useState<string>(
-    localStorage.getItem('i18nextLng') || 'en',
+    readString('language') || 'en',
   );
   const [currentTheme, setCurrentTheme] = React.useState<string>(
     themeContext?.currentTheme || ThemeList.Black,
@@ -100,7 +102,7 @@ function MoreOptionsButton(props: MoreOptionsButtonProps) {
 
   // Language handler
   const switchLanguage = (value: string): void => {
-    localStorage.setItem('i18nextLng', value);
+    writeStored('language', value);
     i18n.changeLanguage(value).then(() => {
       setCurrentLanguage(value);
       log.log('Language switched to', value);
@@ -109,7 +111,7 @@ function MoreOptionsButton(props: MoreOptionsButtonProps) {
 
   // Theme handler
   const switchTheme = (value: string): void => {
-    localStorage.setItem('selectedTheme', value);
+    saveTheme(value);
     themeContext?.setCurrentTheme(value);
     setCurrentTheme(value);
   };
