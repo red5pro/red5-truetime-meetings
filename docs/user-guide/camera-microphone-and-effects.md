@@ -16,9 +16,11 @@ If you unplug a device during a meeting, TrueTime Meetings switches to another o
 Open the camera menu and choose **Backgrounds and effects** (or **More options** → **Virtual Effects**). It's also in
 the lobby before you join.
 
-- **Blur** softens what's behind you.
+- **Blur**: **Slight blur** or **Blur** softens what's behind you. **No effect** turns effects off.
 - **Backgrounds** replace it with an image your organization provides.
 - **Colors** replace it with a plain color.
+
+![The backgrounds and effects panel](../images/effects.png)
 
 Your camera has to be on to use effects. Effects run on your own device, so they may use more battery and slow down
 older computers.
@@ -42,8 +44,11 @@ internet connection is slow or others see your video freeze. Higher looks sharpe
 
 ## Checking your connection
 
-**More options** → **Diagnostic** shows how each connection is doing: whether it's **Healthy**, packet loss,
-jitter, round-trip time and bitrate. It lists any issues it finds.
+**More options** → **Diagnostic** rates your upload and download out of 5 and lists any issues it finds, such as
+high round-trip time (delay) or jitter (uneven delivery), with the connection each one affects. Below that it shows
+the details of every connection: packet loss, jitter, round-trip time and bitrate.
+
+![Diagnostics with connection quality and issues](../images/diagnostics.png)
 
 If a developer is helping you, **Print detailed statistics to the browser console** gives them more detail.
 **More options** → **Report Problem** opens Red5's support portal.

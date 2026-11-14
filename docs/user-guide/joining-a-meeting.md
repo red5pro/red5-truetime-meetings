@@ -2,6 +2,8 @@
 
 ## Start a new meeting
 
+![The home page: start a new meeting or join one](../images/home.png)
+
 1. Open TrueTime Meetings in your browser.
 2. Click **New meeting**. A room with a random name is created and you go straight to the lobby.
 3. Once you're in, open **Meeting details** in the control bar and copy the link to invite others.
@@ -27,14 +29,18 @@ If you clicked **Block** by mistake:
 
 ## The lobby
 
-Before you enter, the lobby shows a preview of your camera. Here you can:
+Before you enter, the lobby shows a preview of your camera and who is already in the call. Here you can:
 
 - type **Your name**, which others see under your video,
 - turn your camera and microphone on or off,
 - choose which camera, microphone and speaker to use,
-- try a background or blur (see [Camera, microphone and effects](camera-microphone-and-effects.md)).
+- try a background or blur with the button in the corner of the preview (see
+  [Camera, microphone and effects](camera-microphone-and-effects.md)).
 
-Click **Join meeting** when you're ready. You can change all of these settings during the meeting too.
+![The lobby: camera preview, devices, your name and who's already in the call](../images/lobby.png)
+
+Click **Join** when you're ready (the button says **Start Call** if no one is there yet). You can change all of
+these settings during the meeting too.
 
 ## Signing in and joining as a guest
 

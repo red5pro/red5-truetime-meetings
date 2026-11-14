@@ -18,6 +18,11 @@ For example: `https://meet.example.com/meetings/team-sync?role=admin`.
 Links can also carry a `token` that the organization's server creates to control who may join. Keep host links
 private.
 
+To invite people, open **Meeting details** and click **Copy joining info**. If you joined with a host link, check
+the copied link before you share it: remove `?role=admin` so you don't hand out host rights.
+
+![Meeting details with the link to share](../images/meeting-details.png)
+
 ## Letting guests in
 
 When sign-in is required, people who choose **Join as Guest** wait until a host admits them. You'll see them in
@@ -38,7 +43,9 @@ like OBS, or another Red5 stream, so it shows up as if it were a participant.
    with how long they've been live.
 3. Click **Add**. Click **Remove** to take it out again.
 
-If your stream isn't listed, click **Refresh**. External streams must be turned on by whoever runs your TrueTime
+![The external streams panel when nothing is live yet](../images/external-streams.png)
+
+If your stream isn't listed, click the refresh button at the top of the panel. External streams must be turned on by whoever runs your TrueTime
 Meetings.
 
 ## Before a big meeting

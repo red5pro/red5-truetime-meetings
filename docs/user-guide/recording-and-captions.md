@@ -5,29 +5,35 @@ buttons are greyed out.
 
 Let people know before you record a meeting.
 
-## Recording on the server
+## Starting a recording
 
-**More options** → **Start Record** opens the recording options. **Server-side recording** records the meeting on
-Red5's servers, so it keeps going even if your own connection drops. Choose:
+**More options** → **Start Record** opens the recording options. Tick where to record, either or both, then click
+**Start Recording**.
 
-- **Grid recording**: the meeting as everyone sees it, in a single MP4 file.
-- **Record participants separately**: one file for each person.
+![Recording options: server-side or local recording](../images/recording-options.png)
 
-A recording indicator shows while it runs. **More options** → **Stop Record** finishes it. Where the files go is set up by whoever
-runs your TrueTime Meetings; ask them for your recordings.
+- **Server-side recording** records the meeting on Red5's servers, so it keeps going even if your own connection
+  drops. You can record the grid view as one MP4 file, or each person separately.
+- **Local recording** saves the meeting to your own computer, exactly as you see it, with nothing stored on a
+  server. It's available to everyone.
 
-## Recording in your browser (local recording)
+A recording indicator shows while it runs. **More options** → **Stop Record** finishes it.
 
-**Local recording** in the control bar records the meeting on your own computer, with nothing stored on a server.
-It's available to everyone.
+## Server recordings
 
-1. Choose the **Recording resolution**. The panel shows the resolution that will actually be recorded and how much
-   storage it will use.
-2. Click **Start Recording**. You can pause and resume.
-3. Click **Stop** and then **Download Recording** to save the file.
+Where server recordings go is set up by whoever runs your TrueTime Meetings; ask them for your recordings.
+
+## Local recordings
+
+While a local recording runs, a **Local recording** button (a camera with a red dot) appears on the right of the
+control bar. It opens a panel with the recording time, the file's estimated size and the storage left on your
+device. From there you can pause, resume, stop and **Download Recording**.
+
+![The local recording panel while recording](../images/local-recording.png)
 
 Keep the tab open until the recording is saved. If your organization has set up cloud storage (Amazon S3),
-recordings upload there automatically; keep the tab open until **Upload Successful** appears.
+recordings upload there automatically; keep the tab open until **Upload Successful** appears. Otherwise the panel
+reminds you that uploads aren't set up, and you download the file yourself.
 
 ## Live captions
 
@@ -37,4 +43,7 @@ Captions start when your microphone is on.
 ## Transcripts
 
 **More options** → **Transcriptions** shows a written record of what was said, in order, with each person's name.
-Pick a time range, then **Copy transcript** to paste it somewhere else.
+Pick a time range (15 minutes, 30 minutes, an hour or your own), click **Get transcript**, then **Copy transcript**
+to paste it somewhere else.
+
+![The transcriptions panel](../images/transcription.png)

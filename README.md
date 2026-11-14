@@ -7,6 +7,8 @@ real-time video platform, so calls stay fast and smooth even with many people in
 This repository is the open source web app. You can use it as it is, host it yourself, or build your own meeting
 product on top of it.
 
+![A TrueTime Meetings call with four people](docs/images/meeting.png)
+
 ## What you can do in a meeting
 
 - **Meet face to face**: up to 30 people on screen, with an automatic or tiled layout, and pinning to keep someone
@@ -112,6 +114,7 @@ Issues and pull requests are welcome. Please read [Contributing](docs/contributi
 
 ## License
 
-<!-- TODO: add a LICENSE file and name the license here before publishing. -->
+Licensed under the Infrared5 example code license; see [LICENSE](LICENSE). The software may only be used with Red5 Pro, which has its own
+[end user license agreement](https://account.red5.net/assets/LICENSE.txt).
 
 For problems with this code, open an issue in this repository.
