@@ -1,5 +1,6 @@
 import React, { JSX } from 'react';
 import { styled, Theme } from '@mui/material/styles';
+import { transition } from 'truetime-ui';
 import IconButton from '@mui/material/IconButton';
 import Tooltip from '@mui/material/Tooltip';
 import { PictureInPicture, PictureInPictureAlt } from '@mui/icons-material';
@@ -27,7 +28,7 @@ const getCustomizedIconButtonStyle = (props: StyleProps, theme: Theme) => {
     width: '52px',
     height: '52px',
     color: theme.palette.text.primary,
-    transition: 'all 0.2s ease',
+    transition: transition(['background-color', 'color']),
     '&:hover': {
       backgroundColor: theme.palette.action.hover,
     },

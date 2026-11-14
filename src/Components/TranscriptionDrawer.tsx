@@ -124,7 +124,6 @@ const TranscriptionDrawer = React.memo<TranscriptionDrawerProps>((props) => {
 
   return (
     <Red5Drawer
-      transitionDuration={200}
       anchor="right"
       id="transcription-drawer"
       open={props?.open}

@@ -5,7 +5,7 @@ import { Keyboard, VideoCall } from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { nanoid } from 'nanoid';
-import { Button, Heading, Input, Text, themeColors } from 'truetime-ui';
+import { Button, Heading, Input, Text, themeColors, enterAnimation, motion } from 'truetime-ui';
 import Logo from 'truetime-ui/assets/images/red5-cloud-logo.svg';
 import { getRuntimeConfig } from '../../utils/configStore';
 import { roomPathFromInput } from './roomPath';
@@ -47,6 +47,14 @@ function Home() {
           flexDirection: 'column',
           alignItems: 'center',
           textAlign: 'center',
+          // Logo, heading, text, button, divider and form arrive one after another
+          '& > *': enterAnimation(),
+          ...Object.fromEntries(
+            [1, 2, 3, 4, 5, 6].map((n) => [
+              `& > :nth-child(${n})`,
+              { animationDelay: `${(n - 1) * motion.stagger * 1.5}ms` },
+            ]),
+          ),
         }}
       >
         <Box

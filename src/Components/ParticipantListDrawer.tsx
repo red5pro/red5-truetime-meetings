@@ -60,7 +60,6 @@ const ParticipantListDrawer = memo<ParticipantListDrawerProps>((props) => {
 
   return (
     <Red5Drawer
-      transitionDuration={200}
       anchor="right"
       id="participant-list-drawer"
       open={props?.participantListDrawerOpen}

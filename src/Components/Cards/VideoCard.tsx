@@ -17,7 +17,7 @@ import DummyCard from './DummyCard';
 import CustomCard from '../CustomCard.tsx';
 import { CustomizedBtn, roundStyle } from '../CustomizedBtn.tsx';
 import { SvgIcon } from '../SvgIcon';
-import { Spinner } from 'truetime-ui';
+import { Spinner, transition } from 'truetime-ui';
 import { ConnectionQualityBar } from '../ConnectionQualityBar.tsx';
 import TalkingIndicator from '../TalkingIndicator.tsx';
 
@@ -167,7 +167,7 @@ const OVERLAY_STYLE = {
   top: 0,
   height: '100%',
   zIndex: 100,
-  transition: 'opacity 0.3s ease',
+  transition: transition('opacity'),
 };
 
 const NAME_INDICATOR_STYLE = {
