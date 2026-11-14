@@ -11,6 +11,7 @@ import { AvailableLanguages } from './constants/AvailableLanguages';
 import log from 'loglevel';
 import { getRuntimeConfig } from './utils/configStore';
 import { ThemeContext } from './contexts/ThemeContext';
+import { getForcedTheme } from './utils/forcedTheme';
 
 // Extend the global Window interface to include our custom functions
 declare global {
@@ -72,8 +73,9 @@ window.getWindowLocation = getWindowLocation;
 window.copyWindowLocation = copyWindowLocation;
 
 function App(): JSX.Element {
+  // A valid `forced_theme` in localStorage (set by hand only) overrides the configured default.
   const [currentTheme, setCurrentTheme] = useState<string>(
-    getRuntimeConfig().VITE_DEFAULT_THEME || ThemeList.Black,
+    () => getForcedTheme() || getRuntimeConfig().VITE_DEFAULT_THEME || ThemeList.Black,
   );
 
   useEffect(() => {
