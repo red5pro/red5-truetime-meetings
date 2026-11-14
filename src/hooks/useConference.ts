@@ -227,8 +227,8 @@ export const useConference = (roomId: string): UseConferenceReturn => {
   // @ts-expect-error - legacy type mismatch, needs proper typing
   const permissions: Permissions = usePermissions();
   // @ts-expect-error - legacy type mismatch, needs proper typing
-  const closedCaptions: ClosedCaptions = useClosedCaptions(client);
-  const externalStreams = useExternalStreams(conferenceState.roomName);
+  const closedCaptions: ClosedCaptions = useClosedCaptions(client, conferenceState.token ?? '');
+  const externalStreams = useExternalStreams(conferenceState.roomName, conferenceState.token ?? '');
 
   // Memoize helper functions to prevent recreation on every render
   const displayMessage = useCallback(

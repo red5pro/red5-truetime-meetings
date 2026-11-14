@@ -92,6 +92,11 @@ endpoints when `VITE_CONFIG_SERVICE_URL` is set, otherwise Red5's conference API
 | Moderation             | `POST /api/room/{room}/user/{id}/block`, `.../unblock`                                     |
 | Node group check       | `GET /api/check-node-group-availability`                                                   |
 
+Room calls send the conference token as `Authorization: Bearer <token>` (`authHeaders()` in `conferenceConfig.ts`); the
+config service refuses them without a valid token for the room. The settings, the token request, the lobby's user list
+and the node group check are public, because the browser needs them before it has a token. See the
+[config service README](../config-service/README.md#conference-tokens-on-room-calls).
+
 ## Browser storage
 
 Everything the app keeps in the browser (theme, device choices, noise suppression level, sign-in) is stored under a

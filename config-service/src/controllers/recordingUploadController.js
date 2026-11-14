@@ -1,9 +1,7 @@
 import { Transform } from 'node:stream';
 import { S3Client } from '@aws-sdk/client-s3';
 import { Upload } from '@aws-sdk/lib-storage';
-import jwt from 'jsonwebtoken';
 import configService from '../services/configService.js';
-import red5Service from '../services/red5Service.js';
 
 // Largest local recording the service accepts, in MB
 const DEFAULT_MAX_MB = 2048;
@@ -38,8 +36,8 @@ const sizeLimit = (limit) => {
 
 /**
  * Receives a local recording (a zip) from the browser and stores it in S3 with the credentials
- * kept here, so the AWS keys never reach the browser. The caller must hold a valid conference
- * token for the room.
+ * kept here, so the AWS keys never reach the browser. The route requires a conference token for
+ * the room (see apiRoutes.js).
  */
 class RecordingUploadController {
   /** The S3 upload; a seam for tests */
@@ -56,24 +54,10 @@ class RecordingUploadController {
     return new Upload({ client, params, leavePartsOnError: false });
   }
 
-  /** The token's claims when it is a valid conference token for `roomName`, otherwise null */
-  async verifyToken(req, roomName) {
-    const header = req.headers.authorization || '';
-    const token = header.startsWith('Bearer ') ? header.slice(7).trim() : '';
-    if (!token) return null;
-
-    const red5Client = await red5Service.getClient();
-    const { conferenceSecret } = red5Client.getCredentials();
-    try {
-      const claims = jwt.verify(token, conferenceSecret, { algorithms: ['HS256'] });
-      return claims.roomId === roomName ? claims : null;
-    } catch {
-      return null;
-    }
-  }
-
+  /** Runs after requireConferenceToken({ roomParam: 'roomName' }), which sets req.conference */
   async uploadLocalRecording(req, res) {
     const { roomName } = req.params;
+    const claims = req.conference;
 
     let config;
     try {
@@ -87,17 +71,6 @@ class RecordingUploadController {
       !config.VITE_AWS_BUCKET_NAME
     ) {
       return res.status(503).json({ error: 'Recording uploads are not set up' });
-    }
-
-    let claims;
-    try {
-      claims = await this.verifyToken(req, roomName);
-    } catch (error) {
-      console.error('Cannot verify conference tokens:', error.message);
-      return res.status(503).json({ error: 'Cannot verify conference tokens' });
-    }
-    if (!claims) {
-      return res.status(401).json({ error: 'A valid conference token for this room is required' });
     }
 
     const limit = maxUploadBytes();

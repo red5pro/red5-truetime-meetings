@@ -104,7 +104,9 @@ make sure the noise suppression model is reachable at `<path>/noise-suppression/
 - Keep `.env` files out of image builds. The repo's `.dockerignore` does this for the app image, because Vite
   builds every `VITE_*` value into the JavaScript.
 - Serve everything over HTTPS.
-- Consider rate limiting the config service at your proxy.
+- Room calls to the config service need a conference token, but anyone can request one from
+  `POST /api/generate-token` for any room and role. Rate limit the config service at your proxy, especially that
+  endpoint.
 
 ## Upgrading
 

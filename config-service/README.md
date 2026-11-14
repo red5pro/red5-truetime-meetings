@@ -19,8 +19,31 @@ How the app uses it is described in [Configuration](../docs/configuration.md) an
   Returns `{ "success": true, "key": "..." }`; 401 without a valid token, 413 over the size limit, 503 when S3 isn't
   set up
 - **GET /health** - Health check endpoint (public)
-- **Authentication** - Bearer token authentication for config writes
+- **Authentication** - Bearer token authentication for config writes (`MEETINGS_CONFIG_ADMIN_TOKEN`), and a
+  conference token for room calls (below)
 - **Validation** - Input validation for configuration values
+
+## Conference tokens on room calls
+
+Room calls need `Authorization: Bearer <conference token>`, the token `POST /api/generate-token` returns. The service
+checks its signature with the deployment's conference secret, so it needs `CONFERENCE_MASTER_KEY` and
+`CONFERENCE_MASTER_SECRET` (without them these calls answer 503).
+
+| Endpoint                                                                                                                                                      | Token needed                     |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------- |
+| `GET /api/room/{room}/user/{user}/isJoined`, `POST .../startRecording`, `.../stopRecording`, `.../local-recording`                                            | For that room                    |
+| `GET /api/room/{room}/transcriptions`, `POST .../user/{user}/start-transcription`, `.../stop-transcription`                                                   | For that room                    |
+| `POST` / `DELETE /api/room/{room}/external-stream/{stream}`                                                                                                   | For that room                    |
+| `POST /api/room/{room}/user/{user}/block`, `.../unblock`                                                                                                      | For that room, with role `admin` |
+| `GET /api/external-streams`                                                                                                                                   | Any room                         |
+| `GET /api/config`, `POST /api/generate-token`, `GET /api/room/{room}/users`, `GET /api/check-node-group-availability`, `GET /health`, `GET /api/health-check` | None                             |
+
+Without a token the answer is 401, with a token for another room or the wrong role 403. The public calls are the ones a
+browser makes before it has a token: loading the settings, getting the token, and the lobby's list of who is in the
+room.
+
+`POST /api/generate-token` issues a token for whatever room and role it is asked for, so a token proves the caller went
+through it, not who they are. Restricting who may get a token (for example a host role) needs sign-in on the service.
 
 ## Configuration
 

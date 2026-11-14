@@ -2,7 +2,7 @@ import { useState, useCallback } from 'react';
 import { useGetRequest } from './useGetRequest';
 import { usePostRequest } from './usePostRequest';
 import { useDeleteRequest } from './useDeleteRequest';
-import { getBackendConfig } from '../utils/conferenceConfig';
+import { authHeaders, getBackendConfig } from '../utils/conferenceConfig';
 
 export interface ExternalStream {
   nodeState: string;
@@ -21,7 +21,7 @@ interface ExternalStreamsResponse {
   totalCount: number;
 }
 
-export const useExternalStreams = (roomName: string) => {
+export const useExternalStreams = (roomName: string, token: string) => {
   const { getData, loading: loadingStreams, error: errorStreams } = useGetRequest();
   const { postData, loading: addingStream, error: errorAdding } = usePostRequest();
   const { deleteData, loading: removingStream, error: errorRemoving } = useDeleteRequest();
@@ -31,14 +31,14 @@ export const useExternalStreams = (roomName: string) => {
     const backendConfig = getBackendConfig();
     const url = `${backendConfig.host}${backendConfig.apiEndpoints.getExternalStreams}`;
     try {
-      const data = await getData<ExternalStreamsResponse>(url);
+      const data = await getData<ExternalStreamsResponse>(url, { headers: authHeaders(token) });
       setStreams(data.streams || []);
       return data.streams;
     } catch (error) {
       console.error('Failed to fetch external streams:', error);
       throw error;
     }
-  }, [getData]);
+  }, [getData, token]);
 
   const addToRoom = useCallback(
     async (streamName: string) => {
@@ -47,13 +47,13 @@ export const useExternalStreams = (roomName: string) => {
         .replace('{roomName}', roomName)
         .replace('{streamId}', streamName);
       try {
-        await postData(url, {});
+        await postData(url, {}, { headers: authHeaders(token) });
       } catch (error) {
         console.error('Failed to add external stream to room:', error);
         throw error;
       }
     },
-    [postData, roomName],
+    [postData, roomName, token],
   );
 
   const removeFromRoom = useCallback(
@@ -63,13 +63,13 @@ export const useExternalStreams = (roomName: string) => {
         .replace('{roomName}', roomName)
         .replace('{streamId}', streamName);
       try {
-        await deleteData(url);
+        await deleteData(url, { headers: authHeaders(token) });
       } catch (error) {
         console.error('Failed to remove external stream from room:', error);
         throw error;
       }
     },
-    [deleteData, roomName],
+    [deleteData, roomName, token],
   );
 
   return {

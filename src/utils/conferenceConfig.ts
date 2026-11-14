@@ -246,6 +246,10 @@ export const getDataChannelHeartbeatConfig = (): DataChannelHeartbeatConfig => {
   };
 };
 
+/** The conference token as a request header; the config service requires it on room calls */
+export const authHeaders = (token: string | null | undefined): Record<string, string> =>
+  token ? { Authorization: `Bearer ${token}` } : {};
+
 /**
  * Get backend API configuration
  */
