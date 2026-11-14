@@ -1,24 +1,16 @@
 import { themeNames, type ThemeName } from 'truetime-ui';
+import { readString, writeStored } from './appStorage';
 
-/** localStorage key holding the theme the user picked in the options menu. */
-export const SELECTED_THEME_KEY = 'selectedTheme';
+/** Field in the app's storage (`ttm`) holding the theme the user picked in the options menu. */
+export const SELECTED_THEME_FIELD = 'theme';
 
 /** Returns the saved theme if it names a known theme, otherwise null. */
 export function getSavedTheme(): ThemeName | null {
-  let value: string | null = null;
-  try {
-    value = localStorage.getItem(SELECTED_THEME_KEY);
-  } catch {
-    return null;
-  }
+  const value = readString(SELECTED_THEME_FIELD);
   return value && (themeNames as string[]).includes(value) ? (value as ThemeName) : null;
 }
 
-/** Remembers the user's theme choice across reloads. */
+/** Remembers the user's theme choice across reloads (for this visit only if storage is blocked). */
 export function saveTheme(theme: string): void {
-  try {
-    localStorage.setItem(SELECTED_THEME_KEY, theme);
-  } catch {
-    // Storage unavailable (private mode, blocked site data): the choice lasts this session only.
-  }
+  writeStored(SELECTED_THEME_FIELD, theme);
 }

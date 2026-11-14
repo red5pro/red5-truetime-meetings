@@ -21,6 +21,7 @@ import type { Devices } from 'truetime-ui';
 import { getRuntimeConfig } from '../../../utils/configStore';
 import { devMenuItems } from './devMenuItems.tsx';
 import type { NoiseSuppressionStatus } from '../../../hooks/useNoiseSuppression';
+import { readString, writeStored } from '../../../utils/appStorage';
 
 interface Globals {
   desiredTileCount?: number;
@@ -93,7 +94,7 @@ function MoreOptionsButton(props: MoreOptionsButtonProps) {
 
   // Language and theme states
   const [currentLanguage, setCurrentLanguage] = React.useState<string>(
-    localStorage.getItem('i18nextLng') || 'en',
+    readString('language') || 'en',
   );
   const [currentTheme, setCurrentTheme] = React.useState<string>(
     themeContext?.currentTheme || ThemeList.Black,
@@ -101,7 +102,7 @@ function MoreOptionsButton(props: MoreOptionsButtonProps) {
 
   // Language handler
   const switchLanguage = (value: string): void => {
-    localStorage.setItem('i18nextLng', value);
+    writeStored('language', value);
     i18n.changeLanguage(value).then(() => {
       setCurrentLanguage(value);
       log.log('Language switched to', value);

@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useGetRequest } from './useGetRequest';
 import { getBackendConfig } from '../utils/conferenceConfig';
+import { readString } from '../utils/appStorage';
 
 // Type definitions
 interface User {
@@ -61,7 +62,7 @@ export const useRoomInfo = (
     if (!roomName) return;
 
     try {
-      const token = localStorage.getItem('token');
+      const token = readString('token') ?? null;
 
       const backendConfig = getBackendConfig();
       /**

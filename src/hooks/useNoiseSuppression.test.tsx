@@ -8,6 +8,7 @@ import {
   noiseSuppressionPercentToLevel,
   saveNoiseSuppressionPercent,
 } from '../utils/conferenceConfig';
+import { readNumber } from '../utils/appStorage';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -61,7 +62,7 @@ describe('useNoiseSuppression', () => {
     act(() => result.current!.setNoiseSuppressionPercent(90));
     expect(setNoiseSuppressionLevel).toHaveBeenLastCalledWith(20);
     expect(result.current!.noiseSuppressionPercent).toBe(90);
-    expect(localStorage.getItem('noiseSuppressionPercent')).toBe('90');
+    expect(readNumber('noiseSuppressionPercent')).toBe(90);
   });
 
   it('keeps it off when the level changes, and uses the new level when turned back on', () => {

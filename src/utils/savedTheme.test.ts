@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { themeNames } from 'truetime-ui';
-import { SELECTED_THEME_KEY, getSavedTheme, saveTheme } from './savedTheme';
+import { readString, writeStored } from './appStorage';
+import { SELECTED_THEME_FIELD, getSavedTheme, saveTheme } from './savedTheme';
 
 describe('savedTheme', () => {
   afterEach(() => localStorage.clear());
@@ -11,12 +12,12 @@ describe('savedTheme', () => {
 
   it('returns a theme saved with saveTheme', () => {
     saveTheme(themeNames[1]);
-    expect(localStorage.getItem(SELECTED_THEME_KEY)).toBe(themeNames[1]);
+    expect(readString(SELECTED_THEME_FIELD)).toBe(themeNames[1]);
     expect(getSavedTheme()).toBe(themeNames[1]);
   });
 
   it('returns null for an unknown theme', () => {
-    localStorage.setItem(SELECTED_THEME_KEY, 'not-a-theme');
+    writeStored(SELECTED_THEME_FIELD, 'not-a-theme');
     expect(getSavedTheme()).toBeNull();
   });
 });
