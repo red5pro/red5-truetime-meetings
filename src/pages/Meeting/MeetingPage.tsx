@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Container, Box, IconButton } from '@mui/material';
+import { enterAnimation } from 'truetime-ui';
 import { useTheme } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import { Close } from '@mui/icons-material';
@@ -431,7 +432,17 @@ const MeetingPage = React.memo<MeetingPageProps>((props) => {
   };
 
   return (
-    <Container id="meeting-page" maxWidth={false} sx={{ width: '100%', maxWidth: '100%', px: 0 }}>
+    <Container
+      id="meeting-page"
+      maxWidth={false}
+      sx={{
+        width: '100%',
+        maxWidth: '100%',
+        px: 0,
+        // Fade only: the footer and drawers are fixed, so nothing here may move
+        ...enterAnimation({ variant: 'fade', duration: 'slow' }),
+      }}
+    >
       <Box
         id="stream-gallery"
         className={hasOpenDrawer ? 'drawer-open' : undefined}

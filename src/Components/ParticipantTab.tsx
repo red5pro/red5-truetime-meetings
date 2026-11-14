@@ -3,7 +3,16 @@ import { Box, IconButton, InputAdornment, Tooltip } from '@mui/material';
 import { alpha } from '@mui/material/styles';
 import { MicOff, PanTool, PersonRemove, Search } from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
-import { Button, Heading, Input, Text, TruncatedText, radii, themeColors } from 'truetime-ui';
+import {
+  Button,
+  Heading,
+  Input,
+  Text,
+  TruncatedText,
+  radii,
+  themeColors,
+  transition,
+} from 'truetime-ui';
 import { USER_ROLES } from '../constants/userRoles';
 
 interface Participant {
@@ -92,7 +101,7 @@ function Row({
         borderRadius: `${radii.container}px`,
         '&:hover': { backgroundColor: alpha(themeColors(theme).text, 0.05) },
         // Row actions show on hover or keyboard focus; touch screens can't hover, so always there
-        '& .row-actions': { opacity: 0, transition: 'opacity 0.15s' },
+        '& .row-actions': { opacity: 0, transition: transition('opacity', { duration: 'fast' }) },
         '&:hover .row-actions, &:focus-within .row-actions': { opacity: 1 },
         '@media (hover: none)': { '& .row-actions': { opacity: 1 } },
       })}

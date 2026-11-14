@@ -1,5 +1,6 @@
 import React from 'react';
 import { alpha, styled, Theme } from '@mui/material/styles';
+import { transition } from 'truetime-ui';
 import { Box, Tooltip } from '@mui/material';
 
 interface ConnectionQualityBarProps {
@@ -15,7 +16,7 @@ const QualityIndicator = styled(Box)(({}: { theme: Theme }) => ({
   right: 8,
   zIndex: 150,
   cursor: 'pointer',
-  transition: 'all 0.2s ease',
+  transition: transition('transform', { duration: 'fast' }),
   '&:hover': {
     transform: 'scale(1.05)',
   },

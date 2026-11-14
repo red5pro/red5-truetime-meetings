@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Box } from '@mui/system';
+import { enterAnimation, motion, pulse, reducedMotion } from 'truetime-ui';
 
 const formatElapsed = (totalSeconds: number): string => {
   const hrs = Math.floor(totalSeconds / 3600);
@@ -60,8 +61,14 @@ const RecordingIndicator: React.FC<RecordingIndicatorProps> = ({ didIStart }) =>
   };
 
   return (
-    <Box style={buttonStyle}>
-      <Box style={iconStyle} />
+    <Box style={buttonStyle} sx={enterAnimation({ variant: 'pop' })}>
+      <Box
+        style={iconStyle}
+        sx={{
+          animation: `${pulse} ${motion.duration.slow * 5}ms ${motion.easing.standard} infinite`,
+          [reducedMotion]: { animation: 'none' },
+        }}
+      />
       <span>Recording</span>
       {didIStart && <span style={timerStyle}>{formatElapsed(elapsed)}</span>}
     </Box>

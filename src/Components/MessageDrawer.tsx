@@ -39,7 +39,6 @@ const MessageDrawer = React.memo<MessageDrawerProps>((props) => {
 
   return (
     <Red5Drawer
-      transitionDuration={200}
       anchor="right"
       id="message-drawer"
       open={props?.messageDrawerOpen}

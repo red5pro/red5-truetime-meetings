@@ -1,4 +1,5 @@
 import { Button, Typography } from '@mui/material';
+import { enterAnimation } from 'truetime-ui';
 import { useTheme } from '@mui/material/styles';
 import Grid from '@mui/material/Grid2';
 import { Box } from '@mui/system';
@@ -52,7 +53,7 @@ function LeftTheRoom({
         sx={{ minHeight: '100vh', px: 2 }}
       >
         <Grid size={{ xs: 12, sm: 10, md: 8 }}>
-          <Box textAlign="center">
+          <Box textAlign="center" sx={enterAnimation()}>
             <Typography variant="h5" align="center" sx={{ mb: 2 }}>
               {message}
             </Typography>

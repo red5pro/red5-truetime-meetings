@@ -1,6 +1,7 @@
 import React, { ReactNode } from 'react';
 import Grid from '@mui/material/Grid2';
 import { Theme } from '@mui/material/styles';
+import { enterAnimation, transition } from 'truetime-ui';
 
 interface CustomCardProps {
   children?: ReactNode;
@@ -91,7 +92,9 @@ const CustomCard: React.FC<CustomCardProps> = ({
           inset 0 1px 0 rgba(255, 255, 255, 0.1),
           inset 0 -1px 0 rgba(255, 255, 255, 0.05)
         `,
-        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+        transition: transition(['background', 'border-color', 'box-shadow', 'width', 'height']),
+        // A participant's tile grows in when they join
+        ...enterAnimation({ variant: 'scale' }),
 
         // Glass effect overlay if enabled
         ...(glass && {
