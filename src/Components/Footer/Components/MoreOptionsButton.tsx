@@ -13,11 +13,12 @@ import i18n from 'i18next';
 import { ThemeList } from '../../../constants/themeList.js';
 import { ThemeContext } from '../../../contexts/ThemeContext';
 import { ToolbarButton } from 'truetime-ui';
+import { getGlassMenuStyle } from '../../../styles/themeUtil.js';
 import log from 'loglevel';
 import { ClosedCaption, ClosedCaptionDisabled, MoreVert } from '@mui/icons-material';
 import type { Devices } from 'truetime-ui';
 import { getRuntimeConfig } from '../../../utils/configStore';
-import { fakeParticipantMenuItems } from './fakeParticipantMenuItems.tsx';
+import { devMenuItems } from './devMenuItems.tsx';
 import type { NoiseSuppressionStatus } from '../../../hooks/useNoiseSuppression';
 
 interface Globals {
@@ -252,6 +253,7 @@ function MoreOptionsButton(props: MoreOptionsButtonProps) {
         MenuListProps={{
           'aria-labelledby': 'basic-button',
         }}
+        PaperProps={{ sx: getGlassMenuStyle(theme, 'secondary', true) }}
         anchorOrigin={{
           vertical: 'top',
           horizontal: 'left',
@@ -412,9 +414,11 @@ function MoreOptionsButton(props: MoreOptionsButtonProps) {
             }}
           />
         </MenuItem>
-        {fakeParticipantMenuItems({
-          onAdd: props?.onAddFakeParticipant,
-          onRemove: props?.onRemoveFakeParticipant,
+        {devMenuItems({
+          onAddFakeParticipant: props?.onAddFakeParticipant,
+          onRemoveFakeParticipant: props?.onRemoveFakeParticipant,
+          currentTheme,
+          onThemeChange: switchTheme,
         })}
       </Menu>
     </>

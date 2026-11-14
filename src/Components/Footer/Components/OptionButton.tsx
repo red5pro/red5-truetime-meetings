@@ -34,7 +34,7 @@ import log from 'loglevel';
 import { getRuntimeConfig } from '../../../utils/configStore';
 import { isMobile } from 'react-device-detect';
 import { RecordingResolutionCheck } from '../../RecordingResolutionCheck';
-import { fakeParticipantMenuItems } from './fakeParticipantMenuItems.tsx';
+import { devMenuItems } from './devMenuItems.tsx';
 import type { RecordingSources } from '../../../hooks/useRecording';
 import {
   DEFAULT_RECORDING_PRESET,
@@ -840,9 +840,11 @@ function OptionButton(props: OptionButtonProps) {
           </ListItemIcon>
           <ListItemText>{t('Report Problem')}</ListItemText>
         </MenuItem>
-        {fakeParticipantMenuItems({
-          onAdd: props?.onAddFakeParticipant,
-          onRemove: props?.onRemoveFakeParticipant,
+        {devMenuItems({
+          onAddFakeParticipant: props?.onAddFakeParticipant,
+          onRemoveFakeParticipant: props?.onRemoveFakeParticipant,
+          currentTheme,
+          onThemeChange: switchTheme,
         })}
       </Menu>
     </>

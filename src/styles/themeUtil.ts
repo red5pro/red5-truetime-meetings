@@ -71,9 +71,16 @@ export function getDialogStyle(theme: Theme): StyleObject {
   };
 }
 
+/**
+ * Menus opened from the call controls. They open upwards from the footer, so they're capped at the
+ * space above it and scroll when their items don't fit (e.g. the options menu on a short window).
+ */
 export function getGlassMenuStyle(theme: Theme, _p0: string, _p1: boolean): StyleObject {
   return {
-    overflow: 'hidden',
+    overflowX: 'hidden',
+    overflowY: 'auto',
+    maxHeight: `calc(100dvh - ${FOOTER_HEIGHT + 16}px)`,
+    scrollbarWidth: 'thin',
     background: themeColors(theme).surfaceRaised,
     borderRadius: `${radii.container}px`,
   };
