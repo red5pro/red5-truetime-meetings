@@ -81,3 +81,12 @@ The [pull request template](../.github/pull_request_template.md) asks for:
 
 Keep pull requests focused on one change, and update the docs when a change affects a feature, a setting or the
 API the app uses.
+
+## Where the docs live
+
+- **Technical docs** (settings, deployment, architecture, the config service, troubleshooting for people running
+  the app) are in this repo, under `docs/`.
+- **The user guide** (how to join, use and host meetings) is on the
+  [Red5 documentation site](https://www.red5.net/docs/red5-cloud/users-guide/truetime-meetings/). Its source is in the `red5pro-docs` repository, under
+  `website/docs/red5-cloud/users-guide/truetime-meetings/`. If your change alters a button, a menu or a workflow,
+  mention it in your pull request so the user guide can be updated.
