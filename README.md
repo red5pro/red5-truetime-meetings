@@ -28,12 +28,12 @@ them.
 
 ## Start here
 
-| I want to…                                  | Read                                                                       |
-| ------------------------------------------- | -------------------------------------------------------------------------- |
-| **Use** TrueTime Meetings to join or host   | [User guide](docs/user-guide/README.md)                                    |
-| **Run it on my computer** to try or develop | [Getting started](docs/getting-started.md)                                 |
-| **Host it** for my team or my customers     | [Deployment](docs/deployment.md)                                           |
-| **Change how it works** or contribute       | [Architecture](docs/architecture.md), [Contributing](docs/contributing.md) |
+| I want to…                                  | Read                                                                                                    |
+| ------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| **Use** TrueTime Meetings to join or host   | [User guide](https://www.red5.net/docs/red5-cloud/users-guide/truetime-meetings/) on the Red5 docs site |
+| **Run it on my computer** to try or develop | [Getting started](docs/getting-started.md)                                                              |
+| **Host it** for my team or my customers     | [Deployment](docs/deployment.md)                                                                        |
+| **Change how it works** or contribute       | [Architecture](docs/architecture.md), [Contributing](docs/contributing.md)                              |
 
 ## Quick start for developers
 
@@ -65,13 +65,18 @@ and turns on recording.
 
 **Use it** (no technical knowledge needed)
 
-| Guide                                                                              | What's in it                                                            |
-| ---------------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
-| [Joining a meeting](docs/user-guide/joining-a-meeting.md)                          | Starting or joining, camera permissions, the lobby, signing in, leaving |
-| [In a meeting](docs/user-guide/in-a-meeting.md)                                    | The control bar, chat, reactions, layouts, screen sharing, shortcuts    |
-| [Camera, microphone and effects](docs/user-guide/camera-microphone-and-effects.md) | Devices, backgrounds, noise suppression, video quality, diagnostics     |
-| [Recording and captions](docs/user-guide/recording-and-captions.md)                | Server and local recording, captions and transcripts                    |
-| [Hosting a meeting](docs/user-guide/hosting-a-meeting.md)                          | Host links, letting guests in, removing people, external streams        |
+The user guide is on the [Red5 documentation site](https://www.red5.net/docs/red5-cloud/users-guide/truetime-meetings/):
+
+| Guide                                                                                                                               | What's in it                                                            |
+| ----------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| [Overview](https://www.red5.net/docs/red5-cloud/users-guide/truetime-meetings/)                                                     | What TrueTime Meetings is and how to deploy it from Red5 Cloud          |
+| [Joining a meeting](https://www.red5.net/docs/red5-cloud/users-guide/truetime-meetings/joining-a-meeting/)                          | Starting or joining, camera permissions, the lobby, signing in, leaving |
+| [In a meeting](https://www.red5.net/docs/red5-cloud/users-guide/truetime-meetings/in-a-meeting/)                                    | The control bar, chat, reactions, layouts, screen sharing, shortcuts    |
+| [Camera, microphone and effects](https://www.red5.net/docs/red5-cloud/users-guide/truetime-meetings/camera-microphone-and-effects/) | Devices, backgrounds, noise suppression, video quality, diagnostics     |
+| [Recording and captions](https://www.red5.net/docs/red5-cloud/users-guide/truetime-meetings/recording-and-captions/)                | Server and local recording, captions and transcripts                    |
+| [Hosting a meeting](https://www.red5.net/docs/red5-cloud/users-guide/truetime-meetings/hosting-a-meeting/)                          | Host links, letting guests in, removing people                          |
+| [Adding an external stream](https://www.red5.net/docs/red5-cloud/users-guide/truetime-meetings/external-streams/)                   | Bringing a live stream into a meeting as a participant                  |
+| [Troubleshooting](https://www.red5.net/docs/red5-cloud/users-guide/truetime-meetings/troubleshooting/)                              | Common problems in a meeting and what fixes them                        |
 
 **Run it**
 
@@ -81,7 +86,7 @@ and turns on recording.
 | [Configuration](docs/configuration.md)     | Every setting, where it can be set and which one wins      |
 | [Deployment](docs/deployment.md)           | Docker image, Docker Compose, nginx, HTTPS                 |
 | [Config service](config-service/README.md) | The small server that holds the settings and talks to Red5 |
-| [Troubleshooting](docs/troubleshooting.md) | Common problems and what fixes them                        |
+| [Troubleshooting](docs/troubleshooting.md) | Problems running or hosting the app and what fixes them    |
 
 **Work on it**
 
