@@ -1,34 +1,8 @@
 # Troubleshooting
 
-## For people in a meeting
-
-**The browser won't use my camera or microphone.**
-Click the camera icon in the address bar and choose **Allow**, then **Try again**. Check that no other app (Zoom,
-Teams, another browser tab) is using the camera. On a Mac, also check **System Settings** → **Privacy & Security** →
-**Camera** and **Microphone**.
-
-**Others can't hear me.**
-Check you're not muted, and that the right microphone is picked in the microphone menu. If push to talk is on,
-holding Space unmutes you only while you hold it.
-
-**I can't hear anyone.**
-Check the speaker picked in the microphone menu and your computer's volume. Some browsers block sound until you
-click somewhere on the page.
-
-**Video freezes or looks blocky.**
-Open **More options** → **Diagnostic** to see which connection has trouble. Move closer to your Wi-Fi router or use
-a cable, close other tabs, lower **Outgoing Video Quality Limit** in **Video Settings**, or turn off background
-effects.
-
-**I joined but see no one else's video.**
-Your network may block the connection. Try another network (a phone hotspot is a quick test). If that works, ask
-whoever runs your TrueTime Meetings to set up a TURN server.
-
-**A button is greyed out.**
-That feature (recording, captions or external streams) is turned off for your organization.
-
-**I'm stuck on "Waiting for approval…".**
-A host has to admit you. Let them know you're waiting.
+This page covers problems running or hosting the app. For problems in a meeting (camera, microphone, sound, frozen
+video, greyed-out buttons, waiting for approval), see
+[Troubleshooting](https://www.red5.net/docs/red5-cloud/users-guide/truetime-meetings/troubleshooting/) in the user guide on the Red5 documentation site.
 
 ## For people running the app
 
