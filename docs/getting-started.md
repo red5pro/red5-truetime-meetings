@@ -40,7 +40,8 @@ Open <http://localhost:3000>, click **New meeting**, and allow your camera and m
 link in a second browser window to see yourself join twice.
 
 `npm run dev` first writes `public/build-info.json` and downloads the noise suppression model into
-`public/noise-suppression/` (both are git-ignored), then starts Vite.
+`public/noise-suppression/` (both are git-ignored), then starts Vite. If the download fails the app still runs, but
+noise suppression is off; see [Noise suppression assets](conference-sdk.md).
 
 > Without `VITE_BASENAME` the app is served under `/meetings`, so it lives at <http://localhost:3000/meetings/>.
 

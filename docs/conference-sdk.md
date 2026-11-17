@@ -43,8 +43,15 @@ If you want to build your own meeting app, read the SDK's documentation, then us
 - **Chat carries app events.** Reactions (`REACTIONS`) and raised hands (`RAISED_HAND`) are sent as chat messages
   with an `eventType`, alongside normal messages (`MESSAGE_RECEIVED`). See `useChat.ts`.
 - **Noise suppression assets.** The DeepFilterNet3 model is downloaded into `public/noise-suppression/` by
-  `scripts/fetch-noise-suppression-assets.ts` and served by the app, because the SDK's default CDN refuses
-  cross-origin requests. The level the SDK takes is an attenuation limit in dB; the app converts a percentage of
+  `scripts/fetch-noise-suppression-assets.ts` and served by the app, because the SDK's default CDN
+  (`cdn.mezon.ai`) refuses cross-origin requests and now returns 403 to all downloads. The model comes from the
+  [DeepFilterNet](https://github.com/Rikorose/DeepFilterNet) repo. The wasm (`v3/pkg/df_bg.wasm`) must match the
+  `deepfilternet3-noise-filter` version, so we host it as an asset on this repo's
+  [`noise-suppression-assets-1.3.0`](https://github.com/red5pro/red5-truetime-meetings/releases/tag/noise-suppression-assets-1.3.0)
+  release. The script checks SHA-256 hashes and tries `NOISE_SUPPRESSION_MIRROR_URL` (a base URL serving
+  `v3/pkg/df_bg.wasm` and `v3/models/...`) first when it is set. When upgrading the package, publish its wasm under
+  a new release tag and update `RELEASE_TAG` and the hash in the script. The
+  level the SDK takes is an attenuation limit in dB; the app converts a percentage of
   noise removed into it (`noiseSuppressionPercentToLevel`).
 - **Tokens stay server-side.** Conference tokens are signed by the config service with the deployment's master
   key and secret, which never reach the browser.
