@@ -3,29 +3,19 @@ import { isMobile } from 'react-device-detect';
 import DialogTitle from '@mui/material/DialogTitle';
 import Dialog from '@mui/material/Dialog';
 import Box from '@mui/material/Box';
-import Button from '@mui/material/Button';
 import DialogContent from '@mui/material/DialogContent';
 import InputLabel from '@mui/material/InputLabel';
 import Select, { SelectChangeEvent } from '@mui/material/Select';
-import {
-  MenuItem,
-  useMediaQuery,
-  Switch,
-  FormControlLabel,
-  Typography,
-  Tooltip,
-  InputAdornment,
-} from '@mui/material';
+import { IconButton, MenuItem, useMediaQuery, Typography, InputAdornment } from '@mui/material';
 import Grid from '@mui/material/Grid2';
 import { SvgIcon } from '../../SvgIcon.js';
 import { useTheme } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 import { getDialogStyle } from '../../../styles/themeUtil.js';
-// @ts-expect-error - legacy component has no proper type exports
 import { isNull } from '../../../utils/utils.tsx';
 import { BitrateOptionsList } from '../../../constants/bitrateOptionsList.js';
-import { QuestionMarkRounded } from '@mui/icons-material';
-import { Slider, Spinner, Switch as ToggleSwitch, themeColors } from 'truetime-ui';
+import { Close } from '@mui/icons-material';
+import { radii, Slider, Spinner, Switch as ToggleSwitch, themeColors } from 'truetime-ui';
 import type { NoiseSuppressionStatus } from '../../../hooks/useNoiseSuppression';
 
 interface Device {
@@ -78,22 +68,24 @@ const MIN_NOISE_SUPPRESSION_PERCENT = 10;
 
 const Red5DialogTitle: React.FC<Red5DialogTitleProps> = (props) => {
   const { children, onClose, ...other } = props;
+  const { t } = useTranslation();
 
   return (
-    <DialogTitle {...other} sx={{ color: '#fff', textAlign: 'center', pb: 1 }}>
+    <DialogTitle {...other} sx={{ textAlign: 'center', pb: 1 }}>
       {children}
       {onClose ? (
-        <Button
-          aria-label="close"
+        <IconButton
+          aria-label={t('Close')}
           onClick={onClose}
-          sx={{
+          sx={(theme) => ({
             position: 'absolute',
-            right: 26,
-            top: 27,
-          }}
+            right: { xs: 8, sm: 24 },
+            top: { xs: 16, sm: 24 },
+            color: themeColors(theme).text,
+          })}
         >
-          <SvgIcon size={20} viewBox="0 0 500 500" name={'close'} color={'#fff'} />
-        </Button>
+          <Close />
+        </IconButton>
       ) : null}
     </DialogTitle>
   );
@@ -234,12 +226,6 @@ export default function SettingsDialog(props: SettingsDialogProps) {
       maxWidth={'sm'}
       id="settings-dialog"
       PaperProps={{ sx: getDialogStyle(theme) }}
-      BackdropProps={{
-        sx: {
-          backgroundColor: 'rgba(255, 255, 255, 0.1)',
-          backdropFilter: 'blur(0.5px)',
-        },
-      }}
     >
       <Red5DialogTitle onClose={handleClose}>{t(title)}</Red5DialogTitle>
       <DialogContent>
@@ -249,13 +235,16 @@ export default function SettingsDialog(props: SettingsDialogProps) {
               {/* Camera Section */}
               <Grid container>
                 <Grid size={12}>
-                  <InputLabel sx={{ color: '#fff', mb: 1 }}>{t('Camera')}</InputLabel>
+                  <InputLabel id="setting-dialog-camera-label" sx={{ mb: 1 }}>
+                    {t('Camera')}
+                  </InputLabel>
                 </Grid>
                 <Grid size={12} sx={{ width: '100vw' }}>
                   <Select
                     autoFocus={section === 'video' || props?.selectFocus === 'camera'}
                     fullWidth
                     id="setting-dialog-camera-select"
+                    labelId="setting-dialog-camera-label"
                     variant="outlined"
                     value={
                       isMobile
@@ -265,10 +254,15 @@ export default function SettingsDialog(props: SettingsDialogProps) {
                         : props?.selectedCamera || ''
                     }
                     onChange={handleCameraChange}
-                    sx={{ color: '#fff', width: '100%' }}
+                    sx={{ width: '100%' }}
                     endAdornment={
                       <InputAdornment position="end" sx={{ mr: 2 }}>
-                        <SvgIcon size={24} viewBox="0 0 500 500" name={'camera'} color={'#fff'} />
+                        <SvgIcon
+                          size={24}
+                          viewBox="0 0 500 500"
+                          name={'camera'}
+                          color={themeColors(theme).text}
+                        />
                       </InputAdornment>
                     }
                   >
@@ -292,7 +286,7 @@ export default function SettingsDialog(props: SettingsDialogProps) {
               {/* Video Quality Section */}
               <Grid container sx={{ mt: 4 }}>
                 <Grid size={12}>
-                  <InputLabel sx={{ color: '#fff', mb: 1 }}>
+                  <InputLabel id="setting-dialog-bitrate-label" sx={{ mb: 1 }}>
                     {t('Outgoing Video Quality Limit')}
                   </InputLabel>
                 </Grid>
@@ -302,15 +296,16 @@ export default function SettingsDialog(props: SettingsDialogProps) {
                     fullWidth
                     value={props?.outgoingBitrate || ''}
                     onChange={handleBitrateChange}
-                    sx={{ color: '#fff', width: '100%' }}
+                    sx={{ width: '100%' }}
                     id="setting-dialog-bitrate-select"
+                    labelId="setting-dialog-bitrate-label"
                     endAdornment={
                       <InputAdornment position="end" sx={{ mr: 2 }}>
                         <SvgIcon
                           viewBox={'0 0 24 24'}
                           size={24}
                           name={'bitrate-limit'}
-                          color={'#fff'}
+                          color={themeColors(theme).text}
                         />
                       </InputAdornment>
                     }
@@ -331,7 +326,9 @@ export default function SettingsDialog(props: SettingsDialogProps) {
               {/* Microphone Section */}
               <Grid container sx={{ mt: showVideo ? 4 : 0 }}>
                 <Grid size={12}>
-                  <InputLabel sx={{ color: '#fff', mb: 1 }}>{t('Microphone')}</InputLabel>
+                  <InputLabel id="setting-dialog-mic-label" sx={{ mb: 1 }}>
+                    {t('Microphone')}
+                  </InputLabel>
                 </Grid>
                 <Grid size={12} sx={{ width: '100vw' }}>
                   <Select
@@ -340,15 +337,16 @@ export default function SettingsDialog(props: SettingsDialogProps) {
                     fullWidth
                     value={props?.selectedMicrophone || ''}
                     onChange={handleMicrophoneChange}
-                    sx={{ color: '#fff', width: '100%' }}
+                    sx={{ width: '100%' }}
                     id="setting-dialog-mic-select"
+                    labelId="setting-dialog-mic-label"
                     endAdornment={
                       <InputAdornment position="end" sx={{ mr: 2 }}>
                         <SvgIcon
                           size={24}
                           viewBox="0 0 500 500"
                           name={'microphone'}
-                          color={'#fff'}
+                          color={themeColors(theme).text}
                         />
                       </InputAdornment>
                     }
@@ -367,7 +365,9 @@ export default function SettingsDialog(props: SettingsDialogProps) {
               {/* Speaker Section */}
               <Grid container sx={{ mt: 4 }}>
                 <Grid size={12}>
-                  <InputLabel sx={{ color: '#fff', mb: 1 }}>{t('Speaker')}</InputLabel>
+                  <InputLabel id="setting-dialog-speaker-label" sx={{ mb: 1 }}>
+                    {t('Speaker')}
+                  </InputLabel>
                 </Grid>
                 <Grid size={12} sx={{ width: '100vw' }}>
                   <Select
@@ -376,15 +376,16 @@ export default function SettingsDialog(props: SettingsDialogProps) {
                     fullWidth
                     value={props?.selectedSpeaker || ''}
                     onChange={handleSpeakerChange}
-                    sx={{ color: '#fff', width: '100%' }}
+                    sx={{ width: '100%' }}
                     id="setting-dialog-speaker-select"
+                    labelId="setting-dialog-speaker-label"
                     endAdornment={
                       <InputAdornment position="end" sx={{ mr: 2 }}>
                         <SvgIcon
                           size={24}
                           viewBox="0 0 500 500"
                           name={'audio-output'}
-                          color={'#fff'}
+                          color={themeColors(theme).text}
                         />
                       </InputAdornment>
                     }
@@ -407,7 +408,7 @@ export default function SettingsDialog(props: SettingsDialogProps) {
                     <Box
                       sx={{
                         p: 1.5,
-                        borderRadius: 1,
+                        borderRadius: `${radii.control}px`,
                         border: `1px solid ${themeColors(theme).border}`,
                         width: '100%',
                       }}
@@ -514,47 +515,40 @@ export default function SettingsDialog(props: SettingsDialogProps) {
                 <Grid size={12} sx={{ width: '100vw' }}>
                   <Box
                     sx={{
-                      p: 1,
-                      borderRadius: 1,
-                      border: '1px solid grey',
+                      p: 1.5,
+                      borderRadius: `${radii.control}px`,
+                      border: `1px solid ${themeColors(theme).border}`,
                       width: '100%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      gap: 2,
                     }}
                   >
-                    <FormControlLabel
-                      label={
-                        <Box display="flex" alignItems="center" gap={1}>
-                          <Typography variant="body1" sx={{ color: '#fff', fontWeight: 'medium' }}>
-                            {t('Push to Talk')}
-                          </Typography>
-                          <Tooltip title="Press and hold spacebar to unmute your mic">
-                            {
-                              //@ts-expect-error - legacy type mismatch, needs proper typing
-                              <QuestionMarkRounded color={'#fff'} fontSize={'small'} />
-                            }
-                          </Tooltip>
-                        </Box>
-                      }
-                      control={
-                        <Switch
-                          checked={localPushToTalkEnabled}
-                          onChange={handlePushToTalkToggle}
-                          sx={{
-                            '& .MuiSwitch-switchBase.Mui-checked': {
-                              color: '#DADADA',
-                            },
-                            '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
-                              backgroundColor: '#DADADA',
-                            },
-                            '& .MuiSwitch-switchBase': {
-                              color: '#DADADA', // Light gray thumb when unchecked
-                            },
-                            '& .MuiSwitch-track': {
-                              backgroundColor: '#424242', // Dark gray track when unchecked
-                            },
-                          }}
-                        />
-                      }
-                      sx={{ margin: 0, width: '100%' }}
+                    <Box>
+                      <Typography
+                        id="setting-dialog-push-to-talk-label"
+                        variant="body1"
+                        sx={{ color: themeColors(theme).text, fontWeight: 'medium' }}
+                      >
+                        {t('Push to Talk')}
+                      </Typography>
+                      <Typography
+                        id="setting-dialog-push-to-talk-hint"
+                        variant="caption"
+                        sx={{ color: themeColors(theme).mutedText }}
+                      >
+                        {t('Press and hold the spacebar to unmute your mic.')}
+                      </Typography>
+                    </Box>
+                    <ToggleSwitch
+                      id="setting-dialog-push-to-talk-switch"
+                      checked={localPushToTalkEnabled}
+                      onChange={handlePushToTalkToggle}
+                      inputProps={{
+                        'aria-labelledby': 'setting-dialog-push-to-talk-label',
+                        'aria-describedby': 'setting-dialog-push-to-talk-hint',
+                      }}
                     />
                   </Box>
                 </Grid>

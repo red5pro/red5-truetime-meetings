@@ -1,88 +1,23 @@
-import React, {
-  useState,
-  useCallback,
-  useMemo,
-  useRef,
-  useLayoutEffect,
-  useEffect,
-  VideoHTMLAttributes,
-} from 'react';
-import { alpha, styled } from '@mui/material/styles';
-import { Typography, useTheme, Box, Tooltip, Theme, Slider } from '@mui/material';
-import Grid from '@mui/material/Grid2';
-import VolumeUp from '@mui/icons-material/VolumeUp';
+import React, { useCallback, useState, VideoHTMLAttributes } from 'react';
+import { alpha, useTheme } from '@mui/material/styles';
+import { Box, Typography } from '@mui/material';
+import { MicOutlined, PanTool, PushPin, PushPinOutlined } from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
+import {
+  Spinner,
+  StatusBadge,
+  ToolbarButton,
+  VideoTile,
+  VolumeControl,
+  readableOn,
+  themeColors,
+} from 'truetime-ui';
 
-import DummyCard from './DummyCard';
-import CustomCard from '../CustomCard.tsx';
-import { CustomizedBtn, roundStyle } from '../CustomizedBtn.tsx';
-import { SvgIcon } from '../SvgIcon';
-import { Spinner, transition } from 'truetime-ui';
 import { ConnectionQualityBar } from '../ConnectionQualityBar.tsx';
-import TalkingIndicator from '../TalkingIndicator.tsx';
 
-// Types and Interfaces
 interface Participant {
   streamId: string;
   streamName: string;
-}
-
-interface OverlayButtonProps {
-  title: string;
-  icon: string;
-  color: 'primary' | 'secondary' | 'error';
-  onClick: () => void;
-}
-
-interface ModerationButtonsProps {
-  micMuted: boolean;
-  streamId: string;
-  name: string;
-  setParticipantIdMuted: (participant: Participant) => void;
-  setMuteParticipantDialogOpen: (open: boolean) => void;
-}
-
-interface PinButtonProps {
-  pinned: boolean;
-  name: string;
-  pinVideo: (streamId: string) => void;
-  unpinVideo: (force?: boolean) => void;
-  streamId: string;
-}
-
-interface ParticipantStatusProps {
-  isMicMuted: boolean;
-  streamId: string;
-}
-
-interface VideoTitleProps {
-  name?: string;
-  isRaiseHand?: boolean;
-}
-
-interface VideoPlayerProps {
-  isMine: boolean;
-  isCamTurnedOff: boolean;
-  streamId: string;
-  hidePlayer: boolean;
-  isPending: boolean;
-  videoProps: VideoHTMLAttributes<HTMLVideoElement>;
-}
-
-interface OverlayButtonsProps {
-  isMine: boolean;
-  displayHover: boolean;
-  hidePin: boolean;
-  pinned: boolean;
-  layout: string;
-  streamId: string;
-  name: string;
-  micMuted: boolean;
-  setParticipantIdMuted: (participant: Participant) => void;
-  setMuteParticipantDialogOpen: (open: boolean) => void;
-  pinVideo: (streamId: string) => void;
-  unpinVideo: (force?: boolean) => void;
-  metaData?: string;
 }
 
 interface VideoCardProps extends VideoHTMLAttributes<HTMLVideoElement> {
@@ -107,379 +42,131 @@ interface VideoCardProps extends VideoHTMLAttributes<HTMLVideoElement> {
   talkers?: string[];
   metaData?: string;
   isScreenShare?: boolean;
+  /** Show the name chip; off where the page shows the name itself (the lobby preview). */
+  showName?: boolean;
 }
 
-// Styled components
-const CustomizedVideo = styled('video')({
-  borderRadius: 4,
-  width: '100%',
-  height: '100%',
-  objectPosition: 'center',
-  backgroundColor: 'transparent',
-});
+/** Props some layouts still pass from the old tile; they mean nothing to a <video>. */
+const LEGACY_PROPS = [
+  'layout',
+  'isMobileView',
+  'streamName',
+  'isPlayOnly',
+  'isPublished',
+  'publishStreamId',
+  'turnOffYourMicNotification',
+] as const;
 
-const CustomizedBox = styled(Box)(({ theme }: { theme: Theme }) => ({
-  backgroundColor: alpha(theme.palette.gray[90], 0.3),
-}));
+interface TileActionsProps {
+  isMine: boolean;
+  pinned: boolean;
+  streamId: string;
+  name: string;
+  micMuted: boolean;
+  isExternalStream: boolean;
+  videoId?: string;
+  pinVideo: (streamId: string) => void;
+  unpinVideo: (force?: boolean) => void;
+  setParticipantIdMuted: (participant: Participant) => void;
+  setMuteParticipantDialogOpen: (open: boolean) => void;
+}
 
-const ScreenShareOverlay = styled(Box)(({ theme }: { theme: Theme }) => ({
-  position: 'absolute',
-  top: 0,
-  left: 0,
-  right: 0,
-  bottom: 0,
-  backgroundColor: alpha(theme.palette.common.black, 0.75),
-  display: 'flex',
-  flexDirection: 'column',
-  justifyContent: 'center',
-  alignItems: 'center',
-  zIndex: 200,
-  borderRadius: 4,
-  padding: theme.spacing(2),
-  textAlign: 'center',
-  backdropFilter: 'blur(4px)',
-}));
-
-const LoadingContainer = styled(Box)(({}: { theme: Theme }) => ({
-  display: 'flex',
-  justifyContent: 'center',
-  alignItems: 'center',
-  height: '100%',
-  width: '100%',
-  backgroundColor: '#262626',
-  borderRadius: 4,
-}));
-
-// Constants
-const CARD_BUTTON_STYLE = {
-  display: 'flex',
-  justifyContent: 'center',
-  alignItems: 'center',
-  width: { xs: '6vw', md: 32 },
-  height: { xs: '6vw', md: 32 },
-  borderRadius: '50%',
-  position: 'relative',
-};
-
-const OVERLAY_STYLE = {
-  position: 'absolute',
-  left: 0,
-  top: 0,
-  height: '100%',
-  zIndex: 100,
-  transition: transition('opacity'),
-};
-
-const NAME_INDICATOR_STYLE = {
-  display: 'flex',
-  alignItems: 'center',
-  gap: '8px',
-  color: 'white',
-  backgroundColor: '#262626',
-  borderRadius: '21px',
-  padding: '4px 12px',
-  width: 'fit-content',
-};
-
-const ModerationButtons: React.FC<ModerationButtonsProps> = ({
-  micMuted,
-  streamId,
-  name,
-  setParticipantIdMuted,
-  setMuteParticipantDialogOpen,
-}) => {
-  const handleToggleMic = () => {
-    if (micMuted) {
-      return;
-    }
-
-    const participant: Participant = {
-      streamId: streamId,
-      streamName: name,
-    };
-
-    setParticipantIdMuted(participant);
-    setMuteParticipantDialogOpen(true);
-  };
-
-  return (
-    <OverlayButton
-      title={`Microphone ${micMuted ? 'on' : 'off'} ${name}`}
-      icon={micMuted ? 'muted-microphone' : 'microphone'}
-      color={micMuted ? 'error' : 'primary'}
-      onClick={handleToggleMic}
-    />
-  );
-};
-
-// Sub-components
-const OverlayButton = React.memo<OverlayButtonProps>(({ title, icon, color, onClick }) => {
-  const theme = useTheme();
-
-  return (
-    <Tooltip title={title} placement="top" style={{ margin: '2px' }}>
-      <CustomizedBtn
-        id="overlay-button"
-        glass={false}
-        className="footer-icon-button"
-        variant="contained"
-        color={color}
-        sx={roundStyle}
-        onClick={onClick}
-      >
-        <SvgIcon
-          size={24}
-          viewBox="0 0 500 500"
-          name={icon}
-          color={theme.palette?.iconColor?.primary}
-        />
-      </CustomizedBtn>
-    </Tooltip>
-  );
-});
-
-const PinButton = React.memo<PinButtonProps>(({ pinned, name, pinVideo, unpinVideo, streamId }) => {
-  const { t } = useTranslation();
-
-  const buttonConfig = useMemo(
-    () => ({
-      title: `${pinned ? t('unpin') : t('pin')} ${name}`,
-      icon: pinned ? 'unpin' : 'pin',
-    }),
-    [pinned, name, t],
-  );
-
-  const handleClick = useCallback(() => {
-    if (pinned) {
-      unpinVideo();
-    } else {
-      pinVideo(streamId);
-    }
-  }, [pinned, unpinVideo, pinVideo, streamId]);
-
-  return (
-    <OverlayButton
-      title={buttonConfig.title}
-      icon={buttonConfig.icon}
-      color="secondary"
-      onClick={handleClick}
-    />
-  );
-});
-
-const ParticipantStatus = React.memo<ParticipantStatusProps>(({ isMicMuted, streamId }) => {
-  const { t } = useTranslation();
-  const theme = useTheme();
-
-  if (!isMicMuted) return null;
-
-  return (
-    <Box
-      sx={{
-        position: 'absolute',
-        top: { xs: 8, md: 16 },
-        right: { xs: 8, md: 16 },
-        zIndex: 9,
-      }}
-    >
-      <Tooltip title={t('mic is muted')} placement="top">
-        <CustomizedBox id={`mic-muted-${streamId}`} sx={CARD_BUTTON_STYLE}>
-          <SvgIcon
-            size={16}
-            viewBox="0 0 500 500"
-            name="muted-microphone"
-            color={theme.palette?.iconColor?.primary}
-          />
-        </CustomizedBox>
-      </Tooltip>
-    </Box>
-  );
-});
-
-const VideoTitle = React.memo<VideoTitleProps>(({ name, isRaiseHand }) => {
-  if (!name) return null;
-
-  if (isRaiseHand) {
-    return (
-      <Box className="name-indicator">
-        <Typography color="#fff" align="left" className="name">
-          <Box component="span" style={NAME_INDICATOR_STYLE}>
-            🖐🏻 {name}
-          </Box>
-        </Typography>
-      </Box>
-    );
-  }
-
-  return (
-    <Box className="name-indicator">
-      <Typography color="#fff" align="left" className="name">
-        {name}
-      </Typography>
-    </Box>
-  );
-});
-
-const VideoPlayer = React.memo<VideoPlayerProps>(
-  ({ isMine, isCamTurnedOff, streamId, hidePlayer, isPending, videoProps }) => {
-    const videoStyle = useMemo(() => {
-      if (hidePlayer) {
-        return {
-          visibility: 'hidden' as const,
-          width: '1px',
-          height: '1px',
-        };
-      }
-
-      return {
-        // @ts-expect-error - legacy type mismatch, needs proper typing
-        visibility: (isCamTurnedOff ? 'hidden' : 'visible') as const,
-        // Local camera fills its tile; remote streams keep their full frame.
-        objectFit: (isMine ? 'cover' : 'contain') as 'cover' | 'contain',
-      };
-    }, [hidePlayer, isCamTurnedOff, isMine]);
-
-    const containerStyle = useMemo(
-      () => ({
-        height: '100%',
-        transform: isMine && !isCamTurnedOff ? 'rotateY(180deg)' : 'none',
-      }),
-      [isMine, isCamTurnedOff],
-    );
-
-    return (
-      <Grid container style={containerStyle}>
-        {isPending ? (
-          <LoadingContainer>
-            Connecting
-            <Spinner type="dots" size={40} color="white" thickness={4} />
-          </LoadingContainer>
-        ) : (
-          <DummyCard streamName={streamId} isVisible={isCamTurnedOff} />
-        )}
-        <CustomCard>
-          <CustomizedVideo {...videoProps} playsInline muted={isMine} style={videoStyle} />
-        </CustomCard>
-      </Grid>
-    );
-  },
-);
-
-const ScreenShareWarning = React.memo(() => {
-  return (
-    <ScreenShareOverlay>
-      <Typography variant="h6" color="white" gutterBottom sx={{ fontWeight: 'bold' }}>
-        You are presenting
-      </Typography>
-      <Typography variant="body2" color="white" sx={{ opacity: 0.9 }}>
-        To avoid an infinite mirror, don't share your entire screen or browser instead.
-      </Typography>
-    </ScreenShareOverlay>
-  );
-});
-
-const OverlayButtons = React.memo<OverlayButtonsProps>(
+/** Pin, mute and volume, revealed by the tile on hover or keyboard focus (always on touch). */
+const TileActions = React.memo<TileActionsProps>(
   ({
     isMine,
-    displayHover,
-    hidePin,
     pinned,
     streamId,
     name,
     micMuted,
-    setParticipantIdMuted,
-    setMuteParticipantDialogOpen,
+    isExternalStream,
+    videoId,
     pinVideo,
     unpinVideo,
-    metaData,
+    setParticipantIdMuted,
+    setMuteParticipantDialogOpen,
   }) => {
-    const isExternalStream = metaData === 'external-stream';
-    const [volume, setVolume] = useState<number>(1);
+    const { t } = useTranslation();
+    const [volume, setVolume] = useState(1);
 
-    const handleVolumeChange = useCallback(
-      (_: Event, newValue: number | number[]) => {
-        const val = newValue as number;
-        setVolume(val);
-        const videoId = isMine ? 'red5pro-publisher' : `red5pro-subscriber-${streamId}`;
-        const videoEl = document.getElementById(videoId) as HTMLVideoElement;
-        if (videoEl) {
-          videoEl.volume = val;
-          videoEl.muted = val === 0;
+    const handleVolume = useCallback(
+      (value: number) => {
+        setVolume(value);
+        // The SDK owns the element; it is found by the id the layout gave it
+        const video = videoId
+          ? (document.getElementById(videoId) as HTMLVideoElement | null)
+          : null;
+        if (video) {
+          video.volume = value;
+          video.muted = value === 0;
         }
       },
-      [isMine, streamId],
+      [videoId],
     );
 
-    if (hidePin) return null;
-
-    const showOverlay = displayHover || pinned;
+    const handleMute = useCallback(() => {
+      setParticipantIdMuted({ streamId, streamName: name });
+      setMuteParticipantDialogOpen(true);
+    }, [streamId, name, setParticipantIdMuted, setMuteParticipantDialogOpen]);
 
     return (
-      <Box
-        className="pin-overlay"
-        sx={{
-          ...OVERLAY_STYLE,
-          opacity: showOverlay ? 1 : 0,
-          pointerEvents: showOverlay ? 'auto' : 'none',
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          width: '100%',
-        }}
-      >
-        <Box
-          sx={{
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            gap: 0.5,
-          }}
-        >
-          <PinButton
-            name={name}
-            pinVideo={pinVideo}
-            unpinVideo={unpinVideo}
-            streamId={streamId}
-            pinned={pinned}
+      <>
+        <ToolbarButton
+          id={`pin-${streamId}`}
+          // A toggle keeps one name and reports its state; the tooltip says what a press does
+          label={t('Pin {{name}}', { name })}
+          pressed={pinned}
+          tooltip={pinned ? t('Unpin {{name}}', { name }) : t('Pin {{name}}', { name })}
+          icon={pinned ? <PushPin /> : <PushPinOutlined />}
+          onClick={() => (pinned ? unpinVideo() : pinVideo(streamId))}
+        />
+        {/* Hosts can ask someone to mute; there's nothing to do once they already are */}
+        {!isMine && !isExternalStream && !micMuted && (
+          <ToolbarButton
+            id={`mute-${streamId}`}
+            label={t('Mute {{name}}', { name })}
+            icon={<MicOutlined />}
+            onClick={handleMute}
           />
-          {!isMine && !isExternalStream && (
-            <ModerationButtons
-              name={name}
-              streamId={streamId}
-              micMuted={micMuted}
-              setParticipantIdMuted={setParticipantIdMuted}
-              setMuteParticipantDialogOpen={setMuteParticipantDialogOpen}
-            />
-          )}
-          {!isMine && isExternalStream && (
-            <Box
-              sx={{
-                display: 'flex',
-                alignItems: 'center',
-                ml: 1,
-                width: 100,
-                pointerEvents: 'auto',
-              }}
-            >
-              <VolumeUp sx={{ color: 'white', mr: 1 }} fontSize="small" />
-              <Slider
-                size="small"
-                min={0}
-                max={1}
-                step={0.01}
-                value={volume}
-                onChange={handleVolumeChange}
-                sx={{ color: 'white' }}
-              />
-            </Box>
-          )}
-        </Box>
-      </Box>
+        )}
+        {!isMine && isExternalStream && (
+          <VolumeControl value={volume} onChange={handleVolume} label={name} sx={{ width: 140 }} />
+        )}
+      </>
     );
   },
 );
 
-// Main component
+/** Shown on your own screen-share tile, so you don't share the meeting into itself. */
+const ScreenShareWarning = () => {
+  const { t } = useTranslation();
+  return (
+    <Box
+      sx={(theme) => ({
+        position: 'absolute',
+        inset: 0,
+        zIndex: 3,
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'center',
+        alignItems: 'center',
+        gap: 1,
+        p: 2,
+        textAlign: 'center',
+        backgroundColor: alpha(themeColors(theme).monitor, 0.75),
+      })}
+    >
+      <Typography variant="h6" component="p">
+        {t('You are presenting')}
+      </Typography>
+      <Typography variant="body2" sx={{ maxWidth: '40ch' }}>
+        {t("To avoid an infinite mirror, don't share your entire screen or browser.")}
+      </Typography>
+    </Box>
+  );
+};
+
+/** One participant in the meeting grid: the SDK's video on a truetime-ui VideoTile. */
 const VideoCard = React.memo<VideoCardProps>((props) => {
   const {
     isMine,
@@ -489,10 +176,9 @@ const VideoCard = React.memo<VideoCardProps>((props) => {
     hidePin = false,
     isPending = false,
     isMicMuted,
-    name,
+    name = '',
     isRaiseHand = false,
     pinned = false,
-    layout,
     pinVideo,
     unpinVideo,
     isOwnScreenShare = false,
@@ -502,149 +188,122 @@ const VideoCard = React.memo<VideoCardProps>((props) => {
     talkers = [],
     metaData,
     isScreenShare = false,
-    ...videoProps
+    showName = true,
+    ...rest
   } = props;
+  const videoProps = { ...rest } as VideoHTMLAttributes<HTMLVideoElement> & Record<string, unknown>;
+  for (const key of LEGACY_PROPS) delete videoProps[key];
   const theme = useTheme();
+  const { t } = useTranslation();
 
-  const [displayHover, setDisplayHover] = useState(false);
-  const leaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const containerRef = useRef<HTMLDivElement | null>(null);
-
-  // Pinned cards remount after pin/unpin; mouse does not move so :hover state is lost.
-  useLayoutEffect(() => {
-    if (pinned) {
-      queueMicrotask(() => setDisplayHover(true));
-      return;
-    }
-    if (containerRef.current?.matches(':hover')) {
-      queueMicrotask(() => setDisplayHover(true));
-    }
-  }, [pinned, streamId, layout]);
-
-  useEffect(() => {
-    return () => {
-      if (leaveTimerRef.current) {
-        clearTimeout(leaveTimerRef.current);
-      }
-    };
-  }, []);
-
-  // Event handlers
-  const handleMouseEnter = useCallback(() => {
-    if (leaveTimerRef.current) {
-      clearTimeout(leaveTimerRef.current);
-      leaveTimerRef.current = null;
-    }
-    setDisplayHover(true);
-  }, []);
-
-  const handleMouseLeave = useCallback(() => {
-    if (pinned) return;
-    leaveTimerRef.current = setTimeout(() => setDisplayHover(false), 200);
-  }, [pinned]);
-
-  // Memoized styles
-  const cardStyle = useMemo(
-    () => ({
-      height: '100%',
-      width: '100%',
-      position: 'relative' as const,
-      borderRadius: 4,
-      overflow: 'hidden' as const,
-    }),
-    [],
-  );
-
-  const containerStyle = useMemo(
-    () => ({
-      height: '100%',
-      width: '100%',
-      position: 'relative' as const,
-      visibility: 'visible' as const,
-    }),
-    [],
-  );
-
-  // Early return for hidden player
+  // A video element the layout still needs (e.g. your own screen share), with no tile around it
   if (hidePlayer) {
     return (
-      <CustomizedVideo
+      <video
         {...videoProps}
         playsInline
         muted={isMine}
-        style={{
-          visibility: 'hidden',
-          width: '1px',
-          height: '1px',
-        }}
+        style={{ visibility: 'hidden', width: 1, height: 1 }}
       />
     );
   }
 
+  // Exact match only: a screen share publishes under an id derived from its owner's, and it
+  // carries no speaker of its own
+  const isTalking = !isScreenShare && !!streamId && talkers.includes(streamId);
+
   return (
-    <Grid
-      container
-      ref={containerRef}
-      style={containerStyle}
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
+    <Box
+      id={`card-${streamId}`}
+      // Focusable by tap (not by Tab), so touching a tile reveals its actions
+      tabIndex={hidePin ? undefined : -1}
+      sx={{
+        position: 'relative',
+        width: '100%',
+        height: '100%',
+        '&:focus': { outline: 'none' },
+        // VideoTile keeps actions visible on touch screens; in a meeting that would dim every
+        // face, so on touch they appear when the tile is tapped. Hidden actions don't take taps.
+        '@media (hover: none)': {
+          '&& [data-tile-actions]': { opacity: 0, pointerEvents: 'none' },
+          '&&:focus-within [data-tile-actions]': { opacity: 1, pointerEvents: 'auto' },
+        },
+      }}
     >
-      <OverlayButtons
-        isMine={isMine}
-        displayHover={displayHover}
-        hidePin={hidePin}
-        pinned={pinned}
-        layout={layout}
-        name={name ?? ''}
-        pinVideo={pinVideo}
-        unpinVideo={unpinVideo}
-        streamId={streamId}
-        micMuted={isMicMuted}
-        setParticipantIdMuted={setParticipantIdMuted}
-        setMuteParticipantDialogOpen={setMuteParticipantDialogOpen}
-        metaData={metaData}
+      <VideoTile
+        fill
+        name={name}
+        showName={showName}
+        media={<video {...videoProps} playsInline muted={isMine} />}
+        videoEnabled={!isCamTurnedOff && !isPending}
+        audioEnabled={!isMicMuted}
+        // Your own camera is mirrored and fills its tile; others keep their whole frame
+        mirrored={isMine && !isScreenShare}
+        fit={isMine ? 'cover' : 'contain'}
+        highlighted={isTalking}
+        avatar={
+          isPending ? (
+            <Spinner
+              type="dots"
+              size={32}
+              color={themeColors(theme).text}
+              label={t('Connecting')}
+            />
+          ) : undefined
+        }
+        status={
+          isRaiseHand ? (
+            <StatusBadge
+              tone="warning"
+              // Solid, so it reads over any picture (the tinted badge is for flat surfaces)
+              sx={{
+                backgroundColor: themeColors(theme).warning,
+                color: readableOn(
+                  themeColors(theme).warning,
+                  theme.palette.themeColor[90],
+                  themeColors(theme).text,
+                ),
+              }}
+            >
+              <PanTool aria-hidden sx={{ fontSize: 14 }} />
+              {t('Hand raised')}
+            </StatusBadge>
+          ) : undefined
+        }
+        actions={
+          hidePin ? undefined : (
+            <TileActions
+              isMine={isMine}
+              pinned={pinned}
+              streamId={streamId}
+              name={name}
+              micMuted={isMicMuted}
+              isExternalStream={metaData === 'external-stream'}
+              videoId={videoProps.id}
+              pinVideo={pinVideo}
+              unpinVideo={unpinVideo}
+              setParticipantIdMuted={setParticipantIdMuted}
+              setMuteParticipantDialogOpen={setMuteParticipantDialogOpen}
+            />
+          )
+        }
       />
 
-      <Box className="single-video-card" id={`card-${streamId || ''}`} style={cardStyle}>
-        {/* A screen share carries no speaker of its own, so it never gets the ring. */}
-        {!isScreenShare && <TalkingIndicator streamId={streamId} talkers={talkers} />}
-
-        <VideoPlayer
-          isMine={isMine}
-          isCamTurnedOff={isCamTurnedOff}
+      {connectionQuality > 0 && (
+        <ConnectionQualityBar
           streamId={streamId}
-          hidePlayer={hidePlayer}
-          isPending={isPending}
-          videoProps={videoProps}
+          isMine={isMine}
+          connectionQuality={connectionQuality}
+          theme={theme}
         />
+      )}
 
-        <ParticipantStatus isMicMuted={isMicMuted} streamId={streamId} />
-
-        <VideoTitle name={name} isRaiseHand={isRaiseHand} />
-
-        {connectionQuality > 0 && !hidePlayer && (
-          <ConnectionQualityBar
-            streamId={streamId}
-            isMine={isMine}
-            connectionQuality={connectionQuality}
-            theme={theme}
-          />
-        )}
-
-        {isOwnScreenShare && <ScreenShareWarning />}
-      </Box>
-    </Grid>
+      {isOwnScreenShare && <ScreenShareWarning />}
+    </Box>
   );
 });
 
-// Display names for debugging
-OverlayButton.displayName = 'OverlayButton';
-PinButton.displayName = 'PinButton';
-ParticipantStatus.displayName = 'ParticipantStatus';
-VideoTitle.displayName = 'VideoTitle';
-VideoPlayer.displayName = 'VideoPlayer';
-ScreenShareWarning.displayName = 'ScreenShareWarning';
-OverlayButtons.displayName = 'OverlayButtons';
+TileActions.displayName = 'TileActions';
 VideoCard.displayName = 'VideoCard';
 
 export default VideoCard;

@@ -15,6 +15,8 @@ export const PlayOnlyVideoCard = React.memo<PlayOnlyVideoCardProps>(
     layout,
   }) => (
     <VideoCard
+      name={streamName}
+      showName={false}
       id="red5pro-publisher"
       key="red5pro-publisher"
       autoPlay

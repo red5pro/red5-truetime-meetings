@@ -1,7 +1,8 @@
 import { JSX, lazy, Suspense } from 'react';
 import { useTheme } from '@mui/material/styles';
 import { Route, Routes } from 'react-router-dom';
-import { Backdrop, CircularProgress, Grid } from '@mui/material';
+import { Backdrop, Grid } from '@mui/material';
+import { Spinner, themeColors } from 'truetime-ui';
 import ProtectedRoute from './Components/ProtectedRoute.tsx';
 
 const Home = lazy(() => import('./pages/Home/Home.tsx'));
@@ -13,8 +14,8 @@ const MobileLayoutPreview = lazy(
 
 function RouteFallback(): JSX.Element {
   return (
-    <Backdrop sx={{ color: '#fff' }} open>
-      <CircularProgress color="inherit" />
+    <Backdrop sx={{ color: (theme) => themeColors(theme).text }} open>
+      <Spinner />
     </Backdrop>
   );
 }

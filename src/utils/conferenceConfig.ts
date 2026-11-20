@@ -8,6 +8,7 @@ import {
 } from './recordingResolution';
 import { getRuntimeConfig } from './configStore';
 import { readBoolean, readNumber, readString, writeStored } from './appStorage';
+import { LayoutOptions } from './layoutOptions';
 
 // Types
 interface IceServer {
@@ -348,10 +349,13 @@ export const saveNoiseSuppressionPreference = (enabled: boolean): void => {
 };
 
 /**
- * Get layout preferences
+ * Get layout preference: the saved layout, or Auto when none (or an unknown one) was saved
  */
 export const getLayoutPreference = (): string => {
-  return readString('layout') || 'Auto';
+  const saved = readString('layout');
+  return Object.values(LayoutOptions).includes(saved ?? '')
+    ? (saved as string)
+    : LayoutOptions.Auto;
 };
 
 /**

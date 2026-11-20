@@ -67,40 +67,6 @@ form {
   }
 }
 
-/*-------- start attendee video style --------*/
-.single-video-card {
-  position: relative;
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
-  border-radius: 4px;
-}
-.single-video-card .talking-indicator-light {
-  border: 2px solid;
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  border-radius: 4px;
-  z-index: 10;
-}
-
-.single-video-card .name-indicator {
-  position: absolute;
-  z-index: 9;
-  bottom: 0;
-  width: 100%;
-  border-radius: 21px;
-  padding: min(18px, 9%) min(18px, 6%) min(18px, 5%);
-  background: rgb(254, 246, 243);
-  background: linear-gradient(180deg, rgba(254, 246, 243, 0) 0%, rgba(0, 0, 0, 0.5) 100%);
-}
-.name-indicator .name {
-  font-size: 16px;
-}
-/*-------- end attendee video style --------*/
-
 /*-------- start meeting video gallery style --------*/
 #stream-gallery {
   position: absolute;
@@ -124,8 +90,9 @@ form {
   /* if drawer width changes, change this value */
 }
 
+/* No width transition: animating every tile's layout while video decodes drops frames. Tiles
+   reflow at once when a drawer opens; the drawer's own slide carries the motion. */
 #stream-gallery .single-video-container {
-  transition: width 0.4s linear;
   border-radius: 4px;
   padding: 8px;
 }
@@ -164,10 +131,6 @@ form {
   min-height: 25%;
   width: 100%;
   border-radius: 4px;
-}
-
-.unpinned .name-indicator .name {
-  font-size: 14px;
 }
 
 #stream-gallery .unpinned .single-video-container {
@@ -213,18 +176,6 @@ form {
 
   #stream-gallery .single-video-container {
     padding: 4px;
-  }
-
-  .name-indicator .name {
-    font-size: 12px;
-    position: relative;
-    bottom: unset;
-    top: unset;
-    left: unset;
-  }
-  .single-video-card .name-indicator {
-    padding-bottom: 8px !important;
-    padding: 12px;
   }
 }
 @media (max-width: 800px) {
@@ -289,7 +240,7 @@ form {
   z-index: 20;
 }
 
-.mobile-pip-local .name-indicator {
+.mobile-pip-local [data-tile-name] {
   display: none;
 }
 

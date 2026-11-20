@@ -3,6 +3,7 @@ import { useState, useCallback, useEffect, useRef, MutableRefObject } from 'reac
 import { isNull } from '../utils/utils';
 import log from 'loglevel';
 import { readString, writeStored } from '../utils/appStorage';
+import { deprioritizeContinuityDevices } from '../utils/devicePriority';
 
 // Type definitions
 interface MediaDeviceInfo {
@@ -147,7 +148,10 @@ export const useDeviceManagement = (
 
       const devices = await navigator.mediaDevices.enumerateDevices();
       const deviceList: DeviceList = {
-        audioInputs: devices.filter((device) => device.kind === 'audioinput'),
+        // iPhone/iPad (Continuity) mics last, so a first visit doesn't default to the phone
+        audioInputs: deprioritizeContinuityDevices(
+          devices.filter((device) => device.kind === 'audioinput'),
+        ),
         videoInputs: devices.filter((device) => device.kind === 'videoinput'),
         audioOutputs: devices.filter((device) => device.kind === 'audiooutput'),
       };
@@ -368,6 +372,17 @@ export const useDeviceManagement = (
       currentDevices: SelectedDevices,
     ): void => {
       if (!roomState.publishStreamIdRef.current) {
+        // Not publishing yet (lobby): the preview opened the system default mic (often a
+        // Continuity iPhone), so move it to the microphone we picked
+        if (previousAudioId !== currentDevices.audioDeviceId && currentDevices.audioDeviceId) {
+          clientRef.current
+            .switchAudioDevice(currentDevices.audioDeviceId)
+            .then((mediaStream) => {
+              const preview = document.getElementById('red5pro-publisher') as HTMLVideoElement;
+              if (mediaStream && preview) preview.srcObject = mediaStream;
+            })
+            .catch((e) => log.error('Failed to switch microphone:', e));
+        }
         return;
       }
 

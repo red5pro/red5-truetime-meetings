@@ -2,12 +2,12 @@ import * as React from 'react';
 import Drawer from '@mui/material/Drawer';
 import { styled, useTheme, Theme } from '@mui/material/styles';
 import Grid from '@mui/material/Grid2';
-import { Typography } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 import CloseDrawerButton from './DrawerButton';
 import { getRed5DrawerStyle } from '../styles/themeUtil';
 import InfoTab from './InfoTab';
 import { getRuntimeConfig } from '../utils/configStore';
+import { Heading, radii } from 'truetime-ui';
 
 interface InfoDrawerProps {
   infoDrawerOpen?: boolean;
@@ -28,7 +28,7 @@ const InfoGrid = styled(Grid)(({ theme }: { theme: Theme }) => ({
   position: 'relative',
   padding: 16,
   background: theme.palette.themeColor?.[60],
-  borderRadius: 10,
+  borderRadius: radii.container,
 }));
 
 const TabGrid = styled(Grid)(({}: { theme: Theme }) => ({
@@ -67,9 +67,9 @@ const InfoDrawer = React.memo<InfoDrawerProps>((props) => {
         }}
       >
         <Grid container justifyContent="space-between" alignItems="center">
-          <Typography variant="h6" component="div">
+          <Heading level={2} variant="h6">
             {t('Meeting Details')}
-          </Typography>
+          </Heading>
           <CloseDrawerButton
             handleInfoDrawerOpen={(open: boolean) => props?.handleInfoDrawerOpen?.(open)}
             handleMessageDrawerOpen={(open: boolean) => props?.handleMessageDrawerOpen?.(open)}

@@ -1,9 +1,10 @@
 // Red5.tsx
 import { useEffect, useCallback, useRef, ReactNode } from 'react';
-import { Backdrop, Button, CircularProgress, Grid } from '@mui/material';
+import { Backdrop, Button, Grid } from '@mui/material';
 import { useBeforeUnload, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import Stack from '@mui/material/Stack';
+import { Spinner, themeColors } from 'truetime-ui';
 
 // Components
 import LobbyPage from '../Lobby/LobbyPage.tsx';
@@ -170,11 +171,14 @@ function Red5(props: Red5Props) {
         {/* Loading States */}
         {conference.room.isJoining && (
           <Backdrop
-            sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }}
+            sx={{
+              color: (theme) => themeColors(theme).text,
+              zIndex: (theme) => theme.zIndex.drawer + 1,
+            }}
             open={conference.room.isJoining}
           >
-            <Stack alignItems="center" justifyContent="center" alignContent="center">
-              <CircularProgress size={52} color="inherit" />
+            <Stack role="status" alignItems="center" justifyContent="center" alignContent="center">
+              <Spinner size={52} />
               {conference.room.isWaitingApproval ? (
                 <>
                   <span style={{ margin: '27px', fontSize: 18, fontWeight: 'normal' }}>
@@ -219,11 +223,14 @@ function Red5(props: Red5Props) {
 
         {conference.features.screenShare.showScreenShareSpinner?.current && (
           <Backdrop
-            sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }}
+            sx={{
+              color: (theme) => themeColors(theme).text,
+              zIndex: (theme) => theme.zIndex.drawer + 1,
+            }}
             open={conference.features.screenShare.showScreenShareSpinner.current}
           >
-            <Stack alignItems="center" justifyContent="center" alignContent="center">
-              <CircularProgress size={52} color="inherit" />
+            <Stack role="status" alignItems="center" justifyContent="center" alignContent="center">
+              <Spinner size={52} />
               <span style={{ margin: '27px', fontSize: 18, fontWeight: 'normal' }}>
                 {t('Screen Share Starting...')}
               </span>
@@ -246,11 +253,14 @@ function Red5(props: Red5Props) {
 
         {conference.room.isReconnecting && conference.room.lobbyOrMeetingPage === 'meeting' && (
           <Backdrop
-            sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 2 }}
+            sx={{
+              color: (theme) => themeColors(theme).text,
+              zIndex: (theme) => theme.zIndex.drawer + 2,
+            }}
             open={conference.room.isReconnecting}
           >
-            <Stack alignItems="center" justifyContent="center" alignContent="center">
-              <CircularProgress size={52} color="inherit" />
+            <Stack role="status" alignItems="center" justifyContent="center" alignContent="center">
+              <Spinner size={52} />
               <span style={{ margin: '27px', fontSize: 18, fontWeight: 'normal' }}>
                 {t('Reconnecting...')}
               </span>
