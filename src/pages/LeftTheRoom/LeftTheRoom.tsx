@@ -171,13 +171,14 @@ function LeftTheRoom({
               </Box>
             )}
 
-            <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center', flexWrap: 'nowrap' }}>
+            {/* Wraps on narrow screens instead of running past the edge */}
+            <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center', flexWrap: 'wrap' }}>
               <Button
                 color="secondary"
                 variant="outlined"
                 shape="pill"
                 onClick={() => window.location.reload()}
-                sx={{ whiteSpace: 'nowrap', px: 2.5 }}
+                sx={{ maxWidth: '100%', px: 2.5 }}
               >
                 {t('Rejoin')}
               </Button>
@@ -186,7 +187,7 @@ function LeftTheRoom({
                 shape="pill"
                 component="a"
                 href="./"
-                sx={{ whiteSpace: 'nowrap', px: 2.5 }}
+                sx={{ maxWidth: '100%', px: 2.5 }}
               >
                 {t('Return to home screen')}
               </Button>
