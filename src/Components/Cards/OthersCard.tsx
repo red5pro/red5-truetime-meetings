@@ -1,27 +1,32 @@
 import Typography from '@mui/material/Typography';
-import { useTheme } from '@mui/material/styles';
+import { Box } from '@mui/material';
 import { useTranslation } from 'react-i18next';
-// @ts-expect-error - legacy component has no proper type exports
-import CustomCard from '../CustomCard.tsx';
-import { Box } from '@mui/system';
+import { radii, themeColors } from 'truetime-ui';
 
 interface OthersCardProps {
   otherParticipantCount: number;
 }
 
-function OthersCard(props: OthersCardProps) {
-  const theme = useTheme();
+/** "+N others" tile for the people who don't fit in the pinned layout's sidebar. */
+function OthersCard({ otherParticipantCount }: OthersCardProps) {
   const { t } = useTranslation();
+  const count = Math.max(otherParticipantCount, 0);
 
   return (
-    <CustomCard theme={theme}>
-      <Box className="others-tile-inner" style={{ background: 'transparent' }}>
-        <Typography sx={{ mt: 2, color: '#fff' }}>
-          {props?.otherParticipantCount > 0 ? props?.otherParticipantCount : 0}{' '}
-          {props?.otherParticipantCount > 1 ? t('Others') : t('Other')}
-        </Typography>
-      </Box>
-    </CustomCard>
+    <Box
+      className="others-tile-inner"
+      sx={(theme) => ({
+        width: '100%',
+        height: '100%',
+        borderRadius: `${radii.control}px`,
+        // Same surface as a tile with no video yet
+        backgroundColor: themeColors(theme).surfaceRaised,
+      })}
+    >
+      <Typography sx={(theme) => ({ color: themeColors(theme).text })}>
+        {count} {count > 1 ? t('Others') : t('Other')}
+      </Typography>
+    </Box>
   );
 }
 

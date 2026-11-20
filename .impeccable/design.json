@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-11-20T11:49:41.357530+00:00",
+  "generatedAt": "2026-11-20T12:09:55.108502+00:00",
   "title": "Design System: TrueTime Meetings",
   "extensions": {
     "colorMeta": {
@@ -339,6 +339,20 @@
           "oklch(84% 0.110 25.7)",
           "oklch(95% 0.035 25.7)"
         ]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Ink",
+        "tonalRamp": [
+          "#0A0A0A",
+          "#141414",
+          "#1E1E1E",
+          "#2C2C2C",
+          "#4A4A4A",
+          "#8E8E8E",
+          "#B8B8B8",
+          "#F5F5F5"
+        ]
       }
     },
     "typographyMeta": {
@@ -484,7 +498,7 @@
       "refersTo": "button-primary",
       "description": "Default contained action; grey by design in the Black theme.",
       "html": "<button class=\"ds-btn-primary\">Save</button>",
-      "css": ".ds-btn-primary { font-family: 'ClashDisplay', sans-serif; background: #8A8A8A; color: #FFFFFF; border: 2px solid #8A8A8A; border-radius: 6px; padding: 10px 16px; font-size: 16px; font-weight: 500; line-height: 24px; cursor: pointer; transition: background-color 150ms cubic-bezier(0.4,0,0.2,1), transform 100ms; } .ds-btn-primary:hover { background: #9A9A9A; border-color: #9A9A9A; } .ds-btn-primary:focus-visible { outline: 2px solid #8A8A8A; outline-offset: 2px; } .ds-btn-primary:active { transform: scale(0.96); }"
+      "css": ".ds-btn-primary { font-family: 'ClashDisplay', sans-serif; background: #8A8A8A; color: #0A0A0A; border: 2px solid #8A8A8A; border-radius: 6px; padding: 10px 16px; font-size: 16px; font-weight: 500; line-height: 24px; cursor: pointer; transition: background-color 150ms cubic-bezier(0.4,0,0.2,1), transform 100ms; } .ds-btn-primary:hover { background: #9A9A9A; border-color: #9A9A9A; } .ds-btn-primary:focus-visible { outline: 2px solid #8A8A8A; outline-offset: 2px; } .ds-btn-primary:active { transform: scale(0.96); }"
     },
     {
       "name": "Pill CTA",
@@ -492,7 +506,7 @@
       "refersTo": "button-pill-cta",
       "description": "Full-width page action on Home and Lobby (New meeting, Join meeting).",
       "html": "<button class=\"ds-btn-pill\"><svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4zM14 13h-3v3H9v-3H6v-2h3V8h2v3h3v2z\"/></svg>New meeting</button>",
-      "css": ".ds-btn-pill { font-family: 'ClashDisplay', sans-serif; display: inline-flex; align-items: center; justify-content: center; gap: 8px; width: 320px; background: #393737; color: #FFFFFF; border: 2px solid #393737; border-radius: 24px; padding: 10px 16px; font-size: 16px; font-weight: 500; line-height: 24px; cursor: pointer; transition: background-color 150ms cubic-bezier(0.4,0,0.2,1), transform 100ms; } .ds-btn-pill:hover { background: #9A9A9A; border-color: #9A9A9A; } .ds-btn-pill:focus-visible { outline: 2px solid #8A8A8A; outline-offset: 2px; } .ds-btn-pill:active { transform: scale(0.96); }"
+      "css": ".ds-btn-pill { font-family: 'ClashDisplay', sans-serif; display: inline-flex; align-items: center; justify-content: center; gap: 8px; width: 320px; background: #393737; color: #FFFFFF; border: 2px solid #393737; border-radius: 24px; padding: 10px 16px; font-size: 16px; font-weight: 500; line-height: 24px; cursor: pointer; transition: background-color 150ms cubic-bezier(0.4,0,0.2,1), transform 100ms; } .ds-btn-pill:hover { background: #9A9A9A; border-color: #9A9A9A; color: #0A0A0A; } .ds-btn-pill:focus-visible { outline: 2px solid #8A8A8A; outline-offset: 2px; } .ds-btn-pill:active { transform: scale(0.96); }"
     },
     {
       "name": "Text Input",
@@ -530,7 +544,7 @@
       "name": "Video Tile",
       "kind": "custom",
       "refersTo": "video-tile",
-      "description": "Participant tile: name chip on translucent black, white ring for the active speaker.",
+      "description": "Participant tile: name chip on translucent black, white ring for the active speaker, solid amber badge for a raised hand.",
       "html": "<div class=\"ds-tile ds-tile-speaking\"><span class=\"ds-tile-name\">Jordan Lee</span></div>",
       "css": ".ds-tile { font-family: 'ClashDisplay', sans-serif; position: relative; width: 320px; aspect-ratio: 16 / 9; border-radius: 6px; overflow: hidden; background: linear-gradient(180deg, #4A6B5E, #2C3F37); outline: 2px solid transparent; outline-offset: -2px; transition: outline-color 200ms cubic-bezier(0.4,0,0.2,1); } .ds-tile-speaking { outline-color: #FFFFFF; } .ds-tile-name { position: absolute; left: 8px; bottom: 8px; padding: 2px 8px; border-radius: 6px; background: rgba(0,0,0,0.6); color: #FFFFFF; font-size: 14px; }"
     },
@@ -567,6 +581,11 @@
       {
         "name": "The Tally Is Sacred Rule",
         "body": "On-Air Red means live. Errors use Alert Red with an icon, so they are never read as on air.",
+        "section": "colors"
+      },
+      {
+        "name": "The Readable Fill Rule",
+        "body": "Text on a filled surface uses white or Ink, whichever measures 4.5:1 or more (`readableOn()` from `truetime-ui`). Never assume white: Black's grey, aurora's teal and Alert Red all need Ink.",
         "section": "colors"
       },
       {

@@ -8,6 +8,7 @@ import CloseDrawerButton from './DrawerButton';
 import { getRed5DrawerStyle } from '../styles/themeUtil';
 import InfoTab from './InfoTab';
 import { getRuntimeConfig } from '../utils/configStore';
+import { radii } from 'truetime-ui';
 
 interface InfoDrawerProps {
   infoDrawerOpen?: boolean;
@@ -28,7 +29,7 @@ const InfoGrid = styled(Grid)(({ theme }: { theme: Theme }) => ({
   position: 'relative',
   padding: 16,
   background: theme.palette.themeColor?.[60],
-  borderRadius: 10,
+  borderRadius: radii.container,
 }));
 
 const TabGrid = styled(Grid)(({}: { theme: Theme }) => ({

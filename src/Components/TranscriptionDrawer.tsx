@@ -41,7 +41,7 @@ const Panel = styled(Box)(({ theme }: { theme: Theme }) => ({
   position: 'relative',
   padding: 16,
   background: theme.palette.themeColor?.[60],
-  borderRadius: 10,
+  borderRadius: radii.container,
   width: '100%',
   height: '100%',
   display: 'flex',

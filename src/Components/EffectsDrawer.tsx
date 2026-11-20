@@ -8,6 +8,7 @@ import CloseDrawerButton from './DrawerButton';
 import EffectsTab from './EffectsTab';
 import { getRed5DrawerStyle } from '../styles/themeUtil';
 import { Box } from '@mui/system';
+import { radii } from 'truetime-ui';
 
 interface VirtualBackgroundImage {
   type: string;
@@ -51,7 +52,7 @@ const EffectsGrid = styled(Grid)(({ theme }: { theme: Theme }) => ({
   position: 'relative',
   padding: 16,
   background: theme.palette.themeColor?.[70],
-  borderRadius: 10,
+  borderRadius: radii.container,
 }));
 
 const TabGrid = styled(Grid)(({}: { theme: Theme }) => ({

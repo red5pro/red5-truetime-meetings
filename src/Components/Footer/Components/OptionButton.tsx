@@ -28,8 +28,8 @@ import { ThemeList } from '../../../constants/themeList.js';
 import { ThemeContext } from '../../../contexts/ThemeContext';
 import { saveTheme } from '../../../utils/savedTheme';
 import i18n from 'i18next';
-import { ToolbarButton } from 'truetime-ui';
-import { getGlassMenuStyle } from '../../../styles/themeUtil.js';
+import { radii, ToolbarButton } from 'truetime-ui';
+import { getDialogStyle, getGlassMenuStyle } from '../../../styles/themeUtil.js';
 import { MoreVert, PictureInPicture, PictureInPictureAlt } from '@mui/icons-material';
 import log from 'loglevel';
 import { getRuntimeConfig } from '../../../utils/configStore';
@@ -422,11 +422,14 @@ function OptionButton(props: OptionButtonProps) {
       <Dialog
         open={recordingModalOpen}
         onClose={handleRecordingModalClose}
+        // Up to 444px wide, and never wider than the screen (a fixed min-width overflowed phones)
+        fullWidth
+        maxWidth="xs"
         PaperProps={{
-          sx: {
-            borderRadius: 2,
-            minWidth: 420,
-          },
+          sx: (theme) => ({
+            ...getDialogStyle(theme),
+            [theme.breakpoints.down('sm')]: { px: 3 },
+          }),
         }}
       >
         <DialogTitle>{t('Recording Options')}</DialogTitle>
@@ -440,7 +443,7 @@ function OptionButton(props: OptionButtonProps) {
             sx={{
               border: '1px solid',
               borderColor: serverSideRecordingChecked ? 'error.main' : 'divider',
-              borderRadius: 2,
+              borderRadius: `${radii.control}px`,
               p: 1,
               mb: 1.5,
             }}
@@ -516,7 +519,7 @@ function OptionButton(props: OptionButtonProps) {
             sx={{
               border: '1px solid',
               borderColor: localRecordingChecked ? 'error.main' : 'divider',
-              borderRadius: 2,
+              borderRadius: `${radii.control}px`,
               p: 1,
             }}
           >
@@ -662,12 +665,8 @@ function OptionButton(props: OptionButtonProps) {
             onClick={handlePiPClick}
             disabled={pipInfo.disabled}
             id="picture-in-picture-button"
-            sx={{
-              backgroundColor: pipInfo.active ? 'rgba(25, 118, 210, 0.12)' : 'transparent',
-              '&:hover': {
-                backgroundColor: pipInfo.active ? 'rgba(25, 118, 210, 0.2)' : undefined,
-              },
-            }}
+            // The menu's own selected state marks an open picture-in-picture window
+            selected={pipInfo.active}
           >
             <ListItemIcon>
               {props?.pipSupported ? (

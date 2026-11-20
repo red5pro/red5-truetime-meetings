@@ -24,7 +24,8 @@ import {
   Translate,
 } from '@mui/icons-material';
 import { alpha, useTheme, styled, Theme } from '@mui/material/styles';
-import { radii, themeColors } from 'truetime-ui';
+import { focusRingStyle, radii, themeColors } from 'truetime-ui';
+import { useTranslation } from 'react-i18next';
 import { FOOTER_HEIGHT } from '../constants/layout';
 
 // Interfaces
@@ -173,6 +174,21 @@ const COLORS: string[] = [
   '#800080',
 ];
 
+// Names for the swatches, so each one has an accessible name (translated where it's read)
+const COLOR_NAMES: Record<string, string> = {
+  '#FFFFFF': 'White',
+  '#000000': 'Black',
+  '#FF0000': 'Red',
+  '#00FF00': 'Green',
+  '#0000FF': 'Blue',
+  '#FFFF00': 'Yellow',
+  '#FF00FF': 'Magenta',
+  '#00FFFF': 'Cyan',
+  '#FFA500': 'Orange',
+  '#800080': 'Purple',
+};
+const colorName = (color: string): string => COLOR_NAMES[color] ?? color;
+
 const ClosedCaptions: React.FC<ClosedCaptionsProps> = ({
   isVisible = true,
   captions = [],
@@ -184,6 +200,7 @@ const ClosedCaptions: React.FC<ClosedCaptionsProps> = ({
   drawerOpen = false,
 }) => {
   const theme = useTheme();
+  const { t } = useTranslation();
   const contentRef = useRef<HTMLDivElement>(null);
 
   // Settings state
@@ -309,7 +326,7 @@ const ClosedCaptions: React.FC<ClosedCaptionsProps> = ({
                   <Translate fontSize="small" />
                 )}
                 <Typography variant="body2" color={theme.palette.text.primary}>
-                  {isLiveCaptions ? 'Live' : 'Translated'}
+                  {isLiveCaptions ? t('Live') : t('Translated')}
                 </Typography>
               </Box>
             }
@@ -318,6 +335,9 @@ const ClosedCaptions: React.FC<ClosedCaptionsProps> = ({
 
           {/* Settings Button */}
           <IconButton
+            aria-label={t('Caption settings')}
+            aria-haspopup="dialog"
+            aria-expanded={Boolean(settingsAnchor)}
             onClick={handleSettingsClick}
             size="small"
             sx={{ color: theme.palette.text.primary }}
@@ -344,7 +364,7 @@ const ClosedCaptions: React.FC<ClosedCaptionsProps> = ({
                   fontWeight: 'medium',
                 }}
               >
-                {subscribedParticipants[caption.speaker]?.participant?.name ?? 'You'}:
+                {subscribedParticipants[caption.speaker]?.participant?.name ?? t('You')}:
               </Typography>
             </Box>
             <CaptionText
@@ -373,19 +393,20 @@ const ClosedCaptions: React.FC<ClosedCaptionsProps> = ({
         }}
       >
         <Paper sx={{ p: 3, minWidth: 300 }}>
-          <Typography variant="h6" gutterBottom>
-            Caption Settings
+          <Typography variant="h6" component="h2" gutterBottom>
+            {t('Caption settings')}
           </Typography>
 
           <Grid container spacing={3}>
             {/* Font Size */}
             <Grid size={12}>
               <Box display="flex" alignItems="center" gap={2}>
-                <FormatSize />
-                <Typography variant="body2" sx={{ minWidth: 80 }}>
-                  Font Size
+                <FormatSize aria-hidden />
+                <Typography id="captions-font-size-label" variant="body2" sx={{ minWidth: 80 }}>
+                  {t('Font size')}
                 </Typography>
                 <Slider
+                  aria-labelledby="captions-font-size-label"
                   value={fontSize}
                   onChange={handleFontSizeChange}
                   min={12}
@@ -400,17 +421,19 @@ const ClosedCaptions: React.FC<ClosedCaptionsProps> = ({
             {/* Font Color */}
             <Grid size={12}>
               <Box display="flex" alignItems="center" gap={2}>
-                <Palette />
-                <Typography variant="body2">Text Color</Typography>
+                <Palette aria-hidden />
+                <Typography variant="body2">{t('Text colour')}</Typography>
                 <Button
                   onClick={handleColorPickerClick}
+                  aria-label={`${t('Text colour')}: ${t(colorName(fontColor))}`}
+                  aria-haspopup="dialog"
                   variant="outlined"
                   size="small"
                   sx={{
                     backgroundColor: fontColor,
                     minWidth: 40,
                     height: 30,
-                    border: '2px solid #ccc',
+                    border: `2px solid ${themeColors(theme).borderStrong}`,
                   }}
                 />
               </Box>
@@ -434,23 +457,30 @@ const ClosedCaptions: React.FC<ClosedCaptionsProps> = ({
         }}
       >
         <Paper sx={{ p: 2 }}>
-          <Typography variant="subtitle2" gutterBottom>
-            Select Color
+          <Typography variant="subtitle2" component="h2" gutterBottom>
+            {t('Select colour')}
           </Typography>
           <Grid container spacing={1} sx={{ maxWidth: 200 }}>
             {COLORS.map((color) => (
               <Grid size={2.4} key={color}>
                 <Button
                   onClick={() => handleColorSelect(color)}
+                  aria-label={t(colorName(color))}
+                  aria-pressed={fontColor === color}
                   sx={{
                     backgroundColor: color,
                     minWidth: 30,
                     height: 30,
-                    border: fontColor === color ? '2px solid #000' : '1px solid #ccc',
+                    // The chosen colour gets a ring in the text colour, offset so it shows on
+                    // black and white swatches alike
+                    border: `1px solid ${themeColors(theme).borderStrong}`,
+                    outline: fontColor === color ? `2px solid ${themeColors(theme).text}` : 'none',
+                    outlineOffset: 2,
                     '&:hover': {
                       backgroundColor: color,
                       opacity: 0.8,
                     },
+                    '&.Mui-focusVisible': focusRingStyle(theme),
                   }}
                 />
               </Grid>

@@ -7,6 +7,7 @@ import ParticipantTab from './ParticipantTab';
 import CloseDrawerButton from './DrawerButton';
 import { getRed5DrawerStyle } from '../styles/themeUtil';
 import { memo } from 'react';
+import { radii } from 'truetime-ui';
 
 interface Participant {
   streamId: string;
@@ -43,7 +44,7 @@ const ParticipantListGrid = styled(Grid)(({ theme }: { theme: Theme }) => ({
   position: 'relative',
   padding: 16,
   background: theme.palette.themeColor?.[60],
-  borderRadius: 10,
+  borderRadius: radii.container,
 }));
 
 const TabGrid = styled(Grid)(({}: { theme: Theme }) => ({

@@ -1,6 +1,8 @@
 import { Dialog, DialogContent, IconButton, Typography, useTheme, Box } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import { useTranslation } from 'react-i18next';
+import { themeColors } from 'truetime-ui';
+import { getDialogStyle } from '../../../styles/themeUtil';
 
 interface UnauthorizedDialogProps {
   onClose: () => void;
@@ -23,12 +25,7 @@ export function UnauthorizedDialog({ onClose, open, message }: UnauthorizedDialo
       maxWidth="sm"
       fullWidth
       PaperProps={{
-        sx: {
-          borderRadius: 3,
-          backgroundColor: 'rgba(20, 20, 20, 0.95)',
-          backdropFilter: 'blur(8px)',
-          color: '#fff',
-        },
+        sx: { ...getDialogStyle(theme), padding: 0, color: themeColors(theme).text },
       }}
     >
       <DialogContent sx={{ px: 3, py: 2 }}>
@@ -36,15 +33,9 @@ export function UnauthorizedDialog({ onClose, open, message }: UnauthorizedDialo
           <Typography variant="body1">{t(message)}</Typography>
 
           <IconButton
-            aria-label="close"
+            aria-label={t('Close')}
             onClick={onClose}
-            sx={{
-              color: theme.palette.grey[500],
-              ml: 2,
-              '&:hover': {
-                color: theme.palette.error.main,
-              },
-            }}
+            sx={{ color: themeColors(theme).mutedText, ml: 2 }}
           >
             <CloseIcon />
           </IconButton>

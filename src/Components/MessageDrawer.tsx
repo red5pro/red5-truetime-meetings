@@ -7,6 +7,7 @@ import { useTranslation } from 'react-i18next';
 import MessagesTab, { type Message, type SentMessage } from './MessagesTab';
 import CloseDrawerButton from './DrawerButton';
 import { getRed5DrawerStyle } from '../styles/themeUtil';
+import { radii } from 'truetime-ui';
 
 interface MessageDrawerProps {
   messageDrawerOpen?: boolean;
@@ -31,7 +32,7 @@ const MessageGrid = styled(Grid)(({ theme }: { theme: Theme }) => ({
   position: 'relative',
   padding: 16,
   background: theme.palette.themeColor?.[60],
-  borderRadius: 10,
+  borderRadius: radii.container,
 }));
 
 const MessageDrawer = React.memo<MessageDrawerProps>((props) => {

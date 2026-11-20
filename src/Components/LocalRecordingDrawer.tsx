@@ -1,7 +1,8 @@
 import * as React from 'react';
 import { useState, useEffect } from 'react';
 import Drawer from '@mui/material/Drawer';
-import { styled, useTheme, Theme } from '@mui/material/styles';
+import { alpha, styled, useTheme, Theme } from '@mui/material/styles';
+import { radii, themeColors, transition } from 'truetime-ui';
 import Grid from '@mui/material/Grid2';
 import { Typography, Button, Divider, Box } from '@mui/material';
 import { useTranslation } from 'react-i18next';
@@ -52,7 +53,7 @@ const ContentGrid = styled(Grid)(({ theme }: { theme: Theme }) => ({
   position: 'relative',
   padding: 24,
   background: theme.palette.themeColor?.[60],
-  borderRadius: 10,
+  borderRadius: radii.container,
   height: '100%',
   display: 'flex',
   flexDirection: 'column',
@@ -87,30 +88,24 @@ interface StorageEstimate {
 
 type RecordingCardState = 'recording' | 'paused' | 'stopped' | 'inactive';
 
-const RECORDING_CARD_STYLES: Record<
-  RecordingCardState,
-  { background: string; border: string; accent: string }
-> = {
-  recording: {
-    background: 'rgba(231, 76, 60, 0.12)',
-    border: 'rgba(231, 76, 60, 0.4)',
-    accent: '#E74C3C',
-  },
-  paused: {
-    background: 'rgba(255, 193, 7, 0.1)',
-    border: 'rgba(255, 193, 7, 0.35)',
-    accent: '#FFC107',
-  },
-  stopped: {
-    background: 'rgba(255, 255, 255, 0.04)',
-    border: 'rgba(255, 255, 255, 0.12)',
-    accent: 'rgba(255, 255, 255, 0.6)',
-  },
-  inactive: {
-    background: 'rgba(255, 255, 255, 0.04)',
-    border: 'rgba(255, 255, 255, 0.12)',
-    accent: 'rgba(255, 255, 255, 0.6)',
-  },
+/** Card colours per state, from the theme: recording is the error red, paused the warning amber. */
+const recordingCardStyles = (
+  theme: Theme,
+  state: RecordingCardState,
+): { background: string; border: string; accent: string } => {
+  const colors = themeColors(theme);
+  const accent =
+    state === 'recording'
+      ? colors.error
+      : state === 'paused'
+        ? colors.warning
+        : alpha(colors.text, 0.7);
+  const tinted = state === 'recording' || state === 'paused';
+  return {
+    background: alpha(tinted ? accent : colors.text, tinted ? 0.12 : 0.04),
+    border: alpha(tinted ? accent : colors.text, tinted ? 0.4 : 0.12),
+    accent,
+  };
 };
 
 const RecordingStatusCard = ({
@@ -122,7 +117,8 @@ const RecordingStatusCard = ({
   label: string;
   value: string;
 }) => {
-  const styles = RECORDING_CARD_STYLES[cardState];
+  const theme = useTheme();
+  const styles = recordingCardStyles(theme, cardState);
 
   return (
     <Box
@@ -130,7 +126,7 @@ const RecordingStatusCard = ({
         backgroundColor: styles.background,
         border: '1px solid',
         borderColor: styles.border,
-        borderRadius: 3,
+        borderRadius: `${radii.container}px`,
         p: 3,
         mb: 3,
       }}
@@ -313,11 +309,16 @@ const LocalRecordingDrawer = React.memo<LocalRecordingDrawerProps>((props) => {
                 </Typography>
               </Box>
               <Box
+                role="progressbar"
+                aria-label={t('Uploading to S3...')}
+                aria-valuenow={uploadProgress}
+                aria-valuemin={0}
+                aria-valuemax={100}
                 sx={{
                   height: 4,
                   width: '100%',
-                  backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                  borderRadius: 2,
+                  backgroundColor: alpha(themeColors(theme).text, 0.1),
+                  borderRadius: '2px',
                   overflow: 'hidden',
                 }}
               >
@@ -326,7 +327,7 @@ const LocalRecordingDrawer = React.memo<LocalRecordingDrawerProps>((props) => {
                     height: '100%',
                     width: `${uploadProgress}%`,
                     backgroundColor: theme.palette.primary.main,
-                    transition: 'width 0.3s ease-out',
+                    transition: transition('width', { duration: 'slow', easing: 'decelerate' }),
                   }}
                 />
               </Box>
@@ -334,13 +335,13 @@ const LocalRecordingDrawer = React.memo<LocalRecordingDrawerProps>((props) => {
           )}
 
           {uploadStatus === 'success' && (
-            <Box sx={{ mb: 3, px: 1, p: 2, borderRadius: 2, paddingLeft: '44px' }}>
+            <Box sx={{ mb: 3, p: 2, pl: '44px', borderRadius: `${radii.control}px` }}>
               <Grid container spacing={2} alignItems="center">
                 <Grid>
                   <SvgIcon size={24} name="check-circle" color={theme.palette.success.main} />
                 </Grid>
                 <Grid sx={{ flex: 1 }}>
-                  <Typography variant="body2" color="white" sx={{ fontWeight: 500 }}>
+                  <Typography variant="body2" color="text.primary" sx={{ fontWeight: 500 }}>
                     {t('Upload Successful')}
                   </Typography>
                   <Typography variant="caption" color="text.secondary">
@@ -352,13 +353,13 @@ const LocalRecordingDrawer = React.memo<LocalRecordingDrawerProps>((props) => {
           )}
 
           {uploadStatus === 'error' && (
-            <Box sx={{ mb: 3, px: 1, p: 2, borderRadius: 2, paddingLeft: '44px' }}>
+            <Box sx={{ mb: 3, p: 2, pl: '44px', borderRadius: `${radii.control}px` }}>
               <Grid container spacing={2} alignItems="center">
                 <Grid>
                   <SvgIcon size={24} name="error" color={theme.palette.error.main} />
                 </Grid>
                 <Grid sx={{ flex: 1 }}>
-                  <Typography variant="body2" color="white" sx={{ fontWeight: 500 }}>
+                  <Typography variant="body2" color="text.primary" sx={{ fontWeight: 500 }}>
                     {t('Upload Failed')}
                   </Typography>
                   <Typography
@@ -397,11 +398,16 @@ const LocalRecordingDrawer = React.memo<LocalRecordingDrawerProps>((props) => {
                 })}
               />
               <Box
+                role="meter"
+                aria-label={t('Storage used')}
+                aria-valuenow={Math.round(storagePercentUsed ?? 0)}
+                aria-valuemin={0}
+                aria-valuemax={100}
                 sx={{
                   height: 6,
                   width: '100%',
-                  backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                  borderRadius: 3,
+                  backgroundColor: alpha(themeColors(theme).text, 0.1),
+                  borderRadius: '3px',
                   overflow: 'hidden',
                   mt: 0.5,
                 }}
@@ -410,8 +416,15 @@ const LocalRecordingDrawer = React.memo<LocalRecordingDrawerProps>((props) => {
                   sx={{
                     height: '100%',
                     width: `${storagePercentUsed}%`,
-                    backgroundColor: '#E74C3C',
-                    transition: 'width 0.3s ease-out',
+                    // Usage, not an error: the accent, turning amber when space runs low
+                    backgroundColor:
+                      (storagePercentUsed ?? 0) >= 80
+                        ? themeColors(theme).warning
+                        : theme.palette.primary.main,
+                    transition: transition(['width', 'background-color'], {
+                      duration: 'slow',
+                      easing: 'decelerate',
+                    }),
                   }}
                 />
               </Box>
@@ -438,15 +451,15 @@ const LocalRecordingDrawer = React.memo<LocalRecordingDrawerProps>((props) => {
                 mt: 2,
                 px: 2,
                 py: 1.5,
-                borderRadius: 2,
-                backgroundColor: 'rgba(255, 193, 7, 0.08)',
-                border: '1px solid rgba(255, 193, 7, 0.25)',
+                borderRadius: `${radii.control}px`,
+                backgroundColor: alpha(themeColors(theme).warning, 0.08),
+                border: `1px solid ${alpha(themeColors(theme).warning, 0.25)}`,
                 display: 'flex',
                 alignItems: 'flex-start',
                 gap: 1.5,
               }}
             >
-              <SvgIcon size={18} name="alert-circle" color="#FFC107" />
+              <SvgIcon size={18} name="alert-circle" color={themeColors(theme).warning} />
               <Box sx={{ flex: 1 }}>
                 <Typography variant="caption" color="text.secondary" sx={{ lineHeight: 1.5 }}>
                   {t('Set up your S3 credentials to upload recordings automatically.')}
@@ -458,7 +471,7 @@ const LocalRecordingDrawer = React.memo<LocalRecordingDrawerProps>((props) => {
                       variant="outlined"
                       color="inherit"
                       onClick={onSetUpS3}
-                      sx={{ textTransform: 'none', borderRadius: 6 }}
+                      sx={{ borderRadius: `${radii.pill}px` }}
                     >
                       {t('Set up S3')}
                     </Button>
@@ -480,7 +493,7 @@ const LocalRecordingDrawer = React.memo<LocalRecordingDrawerProps>((props) => {
                   variant="contained"
                   color="primary"
                   onClick={() => onDownload()}
-                  sx={{ borderRadius: 6, py: 1 }}
+                  sx={{ borderRadius: `${radii.pill}px`, py: 1 }}
                 >
                   {t('Download')}
                 </Button>
@@ -492,7 +505,7 @@ const LocalRecordingDrawer = React.memo<LocalRecordingDrawerProps>((props) => {
                   color="inherit"
                   onClick={onClear}
                   disabled={isUploading}
-                  sx={{ borderRadius: 6, py: 1, opacity: 0.7 }}
+                  sx={{ borderRadius: `${radii.pill}px`, py: 1, opacity: 0.7 }}
                 >
                   {t('Clear')}
                 </Button>

@@ -2,21 +2,23 @@ import React, { forwardRef, useCallback } from 'react';
 import { SnackbarContent, useSnackbar } from 'notistack';
 import { styled } from '@mui/material/styles';
 import { Grid, Typography, useTheme, Theme } from '@mui/material';
+import { radii, themeColors } from 'truetime-ui';
 import { SvgIcon } from './SvgIcon';
 
 // Styled components
 const Red5SnackInfo = styled(Grid)(({ theme }: { theme: Theme }) => ({
   backgroundColor: theme.palette.themeColor?.[60],
-  borderRadius: 6,
+  borderRadius: radii.control,
   padding: 8,
 }));
 
 const Red5SnackMessage = styled(Grid)(({ theme }: { theme: Theme }) => ({
   backgroundColor: theme.palette.themeColor?.[60],
-  borderRadius: 6,
+  borderRadius: radii.control,
   padding: '16px 16px 12px 16px',
   cursor: 'pointer',
   width: 320,
+  maxWidth: 'calc(100vw - 32px)',
 }));
 
 const Red5SnackContent = styled(SnackbarContent)(({}: { theme: Theme }) => ({}));
@@ -64,7 +66,12 @@ const SnackMessage = forwardRef<HTMLDivElement, SnackMessageProps>((props, ref) 
           }}
         >
           <Grid container alignItems="center">
-            <SvgIcon size={24} viewBox="0 0 500 500" color={'#fff'} name={'message-off'} />
+            <SvgIcon
+              size={24}
+              viewBox="0 0 500 500"
+              color={themeColors(theme).text}
+              name={'message-off'}
+            />
             <Typography
               sx={{ ml: 0.5 }}
               variant="subtitle2"

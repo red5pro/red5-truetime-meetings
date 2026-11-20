@@ -22,6 +22,7 @@ colors:
   program: '#E5252A'
   preview: '#1FBF5B'
   monitor: '#000000'
+  ink: '#0A0A0A'
   tone-active-bg: '#D1E9FC'
   tone-active-fg: '#1E364A'
   tone-off-bg: '#FFE3E3'
@@ -83,7 +84,7 @@ spacing:
 components:
   button-primary:
     backgroundColor: '{colors.primary}'
-    textColor: '{colors.text}'
+    textColor: '{colors.ink}'
     typography: '{typography.button}'
     rounded: '{rounded.control}'
     padding: '10px 16px'
@@ -98,7 +99,7 @@ components:
     backgroundColor: '{colors.primary-hover}'
   button-danger:
     backgroundColor: '{colors.error}'
-    textColor: '{colors.text}'
+    textColor: '{colors.ink}'
     rounded: '{rounded.control}'
     padding: '10px 16px'
   input:
@@ -212,6 +213,8 @@ A deliberately colourless greyscale room, with a small, fixed vocabulary of stat
 - **Strong Divider** (border-strong): emphasised outlines and select borders.
 - **Quiet Grey** (disabled-text), **Soft Grey** (muted-text), **Pure White** (text): the three text levels.
 - **Monitor Black** (monitor): pure black behind video, so letterboxing reads as "no picture".
+- **Ink** (ink): text on light fills (Neutral Fixture Grey, Alert Red, Amber), where white would fall
+  below 4.5:1.
 
 ### Tertiary (state)
 
@@ -232,6 +235,9 @@ hard-coded hex works in Black and breaks the other seven themes.
 
 **The Tally Is Sacred Rule.** On-Air Red means live. Errors use Alert Red with an icon, so they are never read
 as on air.
+
+**The Readable Fill Rule.** Text on a filled surface uses white or Ink, whichever measures 4.5:1 or more
+(`readableOn()` from `truetime-ui`). Never assume white: Black's grey, aurora's teal and Alert Red all need Ink.
 
 ## Typography
 
@@ -307,7 +313,8 @@ except outlined buttons (2px). Video tiles clip their video to the tile radius a
 Friendly and calm: rounded, quiet fills, a slight press-in.
 
 - **Shape:** gently rounded (6px) by default; pill (24px) for primary page actions.
-- **Primary:** Neutral Fixture Grey fill, white 16px/500 text, 10px 16px padding, sentence case (no uppercase).
+- **Primary:** Neutral Fixture Grey fill, Ink 16px/500 text, 10px 16px padding, sentence case (no uppercase).
+  Filled buttons pick white or Ink, whichever reads at 4.5:1 or more on that theme's fill.
 - **Pill CTA:** Warm Graphite fill, full width on entry pages ("New meeting", "Join meeting").
 - **Hover / Focus:** fill lightens to Hover Grey; focus is a 2px ring in the focus colour, offset 2px.
   Pressing scales to 0.96 (disabled under reduced motion). Disabled is 50% opacity with `not-allowed`.
@@ -343,9 +350,12 @@ grows upward from the same surface so device options stay attached to the contro
 
 ### Video Tile (signature)
 
-Gentle 6px corners on Raised Charcoal, Monitor Black behind the video. Name chip bottom-left on 60% black;
-actions appear on hover or focus (always on touch). The active speaker gets a white ring; tally sources get a
-3px inset ring and a PGM/PVW chip. Fill or 16:9.
+Gentle 6px corners on Raised Charcoal, Monitor Black behind the video. Name chip bottom-left on 60% black,
+with a mic-off icon when muted; connection bars bottom-right on the same 60% black. Actions (pin, ask to mute,
+volume for external streams) appear on hover or focus; in Meetings they appear on tap on touch screens, so
+the scrim never dims every face on a phone. The active speaker gets a white ring; tally sources get a 3px inset
+ring and a PGM/PVW chip. A raised hand is a solid Amber badge top-left (a tint won't read over video). Fill or
+16:9. Meetings renders the SDK's own `<video>` through the tile's `media` slot.
 
 ### Status Badge
 
