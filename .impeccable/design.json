@@ -1,0 +1,624 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-20T12:09:55.108502+00:00",
+  "title": "Design System: TrueTime Meetings",
+  "extensions": {
+    "colorMeta": {
+      "primary": {
+        "role": "primary",
+        "displayName": "Neutral Fixture Grey",
+        "tonalRamp": [
+          "#0A0A0A",
+          "#141414",
+          "#1E1E1E",
+          "#2C2C2C",
+          "#4A4A4A",
+          "#8E8E8E",
+          "#B8B8B8",
+          "#F5F5F5"
+        ]
+      },
+      "primary-hover": {
+        "role": "primary",
+        "displayName": "Hover Grey",
+        "tonalRamp": [
+          "#0A0A0A",
+          "#141414",
+          "#1E1E1E",
+          "#2C2C2C",
+          "#4A4A4A",
+          "#8E8E8E",
+          "#B8B8B8",
+          "#F5F5F5"
+        ]
+      },
+      "primary-active": {
+        "role": "primary",
+        "displayName": "Pressed Grey",
+        "tonalRamp": [
+          "#0A0A0A",
+          "#141414",
+          "#1E1E1E",
+          "#2C2C2C",
+          "#4A4A4A",
+          "#8E8E8E",
+          "#B8B8B8",
+          "#F5F5F5"
+        ]
+      },
+      "page": {
+        "role": "neutral",
+        "displayName": "Room Black",
+        "tonalRamp": [
+          "#0A0A0A",
+          "#141414",
+          "#1E1E1E",
+          "#2C2C2C",
+          "#4A4A4A",
+          "#8E8E8E",
+          "#B8B8B8",
+          "#F5F5F5"
+        ]
+      },
+      "surface": {
+        "role": "neutral",
+        "displayName": "Panel Black",
+        "tonalRamp": [
+          "#0A0A0A",
+          "#141414",
+          "#1E1E1E",
+          "#2C2C2C",
+          "#4A4A4A",
+          "#8E8E8E",
+          "#B8B8B8",
+          "#F5F5F5"
+        ]
+      },
+      "paper": {
+        "role": "neutral",
+        "displayName": "Paper Black",
+        "tonalRamp": [
+          "#0A0A0A",
+          "#141414",
+          "#1E1E1E",
+          "#2C2C2C",
+          "#4A4A4A",
+          "#8E8E8E",
+          "#B8B8B8",
+          "#F5F5F5"
+        ]
+      },
+      "surface-raised": {
+        "role": "neutral",
+        "displayName": "Raised Charcoal",
+        "tonalRamp": [
+          "#0A0A0A",
+          "#141414",
+          "#1E1E1E",
+          "#2C2C2C",
+          "#4A4A4A",
+          "#8E8E8E",
+          "#B8B8B8",
+          "#F5F5F5"
+        ]
+      },
+      "surface-hover": {
+        "role": "neutral",
+        "displayName": "Warm Graphite",
+        "tonalRamp": [
+          "#0A0A0A",
+          "#141414",
+          "#1E1E1E",
+          "#2C2C2C",
+          "#4A4A4A",
+          "#8E8E8E",
+          "#B8B8B8",
+          "#F5F5F5"
+        ]
+      },
+      "border": {
+        "role": "neutral",
+        "displayName": "Divider Grey",
+        "tonalRamp": [
+          "#0A0A0A",
+          "#141414",
+          "#1E1E1E",
+          "#2C2C2C",
+          "#4A4A4A",
+          "#8E8E8E",
+          "#B8B8B8",
+          "#F5F5F5"
+        ]
+      },
+      "border-strong": {
+        "role": "neutral",
+        "displayName": "Strong Divider",
+        "tonalRamp": [
+          "#0A0A0A",
+          "#141414",
+          "#1E1E1E",
+          "#2C2C2C",
+          "#4A4A4A",
+          "#8E8E8E",
+          "#B8B8B8",
+          "#F5F5F5"
+        ]
+      },
+      "disabled-text": {
+        "role": "neutral",
+        "displayName": "Quiet Grey",
+        "tonalRamp": [
+          "#0A0A0A",
+          "#141414",
+          "#1E1E1E",
+          "#2C2C2C",
+          "#4A4A4A",
+          "#8E8E8E",
+          "#B8B8B8",
+          "#F5F5F5"
+        ]
+      },
+      "muted-text": {
+        "role": "neutral",
+        "displayName": "Soft Grey",
+        "tonalRamp": [
+          "#0A0A0A",
+          "#141414",
+          "#1E1E1E",
+          "#2C2C2C",
+          "#4A4A4A",
+          "#8E8E8E",
+          "#B8B8B8",
+          "#F5F5F5"
+        ]
+      },
+      "text": {
+        "role": "neutral",
+        "displayName": "Pure White",
+        "tonalRamp": [
+          "#0A0A0A",
+          "#141414",
+          "#1E1E1E",
+          "#2C2C2C",
+          "#4A4A4A",
+          "#8E8E8E",
+          "#B8B8B8",
+          "#F5F5F5"
+        ]
+      },
+      "monitor": {
+        "role": "neutral",
+        "displayName": "Monitor Black",
+        "tonalRamp": [
+          "#0A0A0A",
+          "#141414",
+          "#1E1E1E",
+          "#2C2C2C",
+          "#4A4A4A",
+          "#8E8E8E",
+          "#B8B8B8",
+          "#F5F5F5"
+        ]
+      },
+      "error": {
+        "role": "tertiary",
+        "displayName": "Alert Red",
+        "tonalRamp": [
+          "oklch(15% 0.101 25.7)",
+          "oklch(26% 0.165 25.7)",
+          "oklch(38% 0.207 25.7)",
+          "oklch(49% 0.223 25.7)",
+          "oklch(61% 0.210 25.7)",
+          "oklch(72% 0.171 25.7)",
+          "oklch(84% 0.110 25.7)",
+          "oklch(95% 0.035 25.7)"
+        ]
+      },
+      "warning": {
+        "role": "tertiary",
+        "displayName": "Amber",
+        "tonalRamp": [
+          "oklch(15% 0.066 73.5)",
+          "oklch(26% 0.107 73.5)",
+          "oklch(38% 0.135 73.5)",
+          "oklch(49% 0.145 73.5)",
+          "oklch(61% 0.137 73.5)",
+          "oklch(72% 0.111 73.5)",
+          "oklch(84% 0.072 73.5)",
+          "oklch(95% 0.023 73.5)"
+        ]
+      },
+      "success": {
+        "role": "tertiary",
+        "displayName": "Leaf Green",
+        "tonalRamp": [
+          "oklch(15% 0.054 145.3)",
+          "oklch(26% 0.087 145.3)",
+          "oklch(38% 0.110 145.3)",
+          "oklch(49% 0.118 145.3)",
+          "oklch(61% 0.111 145.3)",
+          "oklch(72% 0.091 145.3)",
+          "oklch(84% 0.058 145.3)",
+          "oklch(95% 0.018 145.3)"
+        ]
+      },
+      "info": {
+        "role": "tertiary",
+        "displayName": "Signal Blue",
+        "tonalRamp": [
+          "oklch(15% 0.056 244.7)",
+          "oklch(26% 0.091 244.7)",
+          "oklch(38% 0.114 244.7)",
+          "oklch(49% 0.123 244.7)",
+          "oklch(61% 0.116 244.7)",
+          "oklch(72% 0.094 244.7)",
+          "oklch(84% 0.061 244.7)",
+          "oklch(95% 0.019 244.7)"
+        ]
+      },
+      "program": {
+        "role": "tertiary",
+        "displayName": "On-Air Red",
+        "tonalRamp": [
+          "oklch(15% 0.101 26.6)",
+          "oklch(26% 0.165 26.6)",
+          "oklch(38% 0.207 26.6)",
+          "oklch(49% 0.223 26.6)",
+          "oklch(61% 0.210 26.6)",
+          "oklch(72% 0.171 26.6)",
+          "oklch(84% 0.110 26.6)",
+          "oklch(95% 0.035 26.6)"
+        ]
+      },
+      "preview": {
+        "role": "tertiary",
+        "displayName": "Preview Green",
+        "tonalRamp": [
+          "oklch(15% 0.085 149.7)",
+          "oklch(26% 0.139 149.7)",
+          "oklch(38% 0.174 149.7)",
+          "oklch(49% 0.188 149.7)",
+          "oklch(61% 0.177 149.7)",
+          "oklch(72% 0.144 149.7)",
+          "oklch(84% 0.093 149.7)",
+          "oklch(95% 0.029 149.7)"
+        ]
+      },
+      "tone-active-bg": {
+        "role": "tertiary",
+        "displayName": "Active Tint",
+        "tonalRamp": [
+          "oklch(15% 0.056 244.7)",
+          "oklch(26% 0.091 244.7)",
+          "oklch(38% 0.114 244.7)",
+          "oklch(49% 0.123 244.7)",
+          "oklch(61% 0.116 244.7)",
+          "oklch(72% 0.094 244.7)",
+          "oklch(84% 0.061 244.7)",
+          "oklch(95% 0.019 244.7)"
+        ]
+      },
+      "tone-active-fg": {
+        "role": "tertiary",
+        "displayName": "Active Ink",
+        "tonalRamp": [
+          "oklch(15% 0.056 244.7)",
+          "oklch(26% 0.091 244.7)",
+          "oklch(38% 0.114 244.7)",
+          "oklch(49% 0.123 244.7)",
+          "oklch(61% 0.116 244.7)",
+          "oklch(72% 0.094 244.7)",
+          "oklch(84% 0.061 244.7)",
+          "oklch(95% 0.019 244.7)"
+        ]
+      },
+      "tone-off-bg": {
+        "role": "tertiary",
+        "displayName": "Off Tint",
+        "tonalRamp": [
+          "oklch(15% 0.101 25.7)",
+          "oklch(26% 0.165 25.7)",
+          "oklch(38% 0.207 25.7)",
+          "oklch(49% 0.223 25.7)",
+          "oklch(61% 0.210 25.7)",
+          "oklch(72% 0.171 25.7)",
+          "oklch(84% 0.110 25.7)",
+          "oklch(95% 0.035 25.7)"
+        ]
+      },
+      "tone-off-fg": {
+        "role": "tertiary",
+        "displayName": "Off Ink",
+        "tonalRamp": [
+          "oklch(15% 0.101 25.7)",
+          "oklch(26% 0.165 25.7)",
+          "oklch(38% 0.207 25.7)",
+          "oklch(49% 0.223 25.7)",
+          "oklch(61% 0.210 25.7)",
+          "oklch(72% 0.171 25.7)",
+          "oklch(84% 0.110 25.7)",
+          "oklch(95% 0.035 25.7)"
+        ]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Ink",
+        "tonalRamp": [
+          "#0A0A0A",
+          "#141414",
+          "#1E1E1E",
+          "#2C2C2C",
+          "#4A4A4A",
+          "#8E8E8E",
+          "#B8B8B8",
+          "#F5F5F5"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "Reserved; rarely used in the meeting app."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Page titles such as the Home heading."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Section titles; dialog titles are 24px."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Primary reading text."
+      },
+      "body-small": {
+        "displayName": "Body Small",
+        "purpose": "Secondary text in Soft Grey, toolbar labels, field labels."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Form labels."
+      },
+      "button": {
+        "displayName": "Button",
+        "purpose": "Button text, sentence case."
+      },
+      "badge": {
+        "displayName": "Badge",
+        "purpose": "Uppercase status badges such as LIVE."
+      },
+      "mono": {
+        "displayName": "Mono",
+        "purpose": "Timecodes, clock, bitrates, keycaps."
+      }
+    },
+    "shadows": [
+      {
+        "name": "glass",
+        "value": "0 8px 32px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.3), inset 0 -1px 0 rgba(255, 255, 255, 0.05), inset 0 0 20px 10px rgba(255, 255, 255, 0.05)",
+        "purpose": "Frosted drawers and panels over the video grid (with 20px backdrop blur)."
+      },
+      {
+        "name": "overlay",
+        "value": "0 4px 16px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 0 0 1px rgba(255, 255, 255, 0.1)",
+        "purpose": "Controls floating over video."
+      }
+    ],
+    "motion": [
+      {
+        "name": "duration-instant",
+        "value": "100ms",
+        "purpose": "Press feedback, colour changes on small controls."
+      },
+      {
+        "name": "duration-fast",
+        "value": "150ms",
+        "purpose": "Hover states, tooltips, fading overlays."
+      },
+      {
+        "name": "duration-base",
+        "value": "200ms",
+        "purpose": "Most state changes."
+      },
+      {
+        "name": "duration-enter",
+        "value": "240ms",
+        "purpose": "Dialogs, panels, toasts, list items arriving."
+      },
+      {
+        "name": "duration-exit",
+        "value": "180ms",
+        "purpose": "Elements leaving; quicker than arriving."
+      },
+      {
+        "name": "duration-slow",
+        "value": "320ms",
+        "purpose": "Drawers and pages travelling across the screen."
+      },
+      {
+        "name": "ease-standard",
+        "value": "cubic-bezier(0.4, 0, 0.2, 1)",
+        "purpose": "Moves that start and end on screen."
+      },
+      {
+        "name": "ease-decelerate",
+        "value": "cubic-bezier(0.2, 0, 0, 1)",
+        "purpose": "Arriving."
+      },
+      {
+        "name": "ease-accelerate",
+        "value": "cubic-bezier(0.4, 0, 1, 1)",
+        "purpose": "Leaving."
+      },
+      {
+        "name": "ease-spring",
+        "value": "cubic-bezier(0.34, 1.56, 0.64, 1)",
+        "purpose": "Reactions and badges popping in."
+      },
+      {
+        "name": "press",
+        "value": "scale(0.96)",
+        "purpose": "Active state of buttons; none under reduced motion."
+      },
+      {
+        "name": "enter-distance",
+        "value": "8px",
+        "purpose": "Travel when fading in."
+      },
+      {
+        "name": "stagger",
+        "value": "40ms",
+        "purpose": "Delay between staggered list items."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "sm",
+        "value": "600px"
+      },
+      {
+        "name": "md",
+        "value": "900px"
+      },
+      {
+        "name": "lg",
+        "value": "1200px"
+      },
+      {
+        "name": "xl",
+        "value": "1536px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Default contained action; grey by design in the Black theme.",
+      "html": "<button class=\"ds-btn-primary\">Save</button>",
+      "css": ".ds-btn-primary { font-family: 'ClashDisplay', sans-serif; background: #8A8A8A; color: #0A0A0A; border: 2px solid #8A8A8A; border-radius: 6px; padding: 10px 16px; font-size: 16px; font-weight: 500; line-height: 24px; cursor: pointer; transition: background-color 150ms cubic-bezier(0.4,0,0.2,1), transform 100ms; } .ds-btn-primary:hover { background: #9A9A9A; border-color: #9A9A9A; } .ds-btn-primary:focus-visible { outline: 2px solid #8A8A8A; outline-offset: 2px; } .ds-btn-primary:active { transform: scale(0.96); }"
+    },
+    {
+      "name": "Pill CTA",
+      "kind": "button",
+      "refersTo": "button-pill-cta",
+      "description": "Full-width page action on Home and Lobby (New meeting, Join meeting).",
+      "html": "<button class=\"ds-btn-pill\"><svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4zM14 13h-3v3H9v-3H6v-2h3V8h2v3h3v2z\"/></svg>New meeting</button>",
+      "css": ".ds-btn-pill { font-family: 'ClashDisplay', sans-serif; display: inline-flex; align-items: center; justify-content: center; gap: 8px; width: 320px; background: #393737; color: #FFFFFF; border: 2px solid #393737; border-radius: 24px; padding: 10px 16px; font-size: 16px; font-weight: 500; line-height: 24px; cursor: pointer; transition: background-color 150ms cubic-bezier(0.4,0,0.2,1), transform 100ms; } .ds-btn-pill:hover { background: #9A9A9A; border-color: #9A9A9A; color: #0A0A0A; } .ds-btn-pill:focus-visible { outline: 2px solid #8A8A8A; outline-offset: 2px; } .ds-btn-pill:active { transform: scale(0.96); }"
+    },
+    {
+      "name": "Text Input",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Filled field on Raised Charcoal; steps up a tone on hover and focus.",
+      "html": "<input class=\"ds-input\" placeholder=\"Enter a room name or link\" />",
+      "css": ".ds-input { font-family: 'ClashDisplay', sans-serif; width: 280px; background: #2C2C2C; color: #FFFFFF; border: 1px solid #4A4A4A; border-radius: 6px; padding: 11.5px 20px; font-size: 16px; transition: background-color 150ms cubic-bezier(0.4,0,0.2,1); } .ds-input::placeholder { color: #B8B8B8; } .ds-input:hover, .ds-input:focus { background: #393737; } .ds-input:focus-visible { outline: 2px solid #8A8A8A; outline-offset: 2px; }"
+    },
+    {
+      "name": "Control Bar",
+      "kind": "nav",
+      "refersTo": "control-bar",
+      "description": "The floating capsule of call controls with default, off, active and leave tones.",
+      "html": "<div class=\"ds-bar\" role=\"toolbar\" aria-label=\"Call controls\"><button class=\"ds-tb ds-tb-off\" aria-label=\"Microphone\" aria-pressed=\"false\"><svg width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"currentColor\"><path d=\"M19 11h-1.7c0 .74-.16 1.43-.43 2.05l1.23 1.23c.56-.98.9-2.09.9-3.28zm-4.02.17c0-.06.02-.11.02-.17V5c0-1.66-1.34-3-3-3S9 3.34 9 5v.18l5.98 5.99zM4.27 3 3 4.27l6.01 6.01V11c0 1.66 1.33 3 2.99 3 .22 0 .44-.03.65-.08l1.66 1.66c-.71.33-1.5.52-2.31.52-2.76 0-5.3-2.1-5.3-5.1H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c.91-.13 1.77-.45 2.54-.9L19.73 21 21 19.73 4.27 3z\"/></svg></button><button class=\"ds-tb\" aria-label=\"Camera\"><svg width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"currentColor\"><path d=\"M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z\"/></svg></button><button class=\"ds-tb ds-tb-active\" aria-label=\"Captions\" aria-pressed=\"true\"><svg width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"currentColor\"><path d=\"M19 4H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2zm-8 7H9.5v-.5h-2v3h2V13H11v1a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1v-4a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v1zm7 0h-1.5v-.5h-2v3h2V13H18v1a1 1 0 0 1-1 1h-3a1 1 0 0 1-1-1v-4a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v1z\"/></svg></button><button class=\"ds-tb ds-tb-leave\" aria-label=\"Leave call\"><svg width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"currentColor\"><path d=\"M12 9c-1.6 0-3.15.25-4.6.72v3.1c0 .39-.23.74-.56.9-.98.49-1.87 1.12-2.66 1.85-.18.18-.43.28-.7.28-.28 0-.53-.11-.71-.29L.29 13.08a.956.956 0 0 1 0-1.36C3.34 8.78 7.46 7 12 7s8.66 1.78 11.71 4.72c.18.18.29.43.29.71 0 .28-.11.53-.29.71l-2.48 2.48c-.18.18-.43.29-.71.29-.27 0-.52-.11-.7-.28a11.27 11.27 0 0 0-2.67-1.85.996.996 0 0 1-.56-.9v-3.1C15.15 9.25 13.6 9 12 9z\"/></svg></button></div>",
+      "css": ".ds-bar { display: inline-flex; gap: 12px; padding: 10px; background: #2C2C2C; border-radius: 28px; } .ds-tb { display: inline-flex; align-items: center; justify-content: center; height: 52px; min-width: 56px; border: none; border-radius: 24px; background: #393737; color: #FFFFFF; cursor: pointer; transition: background-color 200ms cubic-bezier(0.4,0,0.2,1), transform 100ms; } .ds-tb:hover { background: #4A4A4A; } .ds-tb:focus-visible { outline: 2px solid #8A8A8A; outline-offset: 2px; } .ds-tb:active { transform: scale(0.96); } .ds-tb-off { background: #FFE3E3; color: #731F1F; } .ds-tb-off:hover { background: #FFD0D0; } .ds-tb-active { background: #D1E9FC; color: #1E364A; } .ds-tb-active:hover { background: #C1E1FB; } .ds-tb-leave { min-width: 76px; background: #FF4444; color: #FFFFFF; } .ds-tb-leave:hover { background: #E03C3C; }"
+    },
+    {
+      "name": "Tray Chip",
+      "kind": "chip",
+      "refersTo": "toolbar-chip",
+      "description": "40px pill with icon and text in the control bar's tray.",
+      "html": "<button class=\"ds-chip\">Blur background</button>",
+      "css": ".ds-chip { font-family: 'ClashDisplay', sans-serif; height: 40px; padding: 0 16px; border: none; border-radius: 24px; background: #393737; color: #FFFFFF; font-size: 14px; font-weight: 500; cursor: pointer; transition: background-color 200ms cubic-bezier(0.4,0,0.2,1); } .ds-chip:hover { background: #4A4A4A; } .ds-chip:focus-visible { outline: 2px solid #8A8A8A; outline-offset: 2px; }"
+    },
+    {
+      "name": "Card",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "Flat Panel Black container with a hairline; no shadow.",
+      "html": "<div class=\"ds-card\"><div class=\"ds-card-title\">Room info</div><div class=\"ds-card-body\">Share this link to invite people.</div></div>",
+      "css": ".ds-card { font-family: 'ClashDisplay', sans-serif; width: 280px; padding: 24px; background: #1A1A1A; border: 1px solid #2C2C2C; border-radius: 12px; } .ds-card-title { color: #FFFFFF; font-size: 20px; font-weight: 500; line-height: 1; margin-bottom: 8px; } .ds-card-body { color: #B8B8B8; font-size: 14px; line-height: 1.2; }"
+    },
+    {
+      "name": "Video Tile",
+      "kind": "custom",
+      "refersTo": "video-tile",
+      "description": "Participant tile: name chip on translucent black, white ring for the active speaker, solid amber badge for a raised hand.",
+      "html": "<div class=\"ds-tile ds-tile-speaking\"><span class=\"ds-tile-name\">Jordan Lee</span></div>",
+      "css": ".ds-tile { font-family: 'ClashDisplay', sans-serif; position: relative; width: 320px; aspect-ratio: 16 / 9; border-radius: 6px; overflow: hidden; background: linear-gradient(180deg, #4A6B5E, #2C3F37); outline: 2px solid transparent; outline-offset: -2px; transition: outline-color 200ms cubic-bezier(0.4,0,0.2,1); } .ds-tile-speaking { outline-color: #FFFFFF; } .ds-tile-name { position: absolute; left: 8px; bottom: 8px; padding: 2px 8px; border-radius: 6px; background: rgba(0,0,0,0.6); color: #FFFFFF; font-size: 14px; }"
+    },
+    {
+      "name": "Status Badge",
+      "kind": "chip",
+      "refersTo": "status-badge-live",
+      "description": "Compact uppercase status; solid On-Air Red for live, tints for other states.",
+      "html": "<span class=\"ds-badge ds-badge-live\">Live</span> <span class=\"ds-badge ds-badge-warn\">Weak signal</span>",
+      "css": ".ds-badge { font-family: 'ClashDisplay', sans-serif; display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 4px; font-size: 12px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; line-height: 18px; } .ds-badge-live { background: #E5252A; color: #FFFFFF; } .ds-badge-warn { background: rgba(255,183,77,0.14); color: #FFB74D; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Dark Room",
+    "overview": "TrueTime Meetings is a darkened room where people's faces are the only light. The interface is the room itself: near-black walls, a few soft grey fixtures, and nothing that competes with the video. Colour enters through three doors only: the participants' cameras, state that needs attention (mic off, leave, live, warnings), and the company theme an operator picks. Everything else is greyscale on purpose.\n\nWithin that dark room the controls are friendly and calm. Buttons are fully rounded pills, the control bar floats as one soft-cornered surface at the bottom of the screen, and the brand face (Clash Display) is set throughout, so even dense panels read as one voice rather than a utility font. First-time joiners should find it approachable; regulars should stop noticing it. Density is moderate: a 72px control bar, 52px toolbar buttons, generous dialog padding (40px sides).\n\nThe system is a theme, not a single look. The same roles are re-skinned by eight company palettes (`black` default, `blue`, `purple`, `emerald`, `aurora`, `sunset`, `ocean`, `broadcast`), three of which paint a gradient behind the page. Every value below is the Black palette; components must read roles, never these hex values, so a theme swap re-lights the room without touching a component. The visual anti-reference is enterprise blue chrome: busy, blue-tinted toolbars of the Teams or Webex kind.",
+    "keyCharacteristics": [
+      "Dark only (`color-scheme: dark`); tonal greys from #0A0A0A to #F5F5F5 carry all hierarchy.",
+      "People are the colour; UI colour is reserved for state.",
+      "Pill-shaped controls in a single floating bar; tiles and panels with gentle corners.",
+      "Clash Display for every piece of text; JetBrains Mono only for timecodes and figures.",
+      "Tokens and components come from `truetime-ui`; this app composes them."
+    ],
+    "rules": [
+      {
+        "name": "The People Are the Colour Rule",
+        "body": "Chrome stays greyscale in the default theme. A new coloured fill must mean a state (off, active, live, error, warning, success) or come from the operator's palette.",
+        "section": "colors"
+      },
+      {
+        "name": "The Roles, Not Hex Rule",
+        "body": "Style with `themeColors(theme)` roles or `theme.palette.themeColor[n]`. A hard-coded hex works in Black and breaks the other seven themes.",
+        "section": "colors"
+      },
+      {
+        "name": "The Tally Is Sacred Rule",
+        "body": "On-Air Red means live. Errors use Alert Red with an icon, so they are never read as on air.",
+        "section": "colors"
+      },
+      {
+        "name": "The Readable Fill Rule",
+        "body": "Text on a filled surface uses white or Ink, whichever measures 4.5:1 or more (`readableOn()` from `truetime-ui`). Never assume white: Black's grey, aurora's teal and Alert Red all need Ink.",
+        "section": "colors"
+      },
+      {
+        "name": "The One Voice Rule",
+        "body": "Don't introduce a second sans. Text uses Clash Display, and only figures that update in place switch to mono.",
+        "section": "typography"
+      },
+      {
+        "name": "The Flat Room Rule",
+        "body": "Surfaces off the video are flat: no drop shadows on cards, buttons or the control bar (`boxShadow: none` on contained buttons and Fabs). Depth off video is a step in the grey scale.",
+        "section": "elevation"
+      },
+      {
+        "name": "The Glass Only Over Glass Rule",
+        "body": "Blur is for surfaces with video behind them. Older dialogs that add a faint backdrop blur are legacy; don't copy them.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "**Do** take every component from `truetime-ui` first (`Button`, `Input`, `Card`, `ControlBar`, `ToolbarButton`, `VideoTile`, `StatusBadge`…) and pass translated text in as props.",
+      "**Do** style with `themeColors(theme)` roles and the exported tokens (`radii`, `shadows`, `motion`, `controlBar`); check every change in at least Black and one gradient theme (aurora, sunset or ocean).",
+      "**Do** use pills (24px) for call controls and page CTAs, 6px for controls, 12px for containers.",
+      "**Do** show focus with `focusRingStyle(theme)` (2px ring, 2px offset).",
+      "**Do** use the motion tokens: 150ms hover, 200ms state, 240ms enter, 180ms exit, standard easing; spring only for reactions and badges popping in."
+    ],
+    "donts": [
+      "**Don't** hard-code hex, rgba, radii or shadows in the app; new tokens go into `truetime-ui`.",
+      "**Don't** add colour to chrome for decoration; a coloured fill must mean a state or come from the theme.",
+      "**Don't** use On-Air Red or Preview Green for anything but tally.",
+      "**Don't** drift toward enterprise blue chrome: dense, blue-tinted toolbars with many small square buttons.",
+      "**Don't** put shadows or blur on surfaces that have no video behind them.",
+      "**Don't** add a light mode, another theme provider or `CssBaseline`.",
+      "**Don't** uppercase button text; only status badges are uppercase."
+    ]
+  }
+}

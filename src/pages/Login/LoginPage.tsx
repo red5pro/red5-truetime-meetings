@@ -1,6 +1,6 @@
 import React, { JSX } from 'react';
-import { Typography, Box, Button } from '@mui/material';
-import { enterAnimation } from 'truetime-ui';
+import { Box } from '@mui/material';
+import { Button, enterAnimation, Heading } from 'truetime-ui';
 import Grid from '@mui/material/Grid2';
 import { GoogleLogin } from '@react-oauth/google';
 import { useGoogleAuth } from '../../contexts/GoogleAuthContext';
@@ -44,9 +44,9 @@ const LoginPage = (): JSX.Element => {
           <Box sx={{ mb: 2 }}>
             <img src={logoUrl} alt="Red5 Logo" style={{ maxWidth: '100%', maxHeight: '100px' }} />
           </Box>
-          <Typography variant="h6" align="center" sx={{ mb: 4 }}>
+          <Heading level={1} variant="h6" align="center" sx={{ mb: 4 }}>
             {t('TrueTime Meeting™')}
-          </Typography>
+          </Heading>
 
           <Box
             sx={{
@@ -76,18 +76,11 @@ const LoginPage = (): JSX.Element => {
             />
             <Button
               variant="outlined"
-              color="inherit"
+              color="secondary"
+              shape="pill"
               onClick={() => loginAsGuest()}
-              sx={{
-                textTransform: 'none',
-                borderRadius: '20px',
-                px: 3,
-                py: '10px', // Match height roughly with Google button
-                borderColor: 'rgba(0, 0, 0, 0.23)',
-                fontSize: '14px',
-                fontWeight: 500,
-                height: '40px', // Explicit height to match Google button's large size
-              }}
+              // The height of Google's large button beside it
+              sx={{ height: 40, px: 3 }}
             >
               {t('Join as Guest')}
             </Button>

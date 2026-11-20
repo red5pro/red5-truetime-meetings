@@ -268,9 +268,9 @@ function MoreOptionsButton(props: MoreOptionsButtonProps) {
         <MenuItem disabled={!isCaptionEnabled} onClick={handleCaptionsClick}>
           <ListItemIcon>
             {props?.captionsVisible ? (
-              <ClosedCaption sx={{ color: '#fff' }} />
+              <ClosedCaption sx={{ color: 'inherit' }} />
             ) : (
-              <ClosedCaptionDisabled sx={{ color: '#fff' }} />
+              <ClosedCaptionDisabled sx={{ color: 'inherit' }} />
             )}
           </ListItemIcon>
           <ListItemText

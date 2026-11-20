@@ -17,6 +17,8 @@ export const VideoPreview = React.memo<VideoPreviewProps>(
   }) => (
     <Box sx={{ position: 'relative', width: '100%', height: '100%' }}>
       <VideoCard
+        name={streamName}
+        showName={false}
         id="red5pro-publisher"
         key="red5pro-publisher"
         autoPlay

@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import Grid from '@mui/material/Grid2';
 import { Box } from '@mui/system';
 import { ParticipantInfo } from './ParticipantInfo.tsx';
-import { Button, TextField } from '@mui/material';
+import { Button, FormField, Input } from 'truetime-ui';
 
 export const JoinForm = React.memo<JoinFormProps>(
   ({
@@ -28,55 +28,38 @@ export const JoinForm = React.memo<JoinFormProps>(
 
           <Grid container spacing={2} sx={{ mt: 1, mb: 4 }}>
             <Grid size={{ xs: 12, sm: 12 }}>
-              <TextField
-                autoFocus
+              <FormField
+                label={t('Your name')}
                 required
                 fullWidth
-                color="primary"
-                value={streamName || ''}
-                variant="outlined"
-                onChange={onStreamNameChange}
-                placeholder={t('Your name')}
                 id="participant_name"
-                autoComplete="cc-exp-year"
                 disabled={isJoining}
                 error={streamNameFieldError}
-                helperText={streamNameFieldError ? 'Spaces are not allowed' : ''}
-              />
+                helperText={streamNameFieldError ? t('Spaces are not allowed') : undefined}
+              >
+                <Input
+                  autoFocus
+                  fullWidth
+                  value={streamName || ''}
+                  onChange={onStreamNameChange}
+                  placeholder={t('Your name')}
+                  inputProps={{ autoComplete: 'name' }}
+                />
+              </FormField>
             </Grid>
-            {/*
-                    <Grid size={{ xs: 12, sm: 4 }}>
-                        <FormControl fullWidth variant="outlined" disabled={isJoining}>
-                            <InputLabel id="user-role-label">{t('Role')}</InputLabel>
-                            <Select
-                                labelId="user-role-label"
-                                id="user-role-select"
-                                value={selectedRole}
-                                onChange={onRoleChange}
-                                label={t('Role')}
-                                color="primary"
-                            >
-                                {Object.values(USER_ROLES).map((role) => (
-                                    <MenuItem key={role} value={role}>
-                                        {getRoleDisplayName(role)}
-                                    </MenuItem>
-                                ))}
-                            </Select>
-                        </FormControl>
-                    </Grid>
-                    */}
           </Grid>
 
           <Grid container justifyContent="center">
             <Grid size={{ sm: 6, xs: 12 }}>
               <Button
                 fullWidth
+                shape="pill"
                 color="secondary"
-                variant="contained"
+                size="large"
                 type="submit"
                 id="room_join_button"
-                disabled={isJoining || streamNameFieldError}
-                sx={{ borderRadius: 6 }}
+                loading={isJoining}
+                disabled={streamNameFieldError}
               >
                 {isJoining
                   ? t('Joining...')

@@ -2,19 +2,20 @@ import * as React from 'react';
 import { useEffect, useState } from 'react';
 import Drawer from '@mui/material/Drawer';
 import { styled, Theme } from '@mui/material/styles';
-import { Box, IconButton, Tooltip, Typography } from '@mui/material';
+import { Box, IconButton, Tooltip } from '@mui/material';
 import { alpha } from '@mui/material/styles';
 import { Refresh, SensorsOff, Videocam } from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
 import {
   Alert,
   Button,
+  Heading,
+  radii,
   Spinner,
   StatusBadge,
   Text,
-  TruncatedText,
-  radii,
   themeColors,
+  TruncatedText,
 } from 'truetime-ui';
 import CloseDrawerButton from './DrawerButton';
 import { getRed5DrawerStyle } from '../styles/themeUtil';
@@ -52,7 +53,7 @@ const Panel = styled(Box)(({ theme }: { theme: Theme }) => ({
   position: 'relative',
   padding: 16,
   background: theme.palette.themeColor?.[60],
-  borderRadius: 10,
+  borderRadius: radii.container,
   height: '100%',
   display: 'flex',
   flexDirection: 'column',
@@ -149,9 +150,9 @@ const ExternalStreamsDrawer = React.memo<ExternalStreamsDrawerProps>((props) => 
     >
       <Panel>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
-          <Typography variant="h6" component="div" sx={{ flex: 1 }}>
+          <Heading level={2} variant="h6" sx={{ flex: 1 }}>
             {t('External Streams')}
-          </Typography>
+          </Heading>
           <Tooltip title={t('Refresh')}>
             <span>
               <IconButton

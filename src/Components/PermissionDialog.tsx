@@ -1,18 +1,9 @@
-import { useState, useEffect } from 'react';
-import {
-  Dialog,
-  DialogContent,
-  Button,
-  Box,
-  Typography,
-  useTheme,
-  useMediaQuery,
-  CircularProgress,
-} from '@mui/material';
-import Grid from '@mui/material/Grid2';
-import { SvgIcon } from './SvgIcon.tsx';
-import { getDialogStyle } from '../styles/themeUtil.js';
+import { useState, useEffect, useId, type ReactNode } from 'react';
+import { Dialog, DialogContent, Box, Typography, useTheme } from '@mui/material';
+import { CheckCircleOutline, ErrorOutline } from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
+import { Button, radii, Spinner, themeColors } from 'truetime-ui';
+import { getDialogStyle } from '../styles/themeUtil.js';
 
 interface InitialPermissionDialogProps {
   open: boolean;
@@ -44,84 +35,82 @@ interface PermissionFlowManagerProps {
 
 type PermissionStep = 'initial' | 'requesting' | 'denied' | 'granted';
 
-// Initial Permission Dialog
+interface PermissionShellProps {
+  open: boolean;
+  /** Icon or spinner above the title. */
+  visual?: ReactNode;
+  title: string;
+  description: string;
+  children?: ReactNode;
+}
+
+/** The layout every step shares: centred visual, title, description and an optional action. */
+function PermissionShell({ open, visual, title, description, children }: PermissionShellProps) {
+  const theme = useTheme();
+  const titleId = useId();
+  const descriptionId = useId();
+
+  return (
+    <Dialog
+      open={open}
+      fullWidth
+      maxWidth="xs"
+      aria-labelledby={titleId}
+      aria-describedby={descriptionId}
+      PaperProps={{
+        sx: {
+          ...getDialogStyle(theme),
+          [theme.breakpoints.down('sm')]: { px: 3 },
+        },
+      }}
+    >
+      <DialogContent sx={{ px: 0, py: 3, textAlign: 'center' }}>
+        {visual && <Box sx={{ display: 'flex', justifyContent: 'center', mb: 3 }}>{visual}</Box>}
+        <Typography
+          id={titleId}
+          variant="h5"
+          component="h2"
+          sx={{ fontSize: { xs: 24, sm: 28 }, mb: 2, textWrap: 'balance' }}
+        >
+          {title}
+        </Typography>
+        <Typography
+          id={descriptionId}
+          sx={{ color: themeColors(theme).mutedText, lineHeight: 1.5, textWrap: 'pretty' }}
+        >
+          {description}
+        </Typography>
+        {children && <Box sx={{ mt: 4 }}>{children}</Box>}
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 export function InitialPermissionDialog({
   open,
   onRequestPermissions,
 }: InitialPermissionDialogProps) {
   const { t } = useTranslation();
-  const theme = useTheme();
-  const fullScreen = useMediaQuery(theme.breakpoints.down('xs'));
-
-  const handleUseDevices = async () => {
-    onRequestPermissions();
-  };
 
   return (
-    <Dialog
+    <PermissionShell
       open={open}
-      fullScreen={fullScreen}
-      maxWidth="sm"
-      PaperProps={{
-        sx: {
-          ...getDialogStyle(theme),
-          minWidth: '400px',
-          '@media (max-width: 600px)': {
-            minWidth: '90vw',
-          },
-        },
-      }}
-      BackdropProps={{
-        sx: {
-          backgroundColor: 'rgba(255, 255, 255, 0.1)',
-          backdropFilter: 'blur(0.5px)',
-        },
-      }}
+      title={t('Join meeting with camera and microphone?')}
+      description={t(
+        'Your audio and video settings can be adjusted at any point during the meeting.',
+      )}
     >
-      <DialogContent sx={{ p: 4, textAlign: 'center' }}>
-        <Typography
-          variant="h5"
-          component="h2"
-          sx={{
-            color: '#FFF',
-            fontWeight: 500,
-            mb: 2,
-            fontSize: { xs: '1.5rem', sm: '1.75rem' },
-          }}
-        >
-          {t('Join meeting with camera and microphone?')}
-        </Typography>
-
-        <Typography
-          variant="body1"
-          sx={{
-            color: '#FFF',
-            mb: 4,
-            fontSize: '1rem',
-            lineHeight: 1.5,
-          }}
-        >
-          {t('Your audio and video settings can be adjusted at any point during the meeting.')}
-        </Typography>
-
-        <Grid container spacing={2} justifyContent="center">
-          <Grid size={{ xs: 12, sm: 8 }}>
-            <Button
-              color="secondary"
-              variant="contained"
-              id="give_device_permission_button"
-              fullWidth
-              onClick={handleUseDevices}
-              sx={{
-                borderRadius: 6,
-              }}
-            >
-              {t('Join with audio and video')}
-            </Button>
-          </Grid>
-        </Grid>
-      </DialogContent>
-    </Dialog>
+      <Button
+        shape="pill"
+        color="secondary"
+        size="large"
+        fullWidth
+        id="give_device_permission_button"
+        onClick={onRequestPermissions}
+      >
+        {t('Join with audio and video')}
+      </Button>
+    </PermissionShell>
   );
 }
 
@@ -129,66 +118,16 @@ export function InitialPermissionDialog({
 export function RequestingPermissionDialog({ open }: RequestingPermissionDialogProps) {
   const { t } = useTranslation();
   const theme = useTheme();
-  const fullScreen = useMediaQuery(theme.breakpoints.down('xs'));
 
   return (
-    <Dialog
+    <PermissionShell
       open={open}
-      fullScreen={fullScreen}
-      maxWidth="sm"
-      PaperProps={{
-        sx: {
-          ...getDialogStyle(theme),
-          minWidth: '400px',
-          '@media (max-width: 600px)': {
-            minWidth: '90vw',
-          },
-        },
-      }}
-      BackdropProps={{
-        sx: {
-          backgroundColor: 'rgba(255, 255, 255, 0.1)',
-          backdropFilter: 'blur(0.5px)',
-        },
-      }}
-    >
-      <DialogContent sx={{ p: 4, textAlign: 'center' }}>
-        <Box sx={{ mb: 4 }}>
-          <CircularProgress
-            size={48}
-            sx={{
-              color: '#FFF',
-              mb: 2,
-            }}
-          />
-        </Box>
-
-        <Typography
-          variant="h5"
-          component="h2"
-          sx={{
-            color: '#FFF',
-            fontWeight: 500,
-            mb: 2,
-            fontSize: { xs: '1.5rem', sm: '1.75rem' },
-          }}
-        >
-          {t('Requesting permissions...')}
-        </Typography>
-
-        <Typography
-          variant="body1"
-          sx={{
-            color: '#FFF',
-            fontSize: '1rem',
-            lineHeight: 1.5,
-            opacity: 0.9,
-          }}
-        >
-          {t('Please allow access to your camera and microphone when prompted by your browser.')}
-        </Typography>
-      </DialogContent>
-    </Dialog>
+      visual={<Spinner size={48} color={themeColors(theme).text} />}
+      title={t('Requesting permissions...')}
+      description={t(
+        'Please allow access to your camera and microphone when prompted by your browser.',
+      )}
+    />
   );
 }
 
@@ -196,99 +135,33 @@ export function RequestingPermissionDialog({ open }: RequestingPermissionDialogP
 export function PermissionDeniedDialog({ open }: PermissionDeniedDialogProps) {
   const { t } = useTranslation();
   const theme = useTheme();
-  const fullScreen = useMediaQuery(theme.breakpoints.down('xs'));
+  const colors = themeColors(theme);
 
   return (
-    <Dialog
+    <PermissionShell
       open={open}
-      fullScreen={fullScreen}
-      maxWidth="sm"
-      PaperProps={{
-        sx: {
-          ...getDialogStyle(theme),
-          minWidth: '400px',
-          '@media (max-width: 600px)': {
-            minWidth: '90vw',
-          },
-        },
-      }}
-      BackdropProps={{
-        sx: {
-          backgroundColor: 'rgba(255, 255, 255, 0.1)',
-          backdropFilter: 'blur(0.5px)',
-        },
-      }}
+      visual={<ErrorOutline aria-hidden sx={{ fontSize: 64, color: colors.warning }} />}
+      title={t('Camera and microphone access needed')}
+      description={t('To join with audio and video, please allow access:')}
     >
-      <DialogContent sx={{ p: 4, textAlign: 'center' }}>
-        <Box sx={{ mb: 3 }}>
-          <SvgIcon size={72} viewBox="0 0 500 500" name="alert-circle" color="#FFB74D" />
-        </Box>
-
-        <Typography
-          variant="h5"
-          component="h2"
-          sx={{
-            color: '#FFF',
-            fontWeight: 500,
-            mb: 2,
-            fontSize: { xs: '1.5rem', sm: '1.75rem' },
-          }}
-        >
-          {t('Camera and microphone access needed')}
+      <Box
+        sx={{
+          p: 3,
+          textAlign: 'left',
+          borderRadius: `${radii.control}px`,
+          backgroundColor: colors.surface,
+          border: `1px solid ${colors.border}`,
+        }}
+      >
+        <Typography variant="body2" sx={{ color: colors.text, fontWeight: 500, mb: 1.5 }}>
+          {t('Instructions:')}
         </Typography>
-
-        <Typography
-          variant="body1"
-          sx={{
-            color: '#FFF',
-            mb: 3,
-            fontSize: '1rem',
-            lineHeight: 1.5,
-          }}
-        >
-          {t('To join with audio and video, please allow access:')}
-        </Typography>
-
-        <Box
-          sx={{
-            backgroundColor: 'rgba(5, 5, 5, 0.8)',
-            borderRadius: 2,
-            borderColor: 'white',
-            borderWidth: 2,
-            p: 3,
-            mb: 4,
-            textAlign: 'left',
-          }}
-        >
-          <Typography variant="body2" sx={{ color: '#FFF', mb: 2, fontWeight: 500 }}>
-            {t('Instructions:')}
-          </Typography>
-          <Box component="ol" sx={{ color: '#FFF', pl: 2, '& li': { mb: 1, fontSize: '0.9rem' } }}>
-            <li>{t('Look for the camera/microphone icon in your address bar')}</li>
-            <li>{t('Click on it and select "Allow"')}</li>
-            {/*<li>{t('Click "Try again" below')}</li>*/}
-          </Box>
+        <Box component="ol" sx={{ m: 0, pl: 2.5, color: colors.text, '& li + li': { mt: 1 } }}>
+          <li>{t('Look for the camera/microphone icon in your address bar')}</li>
+          <li>{t('Click on it and select "Allow"')}</li>
         </Box>
-
-        {/*
-        <Grid container spacing={2} justifyContent="center">
-          <Grid size={{ xs: 12, sm: 6 }}>
-            <Button
-              color="secondary"
-              variant="contained"
-              fullWidth
-              onClick={onTryAgain}
-              sx={{
-                borderRadius: 6
-              }}
-            >
-              {t('Try again')}
-            </Button>
-          </Grid>
-        </Grid>
-        */}
-      </DialogContent>
-    </Dialog>
+      </Box>
+    </PermissionShell>
   );
 }
 
@@ -296,82 +169,22 @@ export function PermissionDeniedDialog({ open }: PermissionDeniedDialogProps) {
 export function PermissionGrantedDialog({ open, onJoinMeeting }: PermissionGrantedDialogProps) {
   const { t } = useTranslation();
   const theme = useTheme();
-  const fullScreen = useMediaQuery(theme.breakpoints.down('xs'));
 
   return (
-    <Dialog
+    <PermissionShell
       open={open}
-      fullScreen={fullScreen}
-      maxWidth="sm"
-      PaperProps={{
-        sx: {
-          ...getDialogStyle(theme),
-          minWidth: '400px',
-          '@media (max-width: 600px)': {
-            minWidth: '90vw',
-          },
-        },
-      }}
-      BackdropProps={{
-        sx: {
-          backgroundColor: 'rgba(255, 255, 255, 0.1)',
-          backdropFilter: 'blur(0.5px)',
-        },
-      }}
+      visual={
+        <CheckCircleOutline aria-hidden sx={{ fontSize: 56, color: themeColors(theme).success }} />
+      }
+      title={t("Perfect! You're all set")}
+      description={t(
+        'Camera and microphone access granted. You can now join the meeting with full audio and video.',
+      )}
     >
-      <DialogContent sx={{ p: 4, textAlign: 'center' }}>
-        <Box sx={{ mb: 3 }}>
-          <SvgIcon size={48} viewBox="0 0 500 500" name="check-circle" color="#4CAF50" />
-        </Box>
-
-        <Typography
-          variant="h5"
-          component="h2"
-          sx={{
-            color: '#FFF',
-            fontWeight: 500,
-            mb: 2,
-            fontSize: { xs: '1.5rem', sm: '1.75rem' },
-          }}
-        >
-          {t("Perfect! You're all set")}
-        </Typography>
-
-        <Typography
-          variant="body1"
-          sx={{
-            color: '#FFF',
-            mb: 4,
-            fontSize: '1rem',
-            lineHeight: 1.5,
-          }}
-        >
-          {t(
-            'Camera and microphone access granted. You can now join the meeting with full audio and video.',
-          )}
-        </Typography>
-
-        <Grid container spacing={2} justifyContent="center">
-          <Grid size={{ xs: 12, sm: 8 }}>
-            <Button
-              color="primary"
-              variant="contained"
-              fullWidth
-              onClick={onJoinMeeting}
-              sx={{
-                borderRadius: 6,
-                backgroundColor: '#4CAF50',
-                '&:hover': {
-                  backgroundColor: '#45A049',
-                },
-              }}
-            >
-              {t('Join meeting')}
-            </Button>
-          </Grid>
-        </Grid>
-      </DialogContent>
-    </Dialog>
+      <Button shape="pill" size="large" fullWidth onClick={onJoinMeeting}>
+        {t('Join meeting')}
+      </Button>
+    </PermissionShell>
   );
 }
 

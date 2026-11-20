@@ -28,8 +28,8 @@ import { ThemeList } from '../../../constants/themeList.js';
 import { ThemeContext } from '../../../contexts/ThemeContext';
 import { saveTheme } from '../../../utils/savedTheme';
 import i18n from 'i18next';
-import { ToolbarButton } from 'truetime-ui';
-import { getGlassMenuStyle } from '../../../styles/themeUtil.js';
+import { radii, ToolbarButton, useHoverIntent } from 'truetime-ui';
+import { getDialogStyle, getGlassMenuStyle } from '../../../styles/themeUtil.js';
 import { MoreVert, PictureInPicture, PictureInPictureAlt } from '@mui/icons-material';
 import log from 'loglevel';
 import { getRuntimeConfig } from '../../../utils/configStore';
@@ -153,8 +153,11 @@ interface OptionButtonProps {
 
 function OptionButton(props: OptionButtonProps) {
   const { t } = useTranslation();
-  const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
-  const open = Boolean(anchorEl);
+  // The menu opens when the mouse rests on "More options" (like the device pickers); a click or the
+  // keyboard pins it as a normal menu
+  const [anchorEl, setAnchorEl] = React.useState<HTMLButtonElement | null>(null);
+  const menu = useHoverIntent();
+  const open = menu.open;
   const [dialogOpen, setDialogOpen] = React.useState<boolean>(false);
   const [settingsSection, setSettingsSection] = React.useState<'audio' | 'video'>('audio');
   const [layoutDialogOpen, setLayoutDialogOpen] = React.useState<boolean>(false);
@@ -232,12 +235,12 @@ function OptionButton(props: OptionButtonProps) {
   // if you select camera then we are going to focus on camera button.
   const [selectFocus, setSelectFocus] = React.useState<string | null>(null);
 
-  const handleClick = (event: React.MouseEvent<HTMLButtonElement>): void => {
-    setAnchorEl(event.currentTarget);
+  const handleClick = (): void => {
+    menu.toggle();
   };
 
   const handleClose = (): void => {
-    setAnchorEl(null);
+    menu.close();
   };
 
   const handleDialogOpen = (section: 'audio' | 'video'): void => {
@@ -422,11 +425,14 @@ function OptionButton(props: OptionButtonProps) {
       <Dialog
         open={recordingModalOpen}
         onClose={handleRecordingModalClose}
+        // Up to 444px wide, and never wider than the screen (a fixed min-width overflowed phones)
+        fullWidth
+        maxWidth="xs"
         PaperProps={{
-          sx: {
-            borderRadius: 2,
-            minWidth: 420,
-          },
+          sx: (theme) => ({
+            ...getDialogStyle(theme),
+            [theme.breakpoints.down('sm')]: { px: 3 },
+          }),
         }}
       >
         <DialogTitle>{t('Recording Options')}</DialogTitle>
@@ -440,7 +446,7 @@ function OptionButton(props: OptionButtonProps) {
             sx={{
               border: '1px solid',
               borderColor: serverSideRecordingChecked ? 'error.main' : 'divider',
-              borderRadius: 2,
+              borderRadius: `${radii.control}px`,
               p: 1,
               mb: 1.5,
             }}
@@ -516,7 +522,7 @@ function OptionButton(props: OptionButtonProps) {
             sx={{
               border: '1px solid',
               borderColor: localRecordingChecked ? 'error.main' : 'divider',
-              borderRadius: 2,
+              borderRadius: `${radii.control}px`,
               p: 1,
             }}
           >
@@ -576,15 +582,28 @@ function OptionButton(props: OptionButtonProps) {
         aria-controls={open ? 'basic-menu' : undefined}
         aria-haspopup="menu"
         aria-expanded={open}
+        ref={setAnchorEl}
+        hideTooltip={open}
         onClick={handleClick}
+        {...menu.triggerProps}
       />
       <Menu
         id="basic-menu"
         anchorEl={anchorEl}
         open={open}
         onClose={handleClose}
+        // Opened by hover: no backdrop and no focus move, and the full-screen layer lets the
+        // pointer through, so leaving the button and the menu closes it. Pinned: a normal menu.
+        hideBackdrop={!menu.pinned}
+        disableAutoFocus={!menu.pinned}
+        disableEnforceFocus={!menu.pinned}
+        disableRestoreFocus={!menu.pinned}
+        slotProps={{
+          root: { sx: { pointerEvents: menu.pinned ? undefined : 'none' } },
+        }}
         MenuListProps={{
-          'aria-labelledby': 'basic-button',
+          'aria-labelledby': 'settings-button',
+          ...menu.panelProps,
         }}
         anchorOrigin={{
           vertical: 'top',
@@ -594,7 +613,9 @@ function OptionButton(props: OptionButtonProps) {
           vertical: 'bottom',
           horizontal: 'left',
         }}
-        PaperProps={{ sx: getGlassMenuStyle(theme, 'secondary', true) }}
+        PaperProps={{
+          sx: { ...getGlassMenuStyle(theme, 'secondary', true), pointerEvents: 'auto' },
+        }}
       >
         {/*
         <MenuItem key="general-settings" onClick={() => handleGeneralSettingsDialogOpen()}>
@@ -662,12 +683,8 @@ function OptionButton(props: OptionButtonProps) {
             onClick={handlePiPClick}
             disabled={pipInfo.disabled}
             id="picture-in-picture-button"
-            sx={{
-              backgroundColor: pipInfo.active ? 'rgba(25, 118, 210, 0.12)' : 'transparent',
-              '&:hover': {
-                backgroundColor: pipInfo.active ? 'rgba(25, 118, 210, 0.2)' : undefined,
-              },
-            }}
+            // The menu's own selected state marks an open picture-in-picture window
+            selected={pipInfo.active}
           >
             <ListItemIcon>
               {props?.pipSupported ? (

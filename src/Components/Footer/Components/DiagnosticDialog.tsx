@@ -549,12 +549,6 @@ export function DiagnosticDialog({
           px: { xs: 2, sm: 4 },
         },
       }}
-      BackdropProps={{
-        sx: {
-          backgroundColor: 'rgba(255, 255, 255, 0.1)',
-          backdropFilter: 'blur(0.5px)',
-        },
-      }}
     >
       <DialogTitle id="diagnostic-dialog-title" sx={{ pr: 6, pb: 1 }}>
         {t('Diagnostics')}

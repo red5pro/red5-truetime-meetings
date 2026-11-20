@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useMemo, useRef, ChangeEvent, FormEvent } from 'react';
-import { Box, Container, Typography, SelectChangeEvent } from '@mui/material';
+import { Box, Container, Typography, SelectChangeEvent, useTheme } from '@mui/material';
 import Grid from '@mui/material/Grid2';
 import { useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -12,7 +12,7 @@ import { getUrlParameter, makeId } from '../../utils/utils.tsx';
 import { useRoomInfo } from '../../hooks/useRoomInfo.ts';
 import { useAspectFitWidth } from '../../hooks/useAspectFitWidth.ts';
 import { isMobile } from 'react-device-detect';
-import { DeviceSelector, enterAnimation } from 'truetime-ui';
+import { DeviceSelector, enterAnimation, themeColors } from 'truetime-ui';
 import EffectsDrawer from '../../Components/EffectsDrawer.tsx';
 import { LobbyPageProps } from './types.ts';
 import { JoinForm } from './components/JoinForm.tsx';
@@ -81,6 +81,7 @@ const LobbyPage = React.memo<LobbyPageProps>((props) => {
 
   const { id: roomId } = useParams<{ id: string }>();
   const { t } = useTranslation();
+  const theme = useTheme();
   const { enqueueSnackbar } = useSnackbar();
 
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -112,11 +113,18 @@ const LobbyPage = React.memo<LobbyPageProps>((props) => {
         // @ts-expect-error - legacy type mismatch, needs proper typing
         message: t('You need to allow microphone and camera permissions before joining'),
         variant: 'info',
-        icon: <SvgIcon size={24} viewBox="0 0 500 500" name="muted-microphone" color="#fff" />,
+        icon: (
+          <SvgIcon
+            size={24}
+            viewBox="0 0 500 500"
+            name="muted-microphone"
+            color={themeColors(theme).text}
+          />
+        ),
       },
       { autoHideDuration: 1500 },
     );
-  }, [enqueueSnackbar, t]);
+  }, [enqueueSnackbar, t, theme]);
 
   const showDeviceError = useCallback(() => {
     enqueueSnackbar(
@@ -124,11 +132,18 @@ const LobbyPage = React.memo<LobbyPageProps>((props) => {
         // @ts-expect-error - legacy type mismatch, needs proper typing
         message: t('You need to allow microphone and camera permissions before changing settings'),
         variant: 'info',
-        icon: <SvgIcon size={24} viewBox="0 0 500 500" name="muted-microphone" color="#fff" />,
+        icon: (
+          <SvgIcon
+            size={24}
+            viewBox="0 0 500 500"
+            name="muted-microphone"
+            color={themeColors(theme).text}
+          />
+        ),
       },
       { autoHideDuration: 1500 },
     );
-  }, [enqueueSnackbar, t]);
+  }, [enqueueSnackbar, t, theme]);
 
   const handleJoinRoom = useCallback(
     (e: FormEvent<HTMLFormElement>) => {
