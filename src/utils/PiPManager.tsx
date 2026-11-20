@@ -2,7 +2,8 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { createRoot, Root } from 'react-dom/client';
 import { Avatar } from '@mui/material';
 import { PictureInPicture, PictureInPictureAlt } from '@mui/icons-material';
-import { IconButton, Tooltip } from '@mui/material';
+import { IconButton, Tooltip, useTheme } from '@mui/material';
+import { readableOn, themeColors } from 'truetime-ui';
 import defaultAvatar from '../static/images/defaultAvatar.png';
 
 // ---------------------------------------------------------------------------
@@ -139,6 +140,17 @@ declare global {
  */
 class PiPManager {
   private pipWindow: Window | null = null;
+  /**
+   * The app theme as CSS custom properties for the PiP document, which is outside React's theme.
+   * Set by `usePictureInPicture` before a window opens.
+   */
+  private themeVars = '';
+
+  setThemeVars(vars: Record<string, string>): void {
+    this.themeVars = Object.entries(vars)
+      .map(([name, value]) => `--pip-${name}: ${value};`)
+      .join(' ');
+  }
   private pipRoot: Root | null = null;
   private pipContainer: HTMLElement | null = null;
 
@@ -334,9 +346,9 @@ class PiPManager {
       console.warn('[PiPManager] copyStyles error:', e);
     }
 
-    // Inject PiP-specific styles
+    // Inject PiP-specific styles, after the theme's colours as CSS variables
     const style = this.pipWindow!.document.createElement('style');
-    style.textContent = PIP_STYLES;
+    style.textContent = `:root { ${this.themeVars} }\n${PIP_STYLES}`;
     this.pipWindow!.document.head.appendChild(style);
   }
 
@@ -377,10 +389,10 @@ const PIP_STYLES = `
   body {
     margin: 0;
     padding: 0;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    background: #1a1a1a;
+    font-family: var(--pip-font);
+    background: var(--pip-surface);
     overflow: hidden;
-    color: #fff;
+    color: var(--pip-text);
   }
 
   .pip-container {
@@ -388,7 +400,7 @@ const PIP_STYLES = `
     height: 100vh;
     display: flex;
     flex-direction: column;
-    background: #1a1a1a;
+    background: var(--pip-surface);
   }
 
   /* ---- Header ---- */
@@ -397,10 +409,10 @@ const PIP_STYLES = `
     align-items: center;
     justify-content: space-between;
     padding: 8px 12px;
-    background: rgba(0, 0, 0, 0.5);
+    background: color-mix(in srgb, var(--pip-monitor) 50%, transparent);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    border-bottom: 1px solid color-mix(in srgb, var(--pip-text) 6%, transparent);
     min-height: 36px;
     flex-shrink: 0;
   }
@@ -409,12 +421,12 @@ const PIP_STYLES = `
     font-size: 11px;
     font-weight: 600;
     letter-spacing: 0.02em;
-    color: rgba(255, 255, 255, 0.85);
+    color: color-mix(in srgb, var(--pip-text) 85%, transparent);
   }
 
   .pip-close-btn {
-    background: rgba(255, 255, 255, 0.08);
-    color: #fff;
+    background: color-mix(in srgb, var(--pip-text) 8%, transparent);
+    color: var(--pip-text);
     border: none;
     border-radius: 6px;
     width: 24px;
@@ -427,7 +439,7 @@ const PIP_STYLES = `
     line-height: 1;
     transition: background 0.15s;
   }
-  .pip-close-btn:hover { background: rgba(255, 255, 255, 0.18); }
+  .pip-close-btn:hover { background: color-mix(in srgb, var(--pip-text) 18%, transparent); }
 
   /* ---- Grid (scrollable, always 2 columns) ---- */
   .pip-participants-grid {
@@ -449,11 +461,11 @@ const PIP_STYLES = `
     background: transparent;
   }
   .pip-participants-grid::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.2);
+    background: color-mix(in srgb, var(--pip-text) 20%, transparent);
     border-radius: 2px;
   }
   .pip-participants-grid::-webkit-scrollbar-thumb:hover {
-    background: rgba(255, 255, 255, 0.35);
+    background: color-mix(in srgb, var(--pip-text) 35%, transparent);
   }
 
   /* Single participant: full width */
@@ -464,7 +476,7 @@ const PIP_STYLES = `
   /* ---- Tile ---- */
   .pip-participant-tile {
     position: relative;
-    background: #2a2a2a;
+    background: var(--pip-surface-raised);
     border-radius: 10px;
     overflow: hidden;
     display: flex;
@@ -484,10 +496,14 @@ const PIP_STYLES = `
     position: absolute;
     inset: 0;
     border-radius: 10px;
-    border: 2px solid #4caf50;
+    border: 2px solid var(--pip-text);
     pointer-events: none;
     animation: speakPulse 1.4s ease-in-out infinite;
     z-index: 2;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .pip-speaking-ring { animation: none; }
   }
 
   @keyframes speakPulse {
@@ -500,14 +516,14 @@ const PIP_STYLES = `
     position: absolute;
     bottom: 4px;
     left: 4px;
-    background: rgba(0, 0, 0, 0.55);
+    background: color-mix(in srgb, var(--pip-monitor) 55%, transparent);
     backdrop-filter: blur(6px);
     -webkit-backdrop-filter: blur(6px);
     border-radius: 4px;
     padding: 2px 6px;
     font-size: 10px;
     font-weight: 500;
-    color: #fff;
+    color: var(--pip-text);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -526,7 +542,7 @@ const PIP_STYLES = `
     height: 100%;
     gap: 6px;
     padding: 8px;
-    background: #2a2a2a;
+    background: var(--pip-surface-raised);
     z-index: 1;
   }
 
@@ -534,7 +550,7 @@ const PIP_STYLES = `
     font-size: 11px;
     font-weight: 500;
     text-align: center;
-    color: rgba(255,255,255,0.8);
+    color: color-mix(in srgb, var(--pip-text) 80%, transparent);
   }
 
   /* Per-tile indicator: this tile's audio is blocked (not clickable — see pip-unmute-all-banner) */
@@ -542,7 +558,7 @@ const PIP_STYLES = `
     position: absolute;
     top: 4px;
     right: 4px;
-    background: rgba(217, 48, 37, 0.85);
+    background: color-mix(in srgb, var(--pip-danger) 85%, transparent);
     border-radius: 50%;
     width: 18px;
     height: 18px;
@@ -558,8 +574,8 @@ const PIP_STYLES = `
     flex-shrink: 0;
     width: 100%;
     border: none;
-    background: #d93025;
-    color: #fff;
+    background: var(--pip-danger);
+    color: var(--pip-on-danger);
     font-size: 11px;
     font-weight: 600;
     padding: 6px 8px;
@@ -567,7 +583,7 @@ const PIP_STYLES = `
     text-align: center;
   }
   .pip-unmute-all-banner:hover {
-    background: #c12a1f;
+    background: color-mix(in srgb, var(--pip-danger) 88%, black);
   }
 
   /* Empty state */
@@ -577,7 +593,7 @@ const PIP_STYLES = `
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    color: rgba(255, 255, 255, 0.4);
+    color: color-mix(in srgb, var(--pip-text) 40%, transparent);
     gap: 10px;
   }
   .pip-empty-icon { font-size: 36px; opacity: 0.4; }
@@ -618,7 +634,7 @@ const PIP_STYLES = `
     background: transparent;
   }
   .pip-screenshare-strip::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.2);
+    background: color-mix(in srgb, var(--pip-text) 20%, transparent);
     border-radius: 2px;
   }
 
@@ -644,10 +660,10 @@ const PIP_STYLES = `
     justify-content: center;
     gap: 10px;
     padding: 10px 12px;
-    background: rgba(0, 0, 0, 0.6);
+    background: color-mix(in srgb, var(--pip-monitor) 60%, transparent);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
-    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    border-top: 1px solid color-mix(in srgb, var(--pip-text) 6%, transparent);
     flex-shrink: 0;
   }
 
@@ -660,36 +676,36 @@ const PIP_STYLES = `
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.15s ease;
-    background: rgba(255, 255, 255, 0.12);
-    color: #fff;
+    transition: background-color 0.15s ease, color 0.15s ease;
+    background: color-mix(in srgb, var(--pip-text) 12%, transparent);
+    color: var(--pip-text);
   }
 
   .pip-ctrl-btn:hover {
-    background: rgba(255, 255, 255, 0.22);
+    background: color-mix(in srgb, var(--pip-text) 22%, transparent);
   }
 
   .pip-ctrl-btn.active {
-    background: rgba(255, 255, 255, 0.12);
-    color: #fff;
+    background: color-mix(in srgb, var(--pip-text) 12%, transparent);
+    color: var(--pip-text);
   }
 
   .pip-ctrl-btn.muted {
-    background: #d93025;
-    color: #fff;
+    background: var(--pip-danger);
+    color: var(--pip-on-danger);
   }
   .pip-ctrl-btn.muted:hover {
-    background: #c12a1f;
+    background: color-mix(in srgb, var(--pip-danger) 88%, black);
   }
 
   .pip-ctrl-btn.end-call {
-    background: #d93025;
-    color: #fff;
+    background: var(--pip-danger);
+    color: var(--pip-on-danger);
     width: 44px;
     height: 44px;
   }
   .pip-ctrl-btn.end-call:hover {
-    background: #b71c1c;
+    background: color-mix(in srgb, var(--pip-danger) 80%, black);
   }
 
   .pip-ctrl-btn svg {
@@ -1087,6 +1103,7 @@ const PiPGridContent: React.FC<PiPGridContentProps> = ({
 // ---------------------------------------------------------------------------
 
 export const usePictureInPicture = (): UsePictureInPictureReturn => {
+  const theme = useTheme();
   const [isSupported] = useState(() => pipManager.isSupported());
   const [isOpen, setIsOpen] = useState(() => pipManager.isOpen());
   const [error, setError] = useState<string | null>(null);
@@ -1126,6 +1143,16 @@ export const usePictureInPicture = (): UsePictureInPictureReturn => {
       try {
         setError(null);
 
+        const colors = themeColors(theme);
+        pipManager.setThemeVars({
+          surface: colors.surface,
+          'surface-raised': colors.surfaceRaised,
+          text: colors.text,
+          monitor: colors.monitor,
+          danger: colors.error,
+          'on-danger': readableOn(colors.error, theme.palette.themeColor[90], colors.text),
+          font: String(theme.typography.fontFamily ?? 'sans-serif').replace(/\s*!important/g, ''),
+        });
         await pipManager.openWindow({
           width,
           height,
@@ -1164,7 +1191,7 @@ export const usePictureInPicture = (): UsePictureInPictureReturn => {
         return false;
       }
     },
-    [isSupported],
+    [isSupported, theme],
   );
 
   // ---------- updatePiP ----------

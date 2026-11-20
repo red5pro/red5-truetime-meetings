@@ -1,7 +1,8 @@
-import React, { JSX } from 'react';
-import Button from '@mui/material/Button';
-import { SvgIcon } from './SvgIcon';
-import { useTheme } from '@mui/material/styles';
+import { JSX } from 'react';
+import IconButton from '@mui/material/IconButton';
+import { Close } from '@mui/icons-material';
+import { useTranslation } from 'react-i18next';
+import { themeColors } from 'truetime-ui';
 
 interface DrawerButtonProps {
   handleInfoDrawerOpen?: (open: boolean) => void;
@@ -13,9 +14,9 @@ interface DrawerButtonProps {
   handleExternalStreamsDrawerOpen?: (open: boolean) => void;
 }
 
+/** The close button in a drawer's header; closes whichever drawers it's given. */
 function DrawerButton(props: DrawerButtonProps): JSX.Element {
-  const theme = useTheme();
-  const [_, setHovered] = React.useState<boolean>(false);
+  const { t } = useTranslation();
 
   const handleCloseAllDrawers = (): void => {
     props?.handleInfoDrawerOpen?.(false);
@@ -28,14 +29,13 @@ function DrawerButton(props: DrawerButtonProps): JSX.Element {
   };
 
   return (
-    <Button
-      sx={{ minWidth: 30 }}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
+    <IconButton
+      aria-label={t('Close')}
       onClick={handleCloseAllDrawers}
+      sx={(theme) => ({ color: themeColors(theme).text })}
     >
-      <SvgIcon size={20} viewBox="0 0 500 500" name="close" color={theme.palette.text.primary} />
-    </Button>
+      <Close fontSize="small" />
+    </IconButton>
   );
 }
 

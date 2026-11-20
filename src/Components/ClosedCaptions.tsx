@@ -83,8 +83,7 @@ const CaptionsContainer = styled(Box, {
   width: drawerOpen
     ? `calc(100% - ${DRAWER_SPACE}px - ${INSET * 2}px)`
     : `calc(100% - ${INSET * 2}px)`,
-  // Same timing as the gallery's .single-video-container, so both resize together
-  transition: 'width 0.4s linear',
+  // Resizes at once, like the gallery's tiles, when a drawer opens
   height: PANEL_SPACE - INSET * 2,
   backgroundColor: themeColors(theme).surfaceRaised,
   borderRadius: `${radii.pill}px`,

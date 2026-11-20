@@ -1,13 +1,12 @@
 import Drawer from '@mui/material/Drawer';
 import { styled, useTheme, Theme } from '@mui/material/styles';
-import { Typography } from '@mui/material';
 import Grid from '@mui/material/Grid2';
 import { useTranslation } from 'react-i18next';
 import ParticipantTab from './ParticipantTab';
 import CloseDrawerButton from './DrawerButton';
 import { getRed5DrawerStyle } from '../styles/themeUtil';
 import { memo } from 'react';
-import { radii } from 'truetime-ui';
+import { Heading, radii } from 'truetime-ui';
 
 interface Participant {
   streamId: string;
@@ -78,9 +77,9 @@ const ParticipantListDrawer = memo<ParticipantListDrawerProps>((props) => {
         }}
       >
         <Grid container justifyContent="space-between" alignItems="center">
-          <Typography variant="h6" component="div">
+          <Heading level={2} variant="h6">
             {t('Participants')}
-          </Typography>
+          </Heading>
           <CloseDrawerButton
             handleInfoDrawerOpen={(open: boolean) => props?.handleInfoDrawerOpen?.(open)}
             handleMessageDrawerOpen={(open: boolean) => props?.handleMessageDrawerOpen?.(open)}

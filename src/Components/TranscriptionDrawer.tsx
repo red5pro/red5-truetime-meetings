@@ -2,7 +2,7 @@ import * as React from 'react';
 import { useCallback, useMemo, useState } from 'react';
 import Drawer from '@mui/material/Drawer';
 import { styled, Theme } from '@mui/material/styles';
-import { Box, Typography } from '@mui/material';
+import { Box } from '@mui/material';
 import { ContentCopy, DataObject, Subject } from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
 import { enqueueSnackbar } from 'notistack';
@@ -132,9 +132,9 @@ const TranscriptionDrawer = React.memo<TranscriptionDrawerProps>((props) => {
     >
       <Panel>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-          <Typography variant="h6" component="div">
+          <Heading level={2} variant="h6">
             {t('Transcriptions')}
-          </Typography>
+          </Heading>
           <CloseDrawerButton handleInfoDrawerOpen={() => props?.onClose?.(false)} />
         </Box>
 

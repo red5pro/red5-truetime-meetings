@@ -2,7 +2,7 @@ import * as React from 'react';
 import { useState, useEffect } from 'react';
 import Drawer from '@mui/material/Drawer';
 import { alpha, styled, useTheme, Theme } from '@mui/material/styles';
-import { radii, themeColors, transition } from 'truetime-ui';
+import { Heading, radii, themeColors, transition } from 'truetime-ui';
 import Grid from '@mui/material/Grid2';
 import { Typography, Button, Divider, Box } from '@mui/material';
 import { useTranslation } from 'react-i18next';
@@ -285,9 +285,9 @@ const LocalRecordingDrawer = React.memo<LocalRecordingDrawerProps>((props) => {
         }}
       >
         <Grid container justifyContent="space-between" alignItems="center" sx={{ mb: 4 }}>
-          <Typography variant="h6" component="div">
+          <Heading level={2} variant="h6">
             {t('Local Recording')}
-          </Typography>
+          </Heading>
           <CloseDrawerButton handleLocalRecordingDrawerOpen={(open: boolean) => onClose?.(open)} />
         </Grid>
 

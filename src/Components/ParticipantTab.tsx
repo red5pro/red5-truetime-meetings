@@ -46,7 +46,7 @@ interface PersonRow {
 
 /** Up to two initials for the avatar: "Ada Lovelace" → "AL", "ada" → "A" */
 const initialsOf = (name: string): string => {
-  const words = name.trim().split(/\s+/).filter(Boolean);
+  const words = name?.trim().split(/\s+/).filter(Boolean);
   if (words.length === 0) return '?';
   const letters = words.length === 1 ? [words[0][0]] : [words[0][0], words[words.length - 1][0]];
   return letters.join('').toUpperCase();

@@ -1,5 +1,5 @@
-import { Button, Typography } from '@mui/material';
-import { enterAnimation } from 'truetime-ui';
+import { alpha } from '@mui/material';
+import { Button, enterAnimation, Heading, radii, Text, themeColors, transition } from 'truetime-ui';
 import { useTheme } from '@mui/material/styles';
 import Grid from '@mui/material/Grid2';
 import { Box } from '@mui/system';
@@ -54,13 +54,13 @@ function LeftTheRoom({
       >
         <Grid size={{ xs: 12, sm: 10, md: 8 }}>
           <Box textAlign="center" sx={enterAnimation()}>
-            <Typography variant="h5" align="center" sx={{ mb: 2 }}>
+            <Heading level={1} variant="h5" align="center" sx={{ mb: 2 }}>
               {message}
-            </Typography>
+            </Heading>
             {leaveRoomWithError !== null && (
-              <Typography variant="body1" align="center" sx={{ mb: 4 }}>
+              <Text align="center" sx={{ mb: 4 }}>
                 {t(leaveRoomWithError)}
-              </Typography>
+              </Text>
             )}
 
             {(hasRecording || isUploading || uploadStatus !== 'idle') && (
@@ -68,10 +68,10 @@ function LeftTheRoom({
                 sx={{
                   mb: 4,
                   p: 3,
-                  borderRadius: '16px',
+                  borderRadius: `${radii.container}px`,
                   textAlign: 'left',
-                  backgroundColor: theme.palette.themeColor?.[70],
-                  border: `1px solid ${theme.palette.themeColor?.[50]}`,
+                  backgroundColor: themeColors(theme).surfaceRaised,
+                  border: `1px solid ${themeColors(theme).border}`,
                 }}
               >
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
@@ -85,7 +85,7 @@ function LeftTheRoom({
                     <VideoFileIcon sx={{ color: theme.palette.text.secondary }} />
                   )}
                   <Box sx={{ minWidth: 0 }}>
-                    <Typography variant="body1" sx={{ fontWeight: 600 }}>
+                    <Text sx={{ fontWeight: 600 }}>
                       {uploadStatus === 'uploading' || isUploading
                         ? t('Uploading local recording...')
                         : uploadStatus === 'success'
@@ -93,16 +93,16 @@ function LeftTheRoom({
                           : uploadStatus === 'error'
                             ? t('Recording upload failed')
                             : t('Local recording saved')}
-                    </Typography>
+                    </Text>
                     {uploadStatus === 'error' && uploadError && (
-                      <Typography variant="caption" color="error">
+                      <Text variant="body2" tone="error">
                         {uploadError}
-                      </Typography>
+                      </Text>
                     )}
                     {uploadStatus === 'success' && (
-                      <Typography variant="caption" color="text.secondary">
+                      <Text variant="body2" tone="muted">
                         {t('Your recording was uploaded successfully')}
-                      </Typography>
+                      </Text>
                     )}
                   </Box>
                 </Box>
@@ -110,19 +110,24 @@ function LeftTheRoom({
                 {(uploadStatus === 'uploading' || isUploading) && (
                   <Box sx={{ mt: 2 }}>
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                      <Typography variant="caption" color="text.secondary">
+                      <Text variant="body2" tone="muted">
                         {t('Please keep this tab open until the upload finishes')}
-                      </Typography>
-                      <Typography variant="caption" sx={{ fontWeight: 500 }}>
+                      </Text>
+                      <Text variant="body2" mono>
                         {uploadProgress}%
-                      </Typography>
+                      </Text>
                     </Box>
                     <Box
+                      role="progressbar"
+                      aria-label={t('Uploading local recording...')}
+                      aria-valuenow={uploadProgress}
+                      aria-valuemin={0}
+                      aria-valuemax={100}
                       sx={{
                         height: 6,
                         width: '100%',
-                        backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                        borderRadius: 3,
+                        backgroundColor: alpha(themeColors(theme).text, 0.1),
+                        borderRadius: '3px',
                         overflow: 'hidden',
                       }}
                     >
@@ -131,7 +136,10 @@ function LeftTheRoom({
                           height: '100%',
                           width: `${uploadProgress}%`,
                           backgroundColor: theme.palette.primary.main,
-                          transition: 'width 0.3s ease-out',
+                          transition: transition('width', {
+                            duration: 'slow',
+                            easing: 'decelerate',
+                          }),
                         }}
                       />
                     </Box>
@@ -141,8 +149,7 @@ function LeftTheRoom({
                 {hasRecording && (
                   <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mt: 2 }}>
                     <Button
-                      size="small"
-                      color="primary"
+                      color="secondary"
                       variant="outlined"
                       onClick={() => downloadLocalRecording?.()}
                       sx={{ width: '100%' }}
@@ -151,9 +158,7 @@ function LeftTheRoom({
                     </Button>
                     {uploadStatus === 'error' && (
                       <Button
-                        size="small"
                         color="primary"
-                        variant="contained"
                         startIcon={<ReplayIcon />}
                         onClick={() => retryUploadLocalRecording?.()}
                         sx={{ width: '100%' }}
@@ -170,25 +175,18 @@ function LeftTheRoom({
               <Button
                 color="secondary"
                 variant="outlined"
+                shape="pill"
                 onClick={() => window.location.reload()}
-                sx={{
-                  minWidth: 'auto',
-                  whiteSpace: 'nowrap',
-                  px: 2,
-                }}
+                sx={{ whiteSpace: 'nowrap', px: 2.5 }}
               >
                 {t('Rejoin')}
               </Button>
               <Button
                 color="secondary"
-                variant="contained"
+                shape="pill"
                 component="a"
                 href="./"
-                sx={{
-                  minWidth: 'auto',
-                  whiteSpace: 'nowrap',
-                  px: 2,
-                }}
+                sx={{ whiteSpace: 'nowrap', px: 2.5 }}
               >
                 {t('Return to home screen')}
               </Button>

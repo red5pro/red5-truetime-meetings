@@ -1,14 +1,13 @@
 import * as React from 'react';
 import Drawer from '@mui/material/Drawer';
 import { styled, Theme } from '@mui/material/styles';
-import { Typography } from '@mui/material';
 import Grid from '@mui/material/Grid2';
 import { useTranslation } from 'react-i18next';
 import CloseDrawerButton from './DrawerButton';
 import EffectsTab from './EffectsTab';
 import { getRed5DrawerStyle } from '../styles/themeUtil';
 import { Box } from '@mui/system';
-import { radii } from 'truetime-ui';
+import { Heading, radii } from 'truetime-ui';
 
 interface VirtualBackgroundImage {
   type: string;
@@ -127,9 +126,9 @@ const EffectsDrawer = React.memo<EffectsDrawerProps>((props) => {
         style={{ flexWrap: 'nowrap', height: '100%', overflow: 'hidden' }}
       >
         <Grid container justifyContent="space-between" alignItems="center">
-          <Typography variant="h6" component="div">
+          <Heading level={2} variant="h6">
             {t('Backgrounds and effects')}
-          </Typography>
+          </Heading>
           <CloseDrawerButton
             handleInfoDrawerOpen={handleInfoDrawerOpen}
             handleMessageDrawerOpen={props?.handleMessageDrawerOpen}

@@ -1,13 +1,13 @@
 import * as React from 'react';
 import Drawer from '@mui/material/Drawer';
 import { styled, Theme } from '@mui/material/styles';
-import { Box, Typography } from '@mui/material';
+import { Box } from '@mui/material';
 import Grid from '@mui/material/Grid2';
 import { useTranslation } from 'react-i18next';
 import MessagesTab, { type Message, type SentMessage } from './MessagesTab';
 import CloseDrawerButton from './DrawerButton';
 import { getRed5DrawerStyle } from '../styles/themeUtil';
-import { radii } from 'truetime-ui';
+import { Heading, radii } from 'truetime-ui';
 
 interface MessageDrawerProps {
   messageDrawerOpen?: boolean;
@@ -52,9 +52,9 @@ const MessageDrawer = React.memo<MessageDrawerProps>((props) => {
         style={{ flexWrap: 'nowrap', height: '100%', overflow: 'hidden' }}
       >
         <Grid container justifyContent="space-between" alignItems="center">
-          <Typography variant="h6" component="div">
+          <Heading level={2} variant="h6">
             {t('Messages')}
-          </Typography>
+          </Heading>
           <CloseDrawerButton
             handleInfoDrawerOpen={(open: boolean) => props?.handleInfoDrawerOpen?.(open)}
             handleMessageDrawerOpen={props?.handleMessageDrawerOpen}

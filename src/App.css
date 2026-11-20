@@ -90,8 +90,9 @@ form {
   /* if drawer width changes, change this value */
 }
 
+/* No width transition: animating every tile's layout while video decodes drops frames. Tiles
+   reflow at once when a drawer opens; the drawer's own slide carries the motion. */
 #stream-gallery .single-video-container {
-  transition: width 0.4s linear;
   border-radius: 4px;
   padding: 8px;
 }
