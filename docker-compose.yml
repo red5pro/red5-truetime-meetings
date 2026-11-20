@@ -16,6 +16,8 @@ services:
       # recording, captions, external streams and moderation. Never sent to the browser.
       - CONFERENCE_MASTER_KEY=${CONFERENCE_MASTER_KEY:-}
       - CONFERENCE_MASTER_SECRET=${CONFERENCE_MASTER_SECRET:-}
+      # Largest local recording the service uploads to S3 for a browser, in MB
+      - MEETINGS_MAX_RECORDING_UPLOAD_MB=${MEETINGS_MAX_RECORDING_UPLOAD_MB:-2048}
       # Optional: keep the config in MySQL (e.g. TrueTime Studio's server, in its own schema)
       # instead of /data/config.json. Leave MEETINGS_DB_HOST empty to use the file.
       - MEETINGS_DB_HOST=${MEETINGS_DB_HOST:-}
@@ -44,6 +46,7 @@ services:
       - VITE_GOOGLE_CLIENT_ID=${VITE_GOOGLE_CLIENT_ID:-}
       - VITE_PUBNUB_PUBLISH_KEY=${VITE_PUBNUB_PUBLISH_KEY:-}
       - VITE_PUBNUB_SUBSCRIBE_KEY=${VITE_PUBNUB_SUBSCRIBE_KEY:-}
+      # S3 for local recording uploads. The service uploads with these; the browser only sees ***
       - VITE_AWS_ACCESS_KEY=${VITE_AWS_ACCESS_KEY:-}
       - VITE_AWS_SECRET_ACCESS_KEY=${VITE_AWS_SECRET_ACCESS_KEY:-}
       - VITE_AWS_BUCKET_NAME=${VITE_AWS_BUCKET_NAME:-}

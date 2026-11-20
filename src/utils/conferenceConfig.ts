@@ -58,6 +58,8 @@ interface ApiEndpoints {
   generateToken: string;
   startRecording: string;
   stopRecording: string;
+  /** Config service only: stores a local recording in S3 */
+  uploadLocalRecording: string;
   transcription: string;
   blockUser: string;
   unblockUser: string;
@@ -245,6 +247,10 @@ export const getDataChannelHeartbeatConfig = (): DataChannelHeartbeatConfig => {
   };
 };
 
+/** The conference token as a request header; the config service requires it on room calls */
+export const authHeaders = (token: string | null | undefined): Record<string, string> =>
+  token ? { Authorization: `Bearer ${token}` } : {};
+
 /**
  * Get backend API configuration
  */
@@ -272,6 +278,7 @@ export const getBackendConfig = (): BackendConfig => {
       stopRecording: isConfigServiceAvailable()
         ? '/api/room/{roomName}/stopRecording'
         : '/as/v1/conference/room/{roomName}/stopRecording',
+      uploadLocalRecording: '/api/room/{roomName}/local-recording',
       transcription: isConfigServiceAvailable()
         ? '/api/room/{roomName}/transcriptions'
         : '/as/v1/conference/room/{roomName}/transcriptions',

@@ -25,7 +25,7 @@ a secret.
 - **Vite 8**, **Vitest** with Testing Library and jsdom
 - **[red5pro-conference-sdk](https://www.npmjs.com/package/red5pro-conference-sdk)**: rooms, publishing,
   subscribing, chat, screen sharing, virtual backgrounds, noise suppression (DeepFilterNet3), stats
-- **mediabunny** for local recording, **@aws-sdk/client-s3** for uploading it
+- **mediabunny** for local recording, uploaded to S3 by the config service
 - **i18next** / **react-i18next** for text, **notistack** for notifications, **loglevel** for logging
 
 ## Pages and routes
@@ -62,7 +62,7 @@ the room page uses:
 | `useMediaControls`, `useDeviceManagement`, `usePermissions`     | Mute, camera, device switching, browser permissions             |
 | `useScreenShare`, `useVirtualBackground`, `useNoiseSuppression` | Screen sharing and effects                                      |
 | `useChat`                                                       | Chat messages, reactions and raised hands (sent as chat events) |
-| `useRecording`, `useMediabunnyRecording`                        | Server and local recording, S3 upload                           |
+| `useRecording`, `useMediabunnyRecording`                        | Server and local recording, upload through the config service   |
 | `useClosedCaptions`, `useTranscription`                         | Live captions and transcripts                                   |
 | `useExternalStreams`                                            | Listing and adding external streams                             |
 | `useKeyboardShortcuts`                                          | Push to talk (Space) and captions (C)                           |
@@ -81,15 +81,21 @@ options are built in [src/utils/conferenceConfig.ts](../src/utils/conferenceConf
 endpoints when `VITE_CONFIG_SERVICE_URL` is set, otherwise Red5's conference API (`/as/v1/conference/...`) on
 `VITE_BACKEND_HOST` or `VITE_HOST`.
 
-| Purpose          | Config service endpoint                                                            |
-| ---------------- | ---------------------------------------------------------------------------------- |
-| Settings         | `GET /api/config`                                                                  |
-| Conference token | `POST /api/generate-token`                                                         |
-| Server recording | `POST /api/room/{room}/startRecording`, `.../stopRecording`                        |
-| Transcripts      | `GET /api/room/{room}/transcriptions`, `POST .../user/{id}/start-transcription`    |
-| External streams | `GET /api/external-streams`, `POST`/`DELETE /api/room/{room}/external-stream/{id}` |
-| Moderation       | `POST /api/room/{room}/user/{id}/block`, `.../unblock`                             |
-| Node group check | `GET /api/check-node-group-availability`                                           |
+| Purpose                | Config service endpoint                                                                    |
+| ---------------------- | ------------------------------------------------------------------------------------------ |
+| Settings               | `GET /api/config`                                                                          |
+| Conference token       | `POST /api/generate-token`                                                                 |
+| Server recording       | `POST /api/room/{room}/startRecording`, `.../stopRecording`                                |
+| Local recording upload | `POST /api/room/{room}/local-recording` (the zip as the body; the service stores it in S3) |
+| Transcripts            | `GET /api/room/{room}/transcriptions`, `POST .../user/{id}/start-transcription`            |
+| External streams       | `GET /api/external-streams`, `POST`/`DELETE /api/room/{room}/external-stream/{id}`         |
+| Moderation             | `POST /api/room/{room}/user/{id}/block`, `.../unblock`                                     |
+| Node group check       | `GET /api/check-node-group-availability`                                                   |
+
+Room calls send the conference token as `Authorization: Bearer <token>` (`authHeaders()` in `conferenceConfig.ts`); the
+config service refuses them without a valid token for the room. The settings, the token request, the lobby's user list
+and the node group check are public, because the browser needs them before it has a token. See the
+[config service README](../config-service/README.md#conference-tokens-on-room-calls).
 
 ## Browser storage
 

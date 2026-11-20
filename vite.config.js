@@ -1,9 +1,27 @@
+import process from 'node:process';
 import { fileURLToPath } from 'node:url';
-import { defineConfig } from 'vite';
+import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
 
-export default defineConfig(({ mode }) => {
+// Every VITE_* value ends up in the JavaScript bundle, readable by anyone who opens the app. The S3
+// keys belong on the config service, which uploads recordings for the browser.
+const SERVER_ONLY_SECRETS = ['VITE_AWS_ACCESS_KEY', 'VITE_AWS_SECRET_ACCESS_KEY'];
+
+function checkForServerSecrets(mode, command) {
+  const env = { ...loadEnv(mode, process.cwd(), 'VITE_'), ...process.env };
+  const found = SERVER_ONLY_SECRETS.filter((key) => env[key]);
+  if (found.length === 0) return;
+  const message =
+    `${found.join(' and ')} would be built into the app, where every visitor can read them. ` +
+    'Remove them from the app environment (.env) and set them on the config service instead; ' +
+    'see docs/configuration.md.';
+  if (command === 'build') throw new Error(message);
+  console.warn(`\nWarning: ${message}\n`);
+}
+
+export default defineConfig(({ mode, command }) => {
   const isProduction = mode === 'production';
+  if (mode !== 'test') checkForServerSecrets(mode, command);
 
   return {
     resolve: {
@@ -35,7 +53,6 @@ export default defineConfig(({ mode }) => {
       port: 3000,
     },
     optimizeDeps: {
-      include: ['@aws-sdk/client-s3', '@aws-sdk/lib-storage'],
       exclude: ['@mediapipe/selfie_segmentation'],
     },
     build: {

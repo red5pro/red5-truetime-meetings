@@ -1,6 +1,6 @@
 import { useState, useCallback, MutableRefObject } from 'react';
 import { usePostRequest } from './usePostRequest';
-import { getBackendConfig } from '../utils/conferenceConfig';
+import { authHeaders, getBackendConfig } from '../utils/conferenceConfig';
 
 // Type definitions
 interface ConferenceClient {
@@ -31,7 +31,11 @@ interface Caption {
 }
 
 interface PostRequest {
-  postData: (url: string, data: any) => Promise<any>;
+  postData: (
+    url: string,
+    data: any,
+    options?: { headers?: Record<string, string> },
+  ) => Promise<any>;
 }
 
 interface UseClosedCaptionsReturn {
@@ -50,7 +54,7 @@ interface UseClosedCaptionsReturn {
   clearCaptions: () => void;
 }
 
-export const useClosedCaptions = (client: Client): UseClosedCaptionsReturn => {
+export const useClosedCaptions = (client: Client, token: string): UseClosedCaptionsReturn => {
   const { postData }: PostRequest = usePostRequest();
   const [captionsVisible, setCaptionsVisible] = useState<boolean>(false);
   const [captionsLanguage, setCaptionsLanguage] = useState<string>('en');
@@ -64,12 +68,12 @@ export const useClosedCaptions = (client: Client): UseClosedCaptionsReturn => {
       const url = `${backendConfig.host}${backendConfig.apiEndpoints.startTranscription
         .replace('{roomName}', client.conferenceClient.current.roomId)
         .replace('{userId}', client.conferenceClient.current.streamName)}`;
-      const result = await postData(url, {});
+      const result = await postData(url, {}, { headers: authHeaders(token) });
       console.log('startCaption: ', result);
     } catch (error) {
       console.error('Error starting caption:', error);
     }
-  }, [client, postData]);
+  }, [client, postData, token]);
 
   const stopCaption = useCallback(async (): Promise<void> => {
     try {
@@ -77,12 +81,12 @@ export const useClosedCaptions = (client: Client): UseClosedCaptionsReturn => {
       const url = `${backendConfig.host}${backendConfig.apiEndpoints.stopTranscription
         .replace('{roomName}', client.conferenceClient.current.roomId)
         .replace('{userId}', client.conferenceClient.current.streamName)}`;
-      const result = await postData(url, {});
+      const result = await postData(url, {}, { headers: authHeaders(token) });
       console.log('stopCaption: ', result);
     } catch (error) {
       console.error('Error stopping caption:', error);
     }
-  }, [client, postData]);
+  }, [client, postData, token]);
 
   const handleToggleCaptions = useCallback(() => {
     if (captionsVisible) {
