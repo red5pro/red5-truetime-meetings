@@ -87,7 +87,7 @@ export function LayoutSettingsDialog(props: LayoutSettingsDialogProps) {
         <FormControl sx={{ width: '100%' }}>
           <RadioGroup
             aria-labelledby={TITLE_ID}
-            value={props?.layout ?? LayoutOptions.Auto}
+            value={props?.layout ?? LayoutOptions.Tiled}
             onChange={changeLayout}
             name="layout-radio-buttons-group"
           >
