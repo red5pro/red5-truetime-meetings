@@ -148,7 +148,8 @@ function Section({
       <Box
         role="group"
         aria-labelledby={id}
-        sx={{ display: 'grid', gridTemplateColumns: `repeat(${columns}, 1fr)`, gap: 1 }}
+        // minmax(0, …): plain 1fr won't shrink below a tile's content and pushes the row wider
+        sx={{ display: 'grid', gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`, gap: 1 }}
       >
         {children}
       </Box>
@@ -215,6 +216,7 @@ function EffectsTab({
         width: '100%',
         height: '100%',
         overflowY: 'auto',
+        overflowX: 'hidden',
         display: 'flex',
         flexDirection: 'column',
         gap: 3,

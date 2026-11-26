@@ -349,13 +349,13 @@ export const saveNoiseSuppressionPreference = (enabled: boolean): void => {
 };
 
 /**
- * Get layout preference: the saved layout, or Auto when none (or an unknown one) was saved
+ * Get layout preference: the saved layout, or Tiled when none (or an unknown one) was saved
  */
 export const getLayoutPreference = (): string => {
   const saved = readString('layout');
   return Object.values(LayoutOptions).includes(saved ?? '')
     ? (saved as string)
-    : LayoutOptions.Auto;
+    : LayoutOptions.Tiled;
 };
 
 /**

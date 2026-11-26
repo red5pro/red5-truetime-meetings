@@ -74,7 +74,7 @@ window.getWindowLocation = getWindowLocation;
 window.copyWindowLocation = copyWindowLocation;
 
 function App(): JSX.Element {
-  // The theme the user picked last time (stored as `theme` in `ttm`) wins over the configured default.
+  // The theme the user picked last time (stored as `selectedTheme` in `ttm`) wins over the configured default.
   const [currentTheme, setCurrentTheme] = useState<string>(
     () => getSavedTheme() || getRuntimeConfig().VITE_DEFAULT_THEME || ThemeList.Black,
   );

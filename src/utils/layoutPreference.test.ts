@@ -8,8 +8,8 @@ afterEach(() => {
 });
 
 describe('getLayoutPreference', () => {
-  it('defaults to Auto when no layout was saved', () => {
-    expect(getLayoutPreference()).toBe(LayoutOptions.Auto);
+  it('defaults to Tiled when no layout was saved', () => {
+    expect(getLayoutPreference()).toBe(LayoutOptions.Tiled);
   });
 
   it('returns the saved layout', () => {
@@ -17,8 +17,8 @@ describe('getLayoutPreference', () => {
     expect(getLayoutPreference()).toBe(LayoutOptions.Tiled);
   });
 
-  it('falls back to Auto for an unknown saved value', () => {
+  it('falls back to Tiled for an unknown saved value', () => {
     writeStored('layout', 'Auto');
-    expect(getLayoutPreference()).toBe(LayoutOptions.Auto);
+    expect(getLayoutPreference()).toBe(LayoutOptions.Tiled);
   });
 });
