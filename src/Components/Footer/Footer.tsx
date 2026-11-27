@@ -133,6 +133,8 @@ interface FooterProps {
   /** Tile ids of who is talking; ours is `streamName`. */
   talkers?: string[];
   streamName?: string;
+  /** Width to lay out for instead of the window's (the mobile layout preview's phone frame). */
+  viewportWidth?: number;
 }
 
 const FooterBar = styled('footer')(({ theme }: { theme: Theme }) => ({
@@ -174,7 +176,7 @@ function Footer(props: FooterProps) {
   const mobileBreakpoint = 1000;
   const [windowWidth, setWindowWidth] = React.useState(window.innerWidth);
   const isExternalStreamsEnabled = getRuntimeConfig().VITE_ENABLE_EXTERNAL_STREAMS === 'true';
-  const wide = windowWidth > mobileBreakpoint;
+  const wide = (props.viewportWidth ?? windowWidth) > mobileBreakpoint;
 
   // Which tray shows above the call controls: a device tray (local state) or the reactions, which
   // follow `showEmojis` so the mobile menu and shortcuts can open them too.

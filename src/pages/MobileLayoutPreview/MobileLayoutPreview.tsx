@@ -101,7 +101,7 @@ const MobileLayoutPreview: React.FC = () => {
   }, []);
 
   const frameOuterWidth = frameWidth + 20; // + 10px border on each side
-  const frameOuterHeight = frameHeight - FOOTER_HEIGHT + 20;
+  const frameOuterHeight = frameHeight + 20;
   const frameScale =
     stageSize.width && stageSize.height
       ? Math.min(1, stageSize.width / frameOuterWidth, stageSize.height / frameOuterHeight)
@@ -146,7 +146,7 @@ const MobileLayoutPreview: React.FC = () => {
   return (
     <Box
       sx={{
-        height: `calc(100vh - ${FOOTER_HEIGHT}px)`, // the fixed Footer sits below
+        height: '100vh',
         bgcolor: '#0d0d0d',
         display: 'flex',
         overflow: 'hidden',
@@ -173,7 +173,7 @@ const MobileLayoutPreview: React.FC = () => {
           <Box
             sx={{
               width: frameWidth,
-              height: frameHeight - FOOTER_HEIGHT,
+              height: frameHeight,
               borderRadius: '44px',
               border: '10px solid #2a2a2a',
               overflow: 'hidden',
@@ -195,7 +195,7 @@ const MobileLayoutPreview: React.FC = () => {
                 top: 'unset !important',
                 left: 'unset !important',
                 width: '100% !important',
-                height: '100% !important',
+                height: `${frameHeight - FOOTER_HEIGHT}px !important`,
               }}
             >
               <LayoutMobile
@@ -213,6 +213,24 @@ const MobileLayoutPreview: React.FC = () => {
                 setMuteParticipantDialogOpen={() => {}}
               />
             </Box>
+            {/* The frame's transform makes it the containing block for the Footer's
+                position: fixed, so the Footer sits at the bottom of the phone. */}
+            <Footer
+              updateDevicesList={() => {}}
+              isPlayOnly={false}
+              isMyMicMuted={isMicMuted}
+              toggleMic={() => setIsMicMuted((prev) => !prev)}
+              isMyCamTurnedOff={isCamOff}
+              checkAndTurnOffLocalCamera={() => setIsCamOff(true)}
+              checkAndTurnOnLocalCamera={() => setIsCamOff(false)}
+              isScreenShared={isScreenShared}
+              handleStartScreenShare={() => setIsScreenShared(true)}
+              handleStopScreenShare={() => setIsScreenShared(false)}
+              participantCount={allParticipants.length}
+              layout={layout}
+              setLeftTheRoom={() => {}}
+              viewportWidth={frameWidth}
+            />
           </Box>
         </Box>
       </Box>
@@ -234,9 +252,8 @@ const MobileLayoutPreview: React.FC = () => {
         </Typography>
         <Typography variant="body2" color="rgba(255,255,255,0.6)">
           Dev-only preview of LayoutMobile with mock participants — no meeting/backend connection
-          required. The bar below is the real Footer; note its own mobile/compact mode is driven by
-          the actual browser window width (≤1000px), independent of the phone frame's fixed size —
-          shrink the browser window to see it collapse the way it does on a real phone.
+          required. The bar at the bottom of the phone is the real Footer, laid out for the phone's
+          width.
         </Typography>
         {frameScale < 1 && (
           <Typography variant="body2" color="rgba(255,255,255,0.6)">
@@ -299,22 +316,6 @@ const MobileLayoutPreview: React.FC = () => {
             : `${cutOffCount} tile${cutOffCount === 1 ? ' is' : 's are'} cut off vertically`}
         </Typography>
       </Box>
-
-      <Footer
-        updateDevicesList={() => {}}
-        isPlayOnly={false}
-        isMyMicMuted={isMicMuted}
-        toggleMic={() => setIsMicMuted((prev) => !prev)}
-        isMyCamTurnedOff={isCamOff}
-        checkAndTurnOffLocalCamera={() => setIsCamOff(true)}
-        checkAndTurnOnLocalCamera={() => setIsCamOff(false)}
-        isScreenShared={isScreenShared}
-        handleStartScreenShare={() => setIsScreenShared(true)}
-        handleStopScreenShare={() => setIsScreenShared(false)}
-        participantCount={allParticipants.length}
-        layout={layout}
-        setLeftTheRoom={() => {}}
-      />
     </Box>
   );
 };
