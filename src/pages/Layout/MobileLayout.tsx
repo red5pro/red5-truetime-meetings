@@ -18,8 +18,7 @@ import { LayoutMobileProps, ParticipantObject } from './types.ts';
 // - Auto:
 //   - 1 local + 1 remote  -> remote fullscreen, local floats as a PIP bubble
 //   - 1 local + 2 remotes -> remotes stacked, local floats inside the 2nd remote's tile
-//   - 1 local + 3+ remotes -> remotes in the grid, local floats as a PIP bubble
-//     over it (Tiled puts local in the grid as a normal tile instead)
+//   - 1 local + 3+ remotes -> everyone in the grid, local as a normal tile (same as Tiled)
 // In the grid, beyond 8 tiles (local + 7 remotes) the grid caps out and the rest
 // collapse into an "Others" tile bottom-right; those hidden participants stay
 // mounted off-screen so their audio keeps playing.
@@ -165,16 +164,15 @@ const LayoutMobile = React.memo<LayoutMobileProps>((props) => {
     [renderTile],
   );
 
-  // Equal-size grid, 2 tiles per row. An overlay (the floating self-view) sits outside the
-  // grid so it doesn't count as a grid item and break the odd-last-tile rule.
-  const renderGrid = (tiles: ParticipantObject[], overlay?: React.ReactNode) => {
+  // Equal-size grid, 2 tiles per row.
+  const renderGrid = (tiles: ParticipantObject[]) => {
     const hasGridOverflow = tiles.length > GRID_OVERFLOW_THRESHOLD;
     const visibleTiles = hasGridOverflow ? tiles.slice(0, VISIBLE_TILES_ON_OVERFLOW) : tiles;
     const overflowTiles = hasGridOverflow ? tiles.slice(VISIBLE_TILES_ON_OVERFLOW) : [];
 
     const cellCount = visibleTiles.length + (hasGridOverflow ? 1 : 0);
 
-    const content = (
+    return (
       <>
         <Box
           className="mobile-layout-gallery mobile-grid-layout"
@@ -201,15 +199,6 @@ const LayoutMobile = React.memo<LayoutMobileProps>((props) => {
           </Box>
         ))}
       </>
-    );
-
-    if (!overlay) return content;
-
-    return (
-      <Box className="mobile-layout-gallery mobile-grid-with-pip-layout">
-        {content}
-        {overlay}
-      </Box>
     );
   };
 
@@ -240,8 +229,8 @@ const LayoutMobile = React.memo<LayoutMobileProps>((props) => {
       );
     }
 
-    // Tiled — always the plain grid, no floating self-view.
-    if (layout === LayoutOptions.Tiled) {
+    // Tiled, or 3+ remotes — everyone in the plain grid, local as a normal tile.
+    if (layout === LayoutOptions.Tiled || remoteParticipants.length > 2) {
       return renderGrid([localParticipant, ...remoteParticipants]);
     }
 
@@ -257,21 +246,16 @@ const LayoutMobile = React.memo<LayoutMobileProps>((props) => {
     }
 
     // 2 remotes — remotes stacked top/bottom, local floats inside the bottom tile.
-    if (remoteParticipants.length === 2) {
-      return (
-        <Box className="mobile-layout-gallery mobile-two-remote-layout">
-          {renderTileContainer(remoteParticipants[0], 'mobile-stack-tile')}
-          {renderTileContainer(
-            remoteParticipants[1],
-            'mobile-stack-tile mobile-stack-tile-nested',
-            localPip,
-          )}
-        </Box>
-      );
-    }
-
-    // 3+ remotes — remotes in the grid, local floats as a PIP bubble over it.
-    return renderGrid(remoteParticipants, localPip);
+    return (
+      <Box className="mobile-layout-gallery mobile-two-remote-layout">
+        {renderTileContainer(remoteParticipants[0], 'mobile-stack-tile')}
+        {renderTileContainer(
+          remoteParticipants[1],
+          'mobile-stack-tile mobile-stack-tile-nested',
+          localPip,
+        )}
+      </Box>
+    );
   };
 
   if (!localParticipant) return null;

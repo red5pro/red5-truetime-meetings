@@ -84,8 +84,28 @@ const MobileLayoutPreview: React.FC = () => {
   );
   const [cutOffCount, setCutOffCount] = useState(0);
   const galleryRef = useRef<HTMLDivElement | null>(null);
+  const stageRef = useRef<HTMLDivElement | null>(null);
+  const [stageSize, setStageSize] = useState({ width: 0, height: 0 });
 
   const [frameWidth, frameHeight] = phoneSize.split('x').map(Number);
+
+  // Shrink the phone frame to fit the left panel so it's always fully visible without scrolling.
+  useLayoutEffect(() => {
+    const stage = stageRef.current;
+    if (!stage) return;
+    const observer = new ResizeObserver(([entry]) =>
+      setStageSize({ width: entry.contentRect.width, height: entry.contentRect.height }),
+    );
+    observer.observe(stage);
+    return () => observer.disconnect();
+  }, []);
+
+  const frameOuterWidth = frameWidth + 20; // + 10px border on each side
+  const frameOuterHeight = frameHeight + 20;
+  const frameScale =
+    stageSize.width && stageSize.height
+      ? Math.min(1, stageSize.width / frameOuterWidth, stageSize.height / frameOuterHeight)
+      : 1;
 
   const allParticipants = useMemo<ParticipantObject[]>(() => {
     const local = makeParticipant(LOCAL_UID, 'You', true);
@@ -126,141 +146,176 @@ const MobileLayoutPreview: React.FC = () => {
   return (
     <Box
       sx={{
-        minHeight: '100vh',
+        height: '100vh',
         bgcolor: '#0d0d0d',
         display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        gap: 3,
-        py: 5,
-        px: 2,
-        pb: '96px', // reserve space so the fixed Footer below doesn't cover the frame
+        overflow: 'hidden',
       }}
     >
-      <Typography variant="h5" color="white">
-        Mobile Layout Preview
-      </Typography>
-      <Typography variant="body2" color="rgba(255,255,255,0.6)" textAlign="center" maxWidth={420}>
-        Dev-only preview of LayoutMobile with mock participants — no meeting/backend connection
-        required. The bar below is the real Footer; note its own mobile/compact mode is driven by
-        the actual browser window width (≤1000px), independent of the phone frame's fixed size —
-        shrink the browser window to see it collapse the way it does on a real phone.
-      </Typography>
-
-      <Box sx={{ width: 320 }}>
-        <Slider
-          value={remoteCount}
-          onChange={(_, v) => setRemoteCount(v as number)}
-          min={0}
-          max={MAX_REMOTES}
-          step={1}
-          marks
-          valueLabelDisplay="on"
-        />
-        <Typography variant="body2" color="white" textAlign="center">
-          {remoteCount} remote participant{remoteCount === 1 ? '' : 's'} — {scenarioLabel}
-        </Typography>
-      </Box>
-
-      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, justifyContent: 'center' }}>
-        <Select
-          aria-label="Layout"
-          value={layout}
-          onChange={setLayout}
-          options={[
-            { value: LayoutOptions.Auto, label: 'Auto' },
-            { value: LayoutOptions.Tiled, label: 'Tiled' },
-          ]}
-        />
-        <Select
-          aria-label="Pinned participant"
-          value={pinnedParticipantId ?? NO_PIN}
-          onChange={setPinnedUid}
-          options={[
-            { value: NO_PIN, label: 'No pin' },
-            ...allParticipants.map((p) => ({
-              value: p.participant.uid,
-              label: `Pin ${p.participant.name}`,
-            })),
-          ]}
-        />
-        <Select
-          aria-label="Phone size"
-          value={phoneSize}
-          onChange={setPhoneSize}
-          options={PHONE_SIZES}
-        />
-      </Box>
-
-      <Typography
-        variant="body2"
-        role="status"
-        color={cutOffCount === 0 ? 'success.main' : 'error.main'}
-      >
-        {cutOffCount === 0
-          ? 'Fits: every tile is fully visible without vertical scrolling'
-          : `${cutOffCount} tile${cutOffCount === 1 ? ' is' : 's are'} cut off vertically`}
-      </Typography>
-
       <Box
+        ref={stageRef}
         sx={{
-          width: frameWidth,
-          height: frameHeight - FOOTER_HEIGHT,
-          borderRadius: '44px',
-          border: '10px solid #2a2a2a',
-          overflow: 'hidden',
-          position: 'relative',
-          bgcolor: '#000',
-          boxShadow: '0 24px 70px rgba(0,0,0,0.55)',
-          flexShrink: 0,
+          flex: 1,
+          minWidth: 0,
+          m: 3,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
         }}
       >
-        {/* Reuses the real #stream-gallery id so LayoutMobile renders inside the
-            exact same CSS context it gets in production; only position/size are
-            pinned to the phone frame instead of the real viewport. */}
         <Box
-          id="stream-gallery"
-          ref={galleryRef}
           sx={{
-            position: 'relative !important',
-            top: 'unset !important',
-            left: 'unset !important',
-            width: '100% !important',
-            height: '100% !important',
+            width: frameOuterWidth * frameScale,
+            height: frameOuterHeight * frameScale,
+            flexShrink: 0,
           }}
         >
-          <LayoutMobile
-            allParticipants={allParticipants}
-            streamName={LOCAL_UID}
-            isPlayOnly={false}
-            pinnedParticipantId={pinnedParticipantId}
-            pinVideo={setPinnedUid}
-            unpinVideo={() => setPinnedUid(NO_PIN)}
-            layout={layout}
-            globals={{}}
-            connectionStats={{}}
-            networkScore={{ outbound: 4 }}
-            setParticipantIdMuted={() => {}}
-            setMuteParticipantDialogOpen={() => {}}
-          />
+          <Box
+            sx={{
+              width: frameWidth,
+              height: frameHeight,
+              borderRadius: '44px',
+              border: '10px solid #2a2a2a',
+              overflow: 'hidden',
+              position: 'relative',
+              bgcolor: '#000',
+              boxShadow: '0 24px 70px rgba(0,0,0,0.55)',
+              transform: `scale(${frameScale})`,
+              transformOrigin: 'top left',
+            }}
+          >
+            {/* Reuses the real #stream-gallery id so LayoutMobile renders inside the
+                exact same CSS context it gets in production; only position/size are
+                pinned to the phone frame instead of the real viewport. */}
+            <Box
+              id="stream-gallery"
+              ref={galleryRef}
+              sx={{
+                position: 'relative !important',
+                top: 'unset !important',
+                left: 'unset !important',
+                width: '100% !important',
+                height: `${frameHeight - FOOTER_HEIGHT}px !important`,
+              }}
+            >
+              <LayoutMobile
+                allParticipants={allParticipants}
+                streamName={LOCAL_UID}
+                isPlayOnly={false}
+                pinnedParticipantId={pinnedParticipantId}
+                pinVideo={setPinnedUid}
+                unpinVideo={() => setPinnedUid(NO_PIN)}
+                layout={layout}
+                globals={{}}
+                connectionStats={{}}
+                networkScore={{ outbound: 4 }}
+                setParticipantIdMuted={() => {}}
+                setMuteParticipantDialogOpen={() => {}}
+              />
+            </Box>
+            {/* The frame's transform makes it the containing block for the Footer's
+                position: fixed, so the Footer sits at the bottom of the phone. */}
+            <Footer
+              updateDevicesList={() => {}}
+              isPlayOnly={false}
+              isMyMicMuted={isMicMuted}
+              toggleMic={() => setIsMicMuted((prev) => !prev)}
+              isMyCamTurnedOff={isCamOff}
+              checkAndTurnOffLocalCamera={() => setIsCamOff(true)}
+              checkAndTurnOnLocalCamera={() => setIsCamOff(false)}
+              isScreenShared={isScreenShared}
+              handleStartScreenShare={() => setIsScreenShared(true)}
+              handleStopScreenShare={() => setIsScreenShared(false)}
+              participantCount={allParticipants.length}
+              layout={layout}
+              setLeftTheRoom={() => {}}
+              viewportWidth={frameWidth}
+            />
+          </Box>
         </Box>
       </Box>
 
-      <Footer
-        updateDevicesList={() => {}}
-        isPlayOnly={false}
-        isMyMicMuted={isMicMuted}
-        toggleMic={() => setIsMicMuted((prev) => !prev)}
-        isMyCamTurnedOff={isCamOff}
-        checkAndTurnOffLocalCamera={() => setIsCamOff(true)}
-        checkAndTurnOnLocalCamera={() => setIsCamOff(false)}
-        isScreenShared={isScreenShared}
-        handleStartScreenShare={() => setIsScreenShared(true)}
-        handleStopScreenShare={() => setIsScreenShared(false)}
-        participantCount={allParticipants.length}
-        layout={layout}
-        setLeftTheRoom={() => {}}
-      />
+      <Box
+        sx={{
+          width: 380,
+          flexShrink: 0,
+          overflowY: 'auto',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 3,
+          p: 3,
+          borderLeft: '1px solid rgba(255,255,255,0.12)',
+        }}
+      >
+        <Typography variant="h5" color="white">
+          Mobile Layout Preview
+        </Typography>
+        <Typography variant="body2" color="rgba(255,255,255,0.6)">
+          Dev-only preview of LayoutMobile with mock participants — no meeting/backend connection
+          required. The bar at the bottom of the phone is the real Footer, laid out for the phone's
+          width.
+        </Typography>
+        {frameScale < 1 && (
+          <Typography variant="body2" color="rgba(255,255,255,0.6)">
+            Frame shown at {Math.round(frameScale * 100)}% to fit the window.
+          </Typography>
+        )}
+
+        <Box sx={{ pt: 3 }}>
+          <Slider
+            value={remoteCount}
+            onChange={(_, v) => setRemoteCount(v as number)}
+            min={0}
+            max={MAX_REMOTES}
+            step={1}
+            marks
+            valueLabelDisplay="on"
+          />
+          <Typography variant="body2" color="white" textAlign="center">
+            {remoteCount} remote participant{remoteCount === 1 ? '' : 's'} — {scenarioLabel}
+          </Typography>
+        </Box>
+
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+          <Select
+            aria-label="Layout"
+            value={layout}
+            onChange={setLayout}
+            options={[
+              { value: LayoutOptions.Auto, label: 'Auto' },
+              { value: LayoutOptions.Tiled, label: 'Tiled' },
+            ]}
+          />
+          <Select
+            aria-label="Pinned participant"
+            value={pinnedParticipantId ?? NO_PIN}
+            onChange={setPinnedUid}
+            options={[
+              { value: NO_PIN, label: 'No pin' },
+              ...allParticipants.map((p) => ({
+                value: p.participant.uid,
+                label: `Pin ${p.participant.name}`,
+              })),
+            ]}
+          />
+          <Select
+            aria-label="Phone size"
+            value={phoneSize}
+            onChange={setPhoneSize}
+            options={PHONE_SIZES}
+          />
+        </Box>
+
+        <Typography
+          variant="body2"
+          role="status"
+          color={cutOffCount === 0 ? 'success.main' : 'error.main'}
+        >
+          {cutOffCount === 0
+            ? 'Fits: every tile is fully visible without vertical scrolling'
+            : `${cutOffCount} tile${cutOffCount === 1 ? ' is' : 's are'} cut off vertically`}
+        </Typography>
+      </Box>
     </Box>
   );
 };
